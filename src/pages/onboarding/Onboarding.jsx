@@ -30,7 +30,7 @@ export default function Onboarding({ restaurant, onConcluir }) {
         {step === 1 && (
           <Step1Setores
             restaurantId={user.uid}
-            nomeRestaurante={restaurant.nomeRestaurante}
+            nomeRestaurante={restaurant?.nomeRestaurante}
             onNext={(s) => { setSetores(s); setStep(2) }}
           />
         )}
