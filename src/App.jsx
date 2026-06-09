@@ -73,7 +73,7 @@ function AppContent() {
   if (!user) {
     if (page === 'cadastro') return <Cadastro onBack={() => setPage('login')} onSuccess={() => setPage('login')} />
     if (page === 'recuperar') return <Recuperar onBack={() => setPage('login')} />
-    return <Login onCadastro={() => setPage('cadastro')} onRecuperar={() => setPage('recuperar')} />
+    return <Login onNavigate={setPage} />
   }
 
   if (!usuarioData) {
