@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../../services/firebase'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
 
-const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
+const TURNOS = ['Abertura', 'Pr\u00e9 pico', 'Fechamento']
 
 export default function GerenciarTarefas({ restaurantId, onVoltar }) {
   const [setores, setSetores] = useState([])
@@ -87,8 +87,8 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
   return (
     <div style={s.screen}>
       <div style={s.header}>
-        <button style={s.back} onClick={onVoltar}>←</button>
-        <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>⚙️ Gerenciar Tarefas</h1>
+        <button style={s.back} onClick={onVoltar}>{String.fromCharCode(8592)}</button>
+        <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>Gerenciar Tarefas</h1>
       </div>
 
       <div style={s.tabs}>
@@ -112,13 +112,13 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
                   <div key={tarefa.id} style={s.editBox}>
                     <input style={s.addInput} value={editando.texto} onChange={e => setEditando({...editando, texto: e.target.value})} autoFocus />
                     <button style={s.btnConfirm} onClick={salvarEdicao} disabled={saving}>Salvar</button>
-                    <button style={s.btnCancel} onClick={() => setEditando(null)}>✕</button>
+                    <button style={s.btnCancel} onClick={() => setEditando(null)}>{String.fromCharCode(215)}</button>
                   </div>
                 ) : (
                   <div key={tarefa.id} style={s.tarefa}>
                     <span style={s.tarefaTexto}>{tarefa.texto}</span>
-                    <button style={s.btnEdit} onClick={() => setEditando({...tarefa})}>✏️</button>
-                    <button style={s.btnDel} onClick={() => excluir(tarefa.id)}>🗑️</button>
+                    <button style={s.btnEdit} onClick={() => setEditando({...tarefa})}>editar</button>
+                    <button style={s.btnDel} onClick={() => excluir(tarefa.id)}>excluir</button>
                   </div>
                 )
               ))}
@@ -128,7 +128,7 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
                   <input style={s.addInput} placeholder="Nome da tarefa..." value={novoTexto} onChange={e => setNovoTexto(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') adicionarTarefa() }} autoFocus />
                   <button style={s.btnConfirm} onClick={adicionarTarefa} disabled={saving}>Salvar</button>
-                  <button style={s.btnCancel} onClick={() => { setAdicionando(null); setNovoTexto('') }}>✕</button>
+                  <button style={s.btnCancel} onClick={() => { setAdicionando(null); setNovoTexto('') }}>{String.fromCharCode(215)}</button>
                 </div>
               ) : (
                 <button style={s.btnAdd} onClick={() => { setAdicionando({ setor: setorAtivo, turno }); setNovoTexto('') }}>
