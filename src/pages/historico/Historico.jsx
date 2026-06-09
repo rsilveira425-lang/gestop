@@ -6,8 +6,9 @@ import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
 
 const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
 
-export default function Historico({ onVoltar }) {
+export default function Historico({ restaurantId: restaurantIdProp, onVoltar }) {
   const { user } = useAuth()
+  const restaurantId = restaurantIdProp || user.uid
   const [checklists, setChecklists] = useState([])
   const [loading, setLoading] = useState(true)
   const [detalhe, setDetalhe] = useState(null)
@@ -21,7 +22,7 @@ export default function Historico({ onVoltar }) {
     d15.setDate(hoje.getDate() - 15)
     const dataInicio = d15.toISOString().split('T')[0]
 
-    const ref = collection(db, 'restaurants', user.uid, 'checklists')
+    const ref = collection(db, 'restaurants', restaurantId, 'checklists')
     const q = query(ref, where('data', '>=', dataInicio))
     const snap = await getDocs(q)
     const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }))
