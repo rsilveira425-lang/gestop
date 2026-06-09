@@ -132,7 +132,7 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
                 </div>
               ) : (
                 <button style={s.btnAdd} onClick={() => { setAdicionando({ setor: setorAtivo, turno }); setNovoTexto('') }}>
-                  + Adicionar tarefa
+                  + Adicionar Tarefa
                 </button>
               )}
             </div>
