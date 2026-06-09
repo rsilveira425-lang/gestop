@@ -11,12 +11,17 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   const [data, setData] = useState(localDate())
   const [detalhe, setDetalhe] = useState(null)
+  const [mapaT, setMapaT] = useState({})
 
   useEffect(() => { carregarDados() }, [data])
 
   async function carregarDados() {
     setLoading(true)
     try {
+      const tSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
+      const mapa = {}
+      tSnap.docs.forEach(d => { mapa[d.id] = d.data().texto })
+      setMapaT(mapa)
       const q = query(collection(db, 'restaurants', restaurantId, 'checklists'), where('data', '==', data))
       const s = await getDocs(q)
       setChecklists(s.docs.map(d => ({ id: d.id, ...d.data() })))
@@ -54,7 +59,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
         ) : Object.entries(detalhe.respostas||{}).map(([id, resp]) => (
           <div key={id} style={{ backgroundColor:'white', borderRadius:'10px', padding:'14px', marginBottom:'10px', boxShadow:'0 1px 2px rgba(0,0,0,0.06)', borderLeft:`4px solid ${resp==='sim'?'#16a34a':'#dc2626'}` }}>
             <div style={{ display:'flex', justifyContent:'space-between' }}>
-              <span style={{ fontSize:'13px', color:'#64748b' }}>Tarefa #{id.slice(-4)}</span>
+              <span style={{ fontSize:'13px', color:'#64748b' }}>{mapaT[id] || 'Tarefa #' + id.slice(-4)}</span>
               <span style={{ fontWeight:'700', color: resp==='sim'?'#16a34a':'#dc2626' }}>{resp==='sim'?'✓ Sim':'✗ Não'}</span>
             </div>
             {detalhe.comentarios?.[id] && <p style={{ margin:'8px 0 0 0', fontSize:'13px', color:'#475569' }}>💬 {detalhe.comentarios[id]}</p>}
