@@ -5,6 +5,7 @@ import { signOut } from 'firebase/auth'
 import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore'
 import Historico from '../historico/Historico'
 import GestorView from '../gestor/GestorView'
+import GerenciarTarefas from '../tarefas/GerenciarTarefas'
 
 const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
 const HORARIO_LIMITE = { 'Abertura': 11, 'Pré pico': 15, 'Fechamento': 25 }
