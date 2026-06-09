@@ -8,7 +8,8 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const [checklists, setChecklists] = useState([])
   const [loading, setLoading] = useState(true)
   const codigoAcesso = codigoAcessoProp || '—'
-  const [data, setData] = useState(new Date().toISOString().split('T')[0])
+  const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  const [data, setData] = useState(localDate())
   const [detalhe, setDetalhe] = useState(null)
 
   useEffect(() => { carregarDados() }, [data])
@@ -36,7 +37,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
     return { emoji: '🔄', label: `${Object.keys(cl.respostas||{}).length} resp.`, cor: '#2563eb' }
   }
 
-  const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().split('T')[0] })
+  const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
 
   if (detalhe) return (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc' }}>
@@ -80,7 +81,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
       <div style={{ padding:'0 24px 12px' }}>
         <div style={{ display:'flex', gap:'8px', overflowX:'auto' }}>
           {datas.map(d => {
-            const label = d===new Date().toISOString().split('T')[0] ? 'Hoje' : new Date(d+'T12:00:00').toLocaleDateString('pt-BR', {day:'numeric', month:'short'})
+            const label = d===localDate() ? 'Hoje' : new Date(d+'T12:00:00').toLocaleDateString('pt-BR', {day:'numeric', month:'short'})
             return <button key={d} onClick={() => setData(d)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: data===d?'#2563eb':'#f1f5f9', color: data===d?'white':'#64748b' }}>{label}</button>
           })}
         </div>
