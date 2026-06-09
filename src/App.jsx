@@ -86,7 +86,7 @@ function AppContent() {
           setRestaurantData(null)
         }}
         onEntrou={async (restaurantId) => {
-          const u = { restaurantId, role: 'funcionario', nome: user.email, email: user.email }
+          const u = { restaurantId, role: 'funcionario', nome: user.displayName || user.email, email: user.email }
           await setDoc(doc(db, 'usuarios', user.uid), u)
           setUsuarioData(u)
           const r = await getDoc(doc(db, 'restaurants', restaurantId))

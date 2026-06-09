@@ -20,6 +20,10 @@ export default function Cadastro({ onNavigate }) {
     setLoading(true)
     try {
       const cred = await createUserWithEmailAndPassword(auth, form.email, form.senha)
+      if (form.responsavel) {
+        const { updateProfile } = await import('firebase/auth')
+        await updateProfile(cred.user, { displayName: form.responsavel })
+      }
       // restaurante criado no Onboarding (dono) ou via convite (funcionario)
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') setErro('Este e-mail já está cadastrado.')
