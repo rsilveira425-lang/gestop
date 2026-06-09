@@ -23,6 +23,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [alertas, setAlertas] = useState([])
   const [verHistorico, setVerHistorico] = useState(false)
   const [verGestor, setVerGestor] = useState(false)
+  const [verTarefas, setVerTarefas] = useState(false)
   const fileRefs = useRef({})
   const hoje = new Date().toISOString().split('T')[0]
 
@@ -109,6 +110,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
   if (verHistorico) return <Historico restaurantId={restaurantId} onVoltar={() => setVerHistorico(false)} />
   if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} onVoltar={() => setVerGestor(false)} />
+  if (verTarefas) return <GerenciarTarefas restaurantId={restaurantId} onVoltar={() => setVerTarefas(false)} />
 
   const totalResp = Object.keys(respostas).length
   const total = tarefas.length
@@ -127,7 +129,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         </div>
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'flex-end' }}>
           {userRole === 'dono' && (
-            <button onClick={() => setVerGestor(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>👑 Gestor</button>
+            {userRole === 'dono' && <button onClick={() => setVerTarefas(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>⚙️ Tarefas</button>}
+        <button onClick={() => setVerGestor(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>👑 Gestor</button>
           )}
           <button onClick={() => setVerHistorico(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>📋 Histórico</button>
           <button onClick={() => signOut(auth)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
