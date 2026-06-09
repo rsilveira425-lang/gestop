@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { collection, addDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 
-const TURNOS = ['Abertura', 'Meio do dia', 'Fechamento']
+const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
 
 export default function Step1Setores({ restaurantId, nomeRestaurante, onNext }) {
   const [setores, setSetores] = useState([])
