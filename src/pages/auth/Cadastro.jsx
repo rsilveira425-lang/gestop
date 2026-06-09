@@ -20,15 +20,7 @@ export default function Cadastro({ onNavigate }) {
     setLoading(true)
     try {
       const cred = await createUserWithEmailAndPassword(auth, form.email, form.senha)
-      const uid = cred.user.uid
-      await setDoc(doc(db, 'restaurants', uid), {
-        id: uid,
-        nomeRestaurante: form.nomeRestaurante,
-        responsavel: form.responsavel,
-        email: form.email,
-        criadoEm: new Date().toISOString(),
-        onboardingCompleto: false,
-      })
+      // restaurante criado no Onboarding (dono) ou via convite (funcionario)
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') setErro('Este e-mail já está cadastrado.')
       else setErro('Erro ao criar conta. Tente novamente.')
