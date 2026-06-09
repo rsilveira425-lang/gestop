@@ -5,9 +5,12 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase
 const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
 
 export default function GerenciarTarefas({ restaurantId, onVoltar }) {
+  const [setores, setSetores] = useState([])
   const [tarefas, setTarefas] = useState([])
+  const [setorAtivo, setSetorAtivo] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ texto: '', setorNome: '', turno: 'Abertura' })
+  const [adicionando, setAdicionando] = useState(null)
+  const [novoTexto, setNovoTexto] = useState('')
   const [editando, setEditando] = useState(null)
   const [saving, setSaving] = useState(false)
 
@@ -15,20 +18,28 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
 
   async function carregar() {
     setLoading(true)
-    const snap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
-    setTarefas(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    const [sSnap, tSnap] = await Promise.all([
+      getDocs(collection(db, 'restaurants', restaurantId, 'setores')),
+      getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
+    ])
+    const s = sSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    const t = tSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    setSetores(s)
+    setTarefas(t)
+    if (s.length > 0) setSetorAtivo(prev => prev || s[0].nome)
     setLoading(false)
   }
 
-  async function adicionar() {
-    if (!form.texto.trim() || !form.setorNome.trim()) return
+  async function adicionarTarefa() {
+    if (!novoTexto.trim() || !adicionando) return
     setSaving(true)
     await addDoc(collection(db, 'restaurants', restaurantId, 'tarefas'), {
-      texto: form.texto.trim(),
-      setorNome: form.setorNome.trim(),
-      turno: form.turno
+      texto: novoTexto.trim(),
+      setorNome: adicionando.setor,
+      turno: adicionando.turno
     })
-    setForm({ texto: '', setorNome: '', turno: 'Abertura' })
+    setNovoTexto('')
+    setAdicionando(null)
     await carregar()
     setSaving(false)
   }
@@ -37,9 +48,7 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
     if (!editando || !editando.texto.trim()) return
     setSaving(true)
     await updateDoc(doc(db, 'restaurants', restaurantId, 'tarefas', editando.id), {
-      texto: editando.texto.trim(),
-      setorNome: editando.setorNome.trim(),
-      turno: editando.turno
+      texto: editando.texto.trim()
     })
     setEditando(null)
     await carregar()
@@ -56,24 +65,24 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
     screen: { minHeight:'100vh', backgroundColor:'#f8fafc' },
     header: { backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' },
     back: { background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' },
-    body: { padding:'24px', maxWidth:'700px', margin:'0 auto' },
-    card: { backgroundColor:'white', borderRadius:'12px', padding:'20px', marginBottom:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)' },
-    label: { fontSize:'12px', fontWeight:'600', color:'#64748b', marginBottom:'6px', display:'block' },
-    input: { width:'100%', padding:'10px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'14px', outline:'none', boxSizing:'border-box' },
-    select: { width:'100%', padding:'10px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'14px', outline:'none', backgroundColor:'white', boxSizing:'border-box' },
-    btnAdd: { width:'100%', padding:'12px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'15px', fontWeight:'600', cursor:'pointer', marginTop:'12px' },
-    turnoHeader: { fontSize:'16px', fontWeight:'700', color:'#1e293b', marginBottom:'12px', paddingBottom:'8px', borderBottom:'2px solid #e2e8f0' },
-    tarefa: { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px', borderRadius:'8px', border:'1px solid #f1f5f9', marginBottom:'8px', backgroundColor:'#fafafa' },
-    tarefaInfo: { flex:1 },
-    tarefaTexto: { fontSize:'14px', fontWeight:'500', color:'#1e293b' },
-    tarefaSetor: { fontSize:'12px', color:'#94a3b8', marginTop:'2px' },
-    btnEdit: { padding:'6px 12px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'6px', fontSize:'13px', cursor:'pointer', marginRight:'6px' },
-    btnDel: { padding:'6px 12px', backgroundColor:'#fef2f2', color:'#dc2626', border:'none', borderRadius:'6px', fontSize:'13px', cursor:'pointer' },
-    editBox: { backgroundColor:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:'10px', padding:'16px', marginBottom:'8px' },
-    row: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' },
-    btnSave: { padding:'8px 16px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'6px', fontSize:'13px', fontWeight:'600', cursor:'pointer', marginRight:'8px' },
-    btnCancel: { padding:'8px 16px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'6px', fontSize:'13px', cursor:'pointer' },
+    tabs: { display:'flex', gap:'0', backgroundColor:'white', borderBottom:'2px solid #e2e8f0', paddingLeft:'24px' },
+    tab: (ativo) => ({ padding:'12px 24px', border:'none', background:'none', fontSize:'15px', fontWeight:'600', cursor:'pointer', color: ativo ? '#2563eb' : '#64748b', borderBottom: ativo ? '2px solid #2563eb' : '2px solid transparent', marginBottom:'-2px' }),
+    body: { padding:'20px 24px', maxWidth:'700px', margin:'0 auto' },
+    turnoCard: { backgroundColor:'white', borderRadius:'12px', marginBottom:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', overflow:'hidden' },
+    turnoHeader: { padding:'14px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', fontSize:'14px', fontWeight:'700', color:'#475569' },
+    tarefa: { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px', borderBottom:'1px solid #f1f5f9' },
+    tarefaTexto: { fontSize:'14px', color:'#1e293b', flex:1 },
+    btnEdit: { padding:'4px 10px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'6px', color:'#475569' },
+    btnDel: { padding:'4px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', color:'#dc2626' },
+    addRow: { padding:'12px 20px', display:'flex', gap:'8px', alignItems:'center' },
+    addInput: { flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'14px', outline:'none' },
+    btnConfirm: { padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' },
+    btnCancel: { padding:'8px 12px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'8px', fontSize:'13px', cursor:'pointer' },
+    btnAdd: { width:'100%', padding:'10px', backgroundColor:'#f8fafc', border:'1px dashed #cbd5e1', borderRadius:'0', fontSize:'13px', color:'#64748b', cursor:'pointer', textAlign:'left' },
+    editBox: { padding:'12px 20px', backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', display:'flex', gap:'8px', alignItems:'center' },
   }
+
+  if (loading) return <div style={{ textAlign:'center', padding:'60px', color:'#94a3b8' }}>Carregando...</div>
 
   return (
     <div style={s.screen}>
@@ -82,76 +91,53 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>⚙️ Gerenciar Tarefas</h1>
       </div>
 
-      <div style={s.body}>
-        {/* Adicionar nova tarefa */}
-        <div style={s.card}>
-          <h2 style={{ margin:'0 0 16px 0', fontSize:'16px', fontWeight:'700', color:'#1e293b' }}>+ Adicionar Tarefa</h2>
-          <div style={s.row}>
-            <div>
-              <label style={s.label}>Turno</label>
-              <select style={s.select} value={form.turno} onChange={e => setForm({...form, turno: e.target.value})}>
-                {TURNOS.map(t => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={s.label}>Setor</label>
-              <input style={s.input} placeholder="Ex: Cozinha" value={form.setorNome} onChange={e => setForm({...form, setorNome: e.target.value})} />
-            </div>
-          </div>
-          <label style={s.label}>Tarefa</label>
-          <input style={s.input} placeholder="Ex: Verificar temperatura da câmara" value={form.texto} onChange={e => setForm({...form, texto: e.target.value})} />
-          <button style={s.btnAdd} onClick={adicionar} disabled={saving}>
-            {saving ? 'Salvando...' : 'Adicionar tarefa'}
+      <div style={s.tabs}>
+        {setores.map(setor => (
+          <button key={setor.id} style={s.tab(setorAtivo === setor.nome)} onClick={() => setSetorAtivo(setor.nome)}>
+            {setor.nome}
           </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Tarefas por turno */}
-        {loading ? <p style={{ textAlign:'center', color:'#94a3b8' }}>Carregando...</p> : (
-          TURNOS.map(turno => {
-            const lista = tarefas.filter(t => t.turno === turno)
-            return (
-              <div key={turno} style={s.card}>
-                <p style={s.turnoHeader}>{turno} <span style={{ fontSize:'13px', color:'#94a3b8', fontWeight:'400' }}>({lista.length} tarefas)</span></p>
-                {lista.length === 0 && <p style={{ color:'#94a3b8', fontSize:'14px' }}>Nenhuma tarefa neste turno.</p>}
-                {lista.map(tarefa => (
-                  <div key={tarefa.id}>
-                    {editando?.id === tarefa.id ? (
-                      <div style={s.editBox}>
-                        <div style={s.row}>
-                          <div>
-                            <label style={s.label}>Turno</label>
-                            <select style={s.select} value={editando.turno} onChange={e => setEditando({...editando, turno: e.target.value})}>
-                              {TURNOS.map(t => <option key={t}>{t}</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label style={s.label}>Setor</label>
-                            <input style={s.input} value={editando.setorNome} onChange={e => setEditando({...editando, setorNome: e.target.value})} />
-                          </div>
-                        </div>
-                        <label style={s.label}>Tarefa</label>
-                        <input style={{...s.input, marginBottom:'12px'}} value={editando.texto} onChange={e => setEditando({...editando, texto: e.target.value})} />
-                        <button style={s.btnSave} onClick={salvarEdicao} disabled={saving}>Salvar</button>
-                        <button style={s.btnCancel} onClick={() => setEditando(null)}>Cancelar</button>
-                      </div>
-                    ) : (
-                      <div style={s.tarefa}>
-                        <div style={s.tarefaInfo}>
-                          <p style={s.tarefaTexto}>{tarefa.texto}</p>
-                          {tarefa.setorNome && <p style={s.tarefaSetor}>{tarefa.setorNome}</p>}
-                        </div>
-                        <div>
-                          <button style={s.btnEdit} onClick={() => setEditando({...tarefa})}>✏️ Editar</button>
-                          <button style={s.btnDel} onClick={() => excluir(tarefa.id)}>🗑️ Excluir</button>
-                        </div>
-                      </div>
-                    )}
+      <div style={s.body}>
+        {TURNOS.map(turno => {
+          const lista = tarefas.filter(t => t.setorNome === setorAtivo && t.turno === turno)
+          const esteAdicionando = adicionando?.setor === setorAtivo && adicionando?.turno === turno
+          return (
+            <div key={turno} style={s.turnoCard}>
+              <div style={s.turnoHeader}>{turno} <span style={{ fontWeight:400, color:'#94a3b8' }}>({lista.length})</span></div>
+
+              {lista.map(tarefa => (
+                editando?.id === tarefa.id ? (
+                  <div key={tarefa.id} style={s.editBox}>
+                    <input style={s.addInput} value={editando.texto} onChange={e => setEditando({...editando, texto: e.target.value})} autoFocus />
+                    <button style={s.btnConfirm} onClick={salvarEdicao} disabled={saving}>Salvar</button>
+                    <button style={s.btnCancel} onClick={() => setEditando(null)}>✕</button>
                   </div>
-                ))}
-              </div>
-            )
-          })
-        )}
+                ) : (
+                  <div key={tarefa.id} style={s.tarefa}>
+                    <span style={s.tarefaTexto}>{tarefa.texto}</span>
+                    <button style={s.btnEdit} onClick={() => setEditando({...tarefa})}>✏️</button>
+                    <button style={s.btnDel} onClick={() => excluir(tarefa.id)}>🗑️</button>
+                  </div>
+                )
+              ))}
+
+              {esteAdicionando ? (
+                <div style={s.addRow}>
+                  <input style={s.addInput} placeholder="Nome da tarefa..." value={novoTexto} onChange={e => setNovoTexto(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') adicionarTarefa() }} autoFocus />
+                  <button style={s.btnConfirm} onClick={adicionarTarefa} disabled={saving}>Salvar</button>
+                  <button style={s.btnCancel} onClick={() => { setAdicionando(null); setNovoTexto('') }}>✕</button>
+                </div>
+              ) : (
+                <button style={s.btnAdd} onClick={() => { setAdicionando({ setor: setorAtivo, turno }); setNovoTexto('') }}>
+                  + Adicionar tarefa
+                </button>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
