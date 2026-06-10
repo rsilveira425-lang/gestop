@@ -41,7 +41,6 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
       turno: adicionando.turno
     })
     setNovoTexto('')
-    setAdicionando(null)
     await carregar()
     setSaving(false)
   }
