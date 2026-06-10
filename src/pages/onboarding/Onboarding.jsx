@@ -44,7 +44,7 @@ export default function Onboarding({ restaurant, onConcluir }) {
         )}
         {step === 3 && (
           <Step3Colaboradores
-            restaurantId={user.uid}
+            codigoAcesso={restaurant?.codigoAcesso}
             onConcluir={concluir}
             onBack={() => setStep(2)}
           />
