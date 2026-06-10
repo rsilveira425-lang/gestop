@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import Step1Setores from './Step1Setores'
@@ -14,7 +14,7 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
 
   async function concluir() {
     try {
-      await updateDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado })
+      await setDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado }, { merge: true })
       await onConcluir()
     } catch(e) {
       console.error('Erro concluir:', e)
