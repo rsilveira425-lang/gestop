@@ -175,13 +175,13 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
         {(() => {
           const su = [...new Set(tarefas.map(t => t.setorNome).filter(Boolean))]
-          const tf = setorAtivo ? tarefas.filter(t => t.setorNome?.trim() === setorAtivo.trim()) : tarefas
+          const tf = setorAtivo ? tarefas.filter(t => t.setorNome?.trim().toLowerCase() === setorAtivo.trim().toLowerCase()) : tarefas
           return (<>
           {su.length > 1 && (
             <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px' }}>
               <button onClick={() => setSetorAtivo(null)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? '700' : '400', backgroundColor: setorAtivo === null ? '#2563eb' : '#f1f5f9', color: setorAtivo === null ? 'white' : '#475569' }}>Todos</button>
               {su.map(s => (
-                <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === s ? '700' : '400', backgroundColor: setorAtivo === s ? '#2563eb' : '#f1f5f9', color: setorAtivo === s ? 'white' : '#475569' }}>{s}</button>
+                <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo?.toLowerCase() === s?.toLowerCase() ? '700' : '400', backgroundColor: setorAtivo?.toLowerCase() === s?.toLowerCase() ? '#2563eb' : '#f1f5f9', color: setorAtivo?.toLowerCase() === s?.toLowerCase() ? 'white' : '#475569' }}>{s}</button>
               ))}
             </div>
           )}
