@@ -4,7 +4,7 @@ import { doc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../../services/firebase'
 
 export default function Cadastro({ onNavigate }) {
-  const [form, setForm] = useState({ nomeRestaurante:'', responsavel:'', email:'', senha:'', confirmar:'' })
+  const [form, setForm] = useState({ responsavel:'', email:'', senha:'', confirmar:'' })
   const [erro, setErro] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -43,8 +43,6 @@ export default function Cadastro({ onNavigate }) {
         <div style={styles.form}>
           <h2 style={styles.title}>Criar conta</h2>
           <form onSubmit={handleCadastro}>
-            <input style={styles.input} name="nomeRestaurante" placeholder="Nome do restaurante"
-              value={form.nomeRestaurante} onChange={handle} required />
             <input style={styles.input} name="responsavel" placeholder="Seu nome"
               value={form.responsavel} onChange={handle} required />
             <input style={styles.input} type="email" name="email" placeholder="E-mail"
