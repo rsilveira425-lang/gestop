@@ -35,13 +35,15 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
   async function adicionarTarefa() {
     if (!novoTexto.trim() || !adicionando) return
     setSaving(true)
+    const ctx = { ...adicionando }
     await addDoc(collection(db, 'restaurants', restaurantId, 'tarefas'), {
       texto: novoTexto.trim(),
-      setorNome: adicionando.setor,
-      turno: adicionando.turno
+      setorNome: ctx.setor,
+      turno: ctx.turno
     })
     setNovoTexto('')
     await carregar()
+    setAdicionando(ctx)
     setSaving(false)
   }
 
