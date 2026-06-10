@@ -56,13 +56,13 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
         </div>
       </div>
       <div style={{ padding:'20px 24px' }}>
-        {Object.entries(detalhe.respostas||{}).length === 0 ? (
+        {Object.keys(mapaT).length === 0 ? (
           <p style={{ color:'#94a3b8', textAlign:'center' }}>Nenhuma resposta.</p>
-        ) : Object.entries(detalhe.respostas||{}).map(([id, resp]) => (
-          <div key={id} style={{ backgroundColor:'white', borderRadius:'10px', padding:'14px', marginBottom:'10px', boxShadow:'0 1px 2px rgba(0,0,0,0.06)', borderLeft:`4px solid ${resp==='sim'?'#16a34a':'#dc2626'}` }}>
+        ) : [...new Set([...Object.keys(mapaT), ...Object.keys(detalhe.respostas||{})])].map(id => [id, (detalhe.respostas||{})[id]]).map(([id, resp]) => (
+          <div key={id} style={{ backgroundColor:'white', borderRadius:'10px', padding:'14px', marginBottom:'10px', boxShadow:'0 1px 2px rgba(0,0,0,0.06)', borderLeft:`4px solid ${resp===undefined?'— sem resposta':resp==='sim'?'✓ Sim':'× Não'}` }}>
             <div style={{ display:'flex', justifyContent:'space-between' }}>
               <span style={{ fontSize:'13px', color:'#64748b' }}>{mapaT[id] || 'Tarefa #' + id.slice(-4)}</span>
-              <span style={{ fontWeight:'700', color: resp==='sim'?'#16a34a':'#dc2626' }}>{resp==='sim'?'✓ Sim':'✗ Não'}</span>
+              <span style={{ fontWeight:'700', color: resp===undefined?'#94a3b8':resp==='sim'?'#16a34a':'#dc2626' }}>{resp==='sim'?'✓ Sim':'✗ Não'}</span>
             </div>
             {detalhe.comentarios?.[id] && <p style={{ margin:'8px 0 0 0', fontSize:'13px', color:'#475569' }}>💬 {detalhe.comentarios[id]}</p>}
             {detalhe.fotos?.[id] && <img src={detalhe.fotos[id]} alt="foto" onClick={() => setFotoAmpliada(detalhe.fotos[id])} style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover', cursor:'pointer' }} />}
