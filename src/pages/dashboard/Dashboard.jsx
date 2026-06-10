@@ -25,6 +25,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [verGestor, setVerGestor] = useState(false)
   const [verTarefas, setVerTarefas] = useState(false)
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
+  const [setorAtivo, setSetorAtivo] = useState(null)
   const fileRefs = useRef({})
   const hoje = localDate()
 
@@ -172,11 +173,23 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           </div>
         )}
 
-        {tarefas.length === 0 ? (
+        {(() => {
+          const su = [...new Set(tarefas.map(t => t.setorNome).filter(Boolean))]
+          const tf = setorAtivo ? tarefas.filter(t => t.setorNome?.trim() === setorAtivo.trim()) : tarefas
+          return (<>
+          {su.length > 1 && (
+            <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px' }}>
+              <button onClick={() => setSetorAtivo(null)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? '700' : '400', backgroundColor: setorAtivo === null ? '#2563eb' : '#f1f5f9', color: setorAtivo === null ? 'white' : '#475569' }}>Todos</button>
+              {su.map(s => (
+                <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === s ? '700' : '400', backgroundColor: setorAtivo === s ? '#2563eb' : '#f1f5f9', color: setorAtivo === s ? 'white' : '#475569' }}>{s}</button>
+              ))}
+            </div>
+          )}
+          {tf.length === 0 ? (
           <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}><p>Nenhuma tarefa para {turnoAtivo}.</p></div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-            {tarefas.map(tarefa => {
+            {tf.map(tarefa => {
               const resp = respostas[tarefa.id]; const coment = comentarios[tarefa.id]||''; const foto = fotos[tarefa.id]
               return (
                 <div key={tarefa.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', borderLeft: resp==='sim' ? '4px solid #16a34a' : resp==='nao' ? '4px solid #dc2626' : '4px solid #e2e8f0' }}>
@@ -210,6 +223,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
             })}
           </div>
         )}
+        </>)
+        })()}
         {!concluido && todas && (
           <button onClick={concluirChecklist} disabled={salvando} style={{ width:'100%', padding:'16px', marginTop:'24px', backgroundColor:'#16a34a', color:'white', border:'none', borderRadius:'12px', fontSize:'16px', fontWeight:'700', cursor:'pointer' }}>
             {salvando ? 'Salvando...' : 'Concluir Turno'}
