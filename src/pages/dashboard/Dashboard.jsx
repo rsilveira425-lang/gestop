@@ -24,6 +24,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [alertas, setAlertas] = useState([])
   const [verGestor, setVerGestor] = useState(false)
   const [verTarefas, setVerTarefas] = useState(false)
+  const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const fileRefs = useRef({})
   const hoje = localDate()
 
@@ -190,14 +191,14 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
                         <button onClick={() => fileRefs.current[tarefa.id]?.click()} style={{ padding:'8px 14px', borderRadius:'8px', border:'1px solid #e2e8f0', backgroundColor:'#f8fafc', fontSize:'13px', cursor:'pointer', color:'#475569' }}>{foto ? 'Trocar foto' : 'Tirar foto'}</button>
                         {foto && <span style={{ marginLeft:'8px', fontSize:'12px', color:'#16a34a' }}>Foto salva</span>}
                       </div>
-                      {foto && <img src={foto} alt="foto" style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover' }} />}
+                      {foto && <img src={foto} alt="foto" onClick={() => setFotoAmpliada(foto)} style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover', cursor:'pointer' }} />}
                     </>
                   )}
                   {concluido && (
                     <div style={{ marginTop:'8px' }}>
                       {resp && <p style={{ margin:0, fontWeight:'700', color: resp==='sim' ? '#16a34a' : '#dc2626' }}>{resp==='sim' ? 'Sim' : 'Não'}</p>}
                       {coment && <p style={{ margin:'4px 0 0 0', fontSize:'13px', color:'#64748b' }}>{coment}</p>}
-                      {foto && <img src={foto} alt="foto" style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover' }} />}
+                      {foto && <img src={foto} alt="foto" onClick={() => setFotoAmpliada(foto)} style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover', cursor:'pointer' }} />}
                     </div>
                   )}
                 </div>
@@ -212,5 +213,10 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         )}
       </div>
     </div>
+      {fotoAmpliada && (
+        <div onClick={() => setFotoAmpliada(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(0,0,0,0.92)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
+        </div>
+      )}
   )
 }
