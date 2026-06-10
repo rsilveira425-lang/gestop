@@ -6,7 +6,7 @@ import Step1Setores from './Step1Setores'
 import Step2Tarefas from './Step2Tarefas'
 import Step3Colaboradores from './Step3Colaboradores'
 
-export default function Onboarding({ restaurant, onConcluir }) {
+export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
   const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [setores, setSetores] = useState([])
@@ -44,7 +44,7 @@ export default function Onboarding({ restaurant, onConcluir }) {
         )}
         {step === 3 && (
           <Step3Colaboradores
-            codigoAcesso={restaurant?.codigoAcesso}
+            codigoAcesso={codigoAcesso || restaurant?.codigoAcesso}
             onConcluir={concluir}
             onBack={() => setStep(2)}
           />
