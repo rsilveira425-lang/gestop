@@ -13,8 +13,13 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
   const [codigoGerado, setCodigoGerado] = useState('')
 
   async function concluir() {
-    await updateDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado })
-    onConcluir()
+    try {
+      await updateDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado })
+      await onConcluir()
+    } catch(e) {
+      console.error('Erro concluir:', e)
+      alert('Erro: ' + e.message)
+    }
   }
 
   return (
