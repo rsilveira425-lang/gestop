@@ -13,6 +13,8 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
   const [novoTexto, setNovoTexto] = useState('')
   const [editando, setEditando] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [verSetores, setVerSetores] = useState(false)
+  const [novoSetor, setNovoSetor] = useState('')
 
   useEffect(() => { carregar() }, [])
 
@@ -82,6 +84,24 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
     editBox: { padding:'12px 20px', backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', display:'flex', gap:'8px', alignItems:'center' },
   }
 
+  async function adicionarSetor() {
+    if (!novoSetor.trim()) return
+    setSaving(true)
+    await addDoc(collection(db, 'restaurants', restaurantId, 'setores'), { nome: novoSetor.trim() })
+    setNovoSetor('')
+    await carregar()
+    setSaving(false)
+  }
+
+  async function excluirSetor(id, nome) {
+    const temTarefas = tarefas.some(t => t.setorNome?.toLowerCase() === nome.toLowerCase())
+    if (temTarefas) { alert('Remova as tarefas do setor antes de excluir.'); return }
+    if (!window.confirm('Excluir setor ' + nome + '?')) return
+    await deleteDoc(doc(db, 'restaurants', restaurantId, 'setores', id))
+    if (setorAtivo?.toLowerCase() === nome.toLowerCase()) setSetorAtivo(null)
+    await carregar()
+  }
+
   if (loading) return <div style={{ textAlign:'center', padding:'60px', color:'#94a3b8' }}>Carregando...</div>
 
   return (
@@ -89,8 +109,24 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
       <div style={s.header}>
         <button style={s.back} onClick={onVoltar}>{String.fromCharCode(8592)}</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>Gerenciar Tarefas</h1>
+          <button onClick={() => setVerSetores(p => !p)} style={{ marginLeft:'auto', padding:'6px 12px', backgroundColor: verSetores ? '#2563eb' : '#f1f5f9', color: verSetores ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Setores</button>
       </div>
 
+      {verSetores && (
+        <div style={{ padding:'16px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', marginBottom:'8px' }}>
+          <p style={{ margin:'0 0 12px', fontWeight:'600', fontSize:'14px', color:'#1e293b' }}>Setores cadastrados</p>
+          {setores.map(setor => (
+            <div key={setor.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid #f1f5f9' }}>
+              <span style={{ fontSize:'14px', color:'#1e293b' }}>{setor.nome}</span>
+              <button onClick={() => excluirSetor(setor.id, setor.nome)} style={{ padding:'4px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', color:'#dc2626', fontSize:'12px', cursor:'pointer' }}>remover</button>
+            </div>
+          ))}
+          <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
+            <input value={novoSetor} onChange={e => setNovoSetor(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') adicionarSetor() }} placeholder="Novo setor..." style={{ flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'13px', outline:'none' }} />
+            <button onClick={adicionarSetor} disabled={saving} style={{ padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>+ Adicionar</button>
+          </div>
+        </div>
+      )}
       <div style={s.tabs}>
         {setores.map(setor => (
           <button key={setor.id} style={s.tab(setorAtivo === setor.nome)} onClick={() => setSetorAtivo(setor.nome)}>
