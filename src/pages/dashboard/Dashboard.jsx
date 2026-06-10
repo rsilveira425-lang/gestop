@@ -3,7 +3,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import { db, auth } from '../../services/firebase'
 import { signOut } from 'firebase/auth'
 import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore'
-import Historico from '../historico/Historico'
 import GestorView from '../gestor/GestorView'
 import GerenciarTarefas from '../tarefas/GerenciarTarefas'
 
@@ -12,6 +11,7 @@ const HORARIO_LIMITE = { 'Abertura': 11, 'Pré pico': 15, 'Fechamento': 25 }
 
 export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso }) {
   const { user } = useAuth()
+  const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   const [turnoAtivo, setTurnoAtivo] = useState('Abertura')
   const [tarefas, setTarefas] = useState([])
   const [respostas, setRespostas] = useState({})
@@ -22,11 +22,10 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [salvando, setSalvando] = useState(false)
   const [concluido, setConcluido] = useState(false)
   const [alertas, setAlertas] = useState([])
-  const [verHistorico, setVerHistorico] = useState(false)
   const [verGestor, setVerGestor] = useState(false)
   const [verTarefas, setVerTarefas] = useState(false)
   const fileRefs = useRef({})
-  const hoje = new Date().toISOString().split('T')[0]
+  const hoje = localDate()
 
   useEffect(() => { carregarDados() }, [turnoAtivo])
   useEffect(() => { verificarAlertas() }, [])
@@ -109,7 +108,6 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
     setConcluido(true); setSalvando(false); verificarAlertas()
   }
 
-  if (verHistorico) return <Historico restaurantId={restaurantId} onVoltar={() => setVerHistorico(false)} />
   if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} onVoltar={() => setVerGestor(false)} />
   if (verTarefas) return <GerenciarTarefas restaurantId={restaurantId} onVoltar={() => setVerTarefas(false)} />
 
@@ -126,23 +124,22 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         <div>
           <h1 style={{ margin:0, fontSize:'22px', fontWeight:'700' }}>Gestop</h1>
           <p style={{ margin:'4px 0 0 0', fontSize:'13px', opacity:0.85 }}>{new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}</p>
-          {userName && <p style={{ margin:'2px 0 0 0', fontSize:'12px', opacity:0.7 }}>👤 {userName}</p>}
+          {userName && <p style={{ margin:'2px 0 0 0', fontSize:'12px', opacity:0.7 }}>&#128100; {userName}</p>}
         </div>
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'flex-end' }}>
           {userRole === 'dono' && (
             <>
-              <button onClick={() => setVerTarefas(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>⚙️ Tarefas</button>
-              <button onClick={() => setVerGestor(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>👑 Gestor</button>
+              <button onClick={() => setVerTarefas(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Tarefas</button>
+              <button onClick={() => setVerGestor(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Gestor</button>
             </>
           )}
-          <button onClick={() => setVerHistorico(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>📋 Histórico</button>
           <button onClick={() => signOut(auth)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
         </div>
       </div>
 
       {alertas.length > 0 && (
         <div style={{ backgroundColor:'#fef3c7', borderBottom:'1px solid #fcd34d', padding:'12px 24px' }}>
-          <p style={{ margin:0, fontSize:'13px', color:'#92400e', fontWeight:'600' }}>⚠️ Turno(s) não concluído(s) hoje: {alertas.join(', ')}</p>
+          <p style={{ margin:0, fontSize:'13px', color:'#92400e', fontWeight:'600' }}>Turno(s) não concluído(s) hoje: {alertas.join(', ')}</p>
         </div>
       )}
 
@@ -165,13 +162,13 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
         {concluido && (
           <div style={{ backgroundColor:'#dcfce7', border:'1px solid #86efac', borderRadius:'12px', padding:'16px', marginBottom:'20px', textAlign:'center' }}>
-            <div style={{ fontSize:'32px' }}>✅</div>
+            <div style={{ fontSize:'32px' }}>&#9989;</div>
             <p style={{ margin:'8px 0 0 0', fontWeight:'700', color:'#16a34a' }}>Turno concluído!</p>
           </div>
         )}
 
         {tarefas.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}><p style={{ fontSize:'32px' }}>📋</p><p>Nenhuma tarefa para {turnoAtivo}.</p></div>
+          <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}><p style={{ fontSize:'32px' }}>&#128203;</p><p>Nenhuma tarefa para {turnoAtivo}.</p></div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
             {tarefas.map(tarefa => {
@@ -183,23 +180,23 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
                   {!concluido && (
                     <>
                       <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-                        <button onClick={() => salvarResposta(tarefa.id, 'sim')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='sim' ? '#16a34a' : '#f0fdf4', color: resp==='sim' ? 'white' : '#16a34a' }}>✓ Sim</button>
-                        <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='nao' ? '#dc2626' : '#fef2f2', color: resp==='nao' ? 'white' : '#dc2626' }}>✗ Não</button>
+                        <button onClick={() => salvarResposta(tarefa.id, 'sim')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='sim' ? '#16a34a' : '#f0fdf4', color: resp==='sim' ? 'white' : '#16a34a' }}>Sim</button>
+                        <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='nao' ? '#dc2626' : '#fef2f2', color: resp==='nao' ? 'white' : '#dc2626' }}>Não</button>
                       </div>
                       <textarea placeholder="Comentário (opcional)..." value={coment} onChange={e => salvarComentario(tarefa.id, e.target.value)}
                         style={{ width:'100%', marginTop:'10px', padding:'8px 10px', borderRadius:'8px', border:'1px solid #e2e8f0', fontSize:'13px', resize:'none', fontFamily:'inherit', boxSizing:'border-box', height:'60px' }} />
                       <div style={{ marginTop:'8px' }}>
                         <input type="file" accept="image/*" capture="environment" style={{ display:'none' }} ref={el => fileRefs.current[tarefa.id]=el} onChange={e => handleFoto(tarefa.id, e.target.files[0])} />
-                        <button onClick={() => fileRefs.current[tarefa.id]?.click()} style={{ padding:'8px 14px', borderRadius:'8px', border:'1px solid #e2e8f0', backgroundColor:'#f8fafc', fontSize:'13px', cursor:'pointer', color:'#475569' }}>📷 {foto ? 'Trocar foto' : 'Tirar foto'}</button>
-                        {foto && <span style={{ marginLeft:'8px', fontSize:'12px', color:'#16a34a' }}>✓ Foto salva</span>}
+                        <button onClick={() => fileRefs.current[tarefa.id]?.click()} style={{ padding:'8px 14px', borderRadius:'8px', border:'1px solid #e2e8f0', backgroundColor:'#f8fafc', fontSize:'13px', cursor:'pointer', color:'#475569' }}>{foto ? 'Trocar foto' : 'Tirar foto'}</button>
+                        {foto && <span style={{ marginLeft:'8px', fontSize:'12px', color:'#16a34a' }}>Foto salva</span>}
                       </div>
                       {foto && <img src={foto} alt="foto" style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover' }} />}
                     </>
                   )}
                   {concluido && (
                     <div style={{ marginTop:'8px' }}>
-                      {resp && <p style={{ margin:0, fontWeight:'700', color: resp==='sim' ? '#16a34a' : '#dc2626' }}>{resp==='sim' ? '✓ Sim' : '✗ Não'}</p>}
-                      {coment && <p style={{ margin:'4px 0 0 0', fontSize:'13px', color:'#64748b' }}>💬 {coment}</p>}
+                      {resp && <p style={{ margin:0, fontWeight:'700', color: resp==='sim' ? '#16a34a' : '#dc2626' }}>{resp==='sim' ? 'Sim' : 'Não'}</p>}
+                      {coment && <p style={{ margin:'4px 0 0 0', fontSize:'13px', color:'#64748b' }}>{coment}</p>}
                       {foto && <img src={foto} alt="foto" style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover' }} />}
                     </div>
                   )}
@@ -210,7 +207,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         )}
         {!concluido && todas && (
           <button onClick={concluirChecklist} disabled={salvando} style={{ width:'100%', padding:'16px', marginTop:'24px', backgroundColor:'#16a34a', color:'white', border:'none', borderRadius:'12px', fontSize:'16px', fontWeight:'700', cursor:'pointer' }}>
-            {salvando ? 'Salvando...' : '✅ Concluir Turno'}
+            {salvando ? 'Salvando...' : 'Concluir Turno'}
           </button>
         )}
       </div>

@@ -101,7 +101,7 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
 
       <div style={s.body}>
         {TURNOS.map(turno => {
-          const lista = tarefas.filter(t => t.setorNome === setorAtivo && t.turno === turno)
+          const lista = tarefas.filter(t => t.setorNome?.trim() === setorAtivo?.trim() && t.turno?.trim() === turno?.trim())
           const esteAdicionando = adicionando?.setor === setorAtivo && adicionando?.turno === turno
           return (
             <div key={turno} style={s.turnoCard}>
