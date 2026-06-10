@@ -121,11 +121,16 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
   return (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'80px' }}>
+      {fotoAmpliada && (
+        <div onClick={() => setFotoAmpliada(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(0,0,0,0.92)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
+        </div>
+      )}
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
           <h1 style={{ margin:0, fontSize:'22px', fontWeight:'700' }}>Gestop</h1>
           <p style={{ margin:'4px 0 0 0', fontSize:'13px', opacity:0.85 }}>{new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}</p>
-          {userName && <p style={{ margin:'2px 0 0 0', fontSize:'12px', opacity:0.7 }}>&#128100; {userName}</p>}
+          {userName && <p style={{ margin:'2px 0 0 0', fontSize:'12px', opacity:0.7 }}>{userName}</p>}
         </div>
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'flex-end' }}>
           {userRole === 'dono' && (
@@ -140,7 +145,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
       {alertas.length > 0 && (
         <div style={{ backgroundColor:'#fef3c7', borderBottom:'1px solid #fcd34d', padding:'12px 24px' }}>
-          <p style={{ margin:0, fontSize:'13px', color:'#92400e', fontWeight:'600' }}>Turno(s) não concluído(s) hoje: {alertas.join(', ')}</p>
+          <p style={{ margin:0, fontSize:'13px', color:'#92400e', fontWeight:'600' }}>Turno(s) nao concluido(s) hoje: {alertas.join(', ')}</p>
         </div>
       )}
 
@@ -163,13 +168,12 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
         {concluido && (
           <div style={{ backgroundColor:'#dcfce7', border:'1px solid #86efac', borderRadius:'12px', padding:'16px', marginBottom:'20px', textAlign:'center' }}>
-            <div style={{ fontSize:'32px' }}>&#9989;</div>
-            <p style={{ margin:'8px 0 0 0', fontWeight:'700', color:'#16a34a' }}>Turno concluído!</p>
+            <p style={{ margin:0, fontWeight:'700', color:'#16a34a', fontSize:'18px' }}>Turno concluido!</p>
           </div>
         )}
 
         {tarefas.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}><p style={{ fontSize:'32px' }}>&#128203;</p><p>Nenhuma tarefa para {turnoAtivo}.</p></div>
+          <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}><p>Nenhuma tarefa para {turnoAtivo}.</p></div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
             {tarefas.map(tarefa => {
@@ -182,9 +186,9 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
                     <>
                       <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
                         <button onClick={() => salvarResposta(tarefa.id, 'sim')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='sim' ? '#16a34a' : '#f0fdf4', color: resp==='sim' ? 'white' : '#16a34a' }}>Sim</button>
-                        <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='nao' ? '#dc2626' : '#fef2f2', color: resp==='nao' ? 'white' : '#dc2626' }}>Não</button>
+                        <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='nao' ? '#dc2626' : '#fef2f2', color: resp==='nao' ? 'white' : '#dc2626' }}>Nao</button>
                       </div>
-                      <textarea placeholder="Comentário (opcional)..." value={coment} onChange={e => salvarComentario(tarefa.id, e.target.value)}
+                      <textarea placeholder="Comentario (opcional)..." value={coment} onChange={e => salvarComentario(tarefa.id, e.target.value)}
                         style={{ width:'100%', marginTop:'10px', padding:'8px 10px', borderRadius:'8px', border:'1px solid #e2e8f0', fontSize:'13px', resize:'none', fontFamily:'inherit', boxSizing:'border-box', height:'60px' }} />
                       <div style={{ marginTop:'8px' }}>
                         <input type="file" accept="image/*" capture="environment" style={{ display:'none' }} ref={el => fileRefs.current[tarefa.id]=el} onChange={e => handleFoto(tarefa.id, e.target.files[0])} />
@@ -196,7 +200,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
                   )}
                   {concluido && (
                     <div style={{ marginTop:'8px' }}>
-                      {resp && <p style={{ margin:0, fontWeight:'700', color: resp==='sim' ? '#16a34a' : '#dc2626' }}>{resp==='sim' ? 'Sim' : 'Não'}</p>}
+                      {resp && <p style={{ margin:0, fontWeight:'700', color: resp==='sim' ? '#16a34a' : '#dc2626' }}>{resp==='sim' ? 'Sim' : 'Nao'}</p>}
                       {coment && <p style={{ margin:'4px 0 0 0', fontSize:'13px', color:'#64748b' }}>{coment}</p>}
                       {foto && <img src={foto} alt="foto" onClick={() => setFotoAmpliada(foto)} style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover', cursor:'pointer' }} />}
                     </div>
@@ -213,10 +217,5 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         )}
       </div>
     </div>
-      {fotoAmpliada && (
-        <div onClick={() => setFotoAmpliada(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(0,0,0,0.92)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-          <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
-        </div>
-      )}
   )
 }
