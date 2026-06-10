@@ -46,6 +46,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
 
   if (detalhe) return (
+    <>
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc' }}>
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
         <button onClick={() => setDetalhe(null)} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
@@ -69,6 +70,12 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
         ))}
       </div>
     </div>
+    {fotoAmpliada && (
+      <div onClick={() => setFotoAmpliada(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(0,0,0,0.92)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+        <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
+      </div>
+    )}
+    </>
   )
 
   return (
@@ -114,10 +121,5 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
         ))}
       </div>
     </div>
-      {fotoAmpliada && (
-        <div onClick={() => setFotoAmpliada(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(0,0,0,0.92)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-          <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
-        </div>
-      )}
   )
 }
