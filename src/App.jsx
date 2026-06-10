@@ -97,7 +97,7 @@ function AppContent() {
   }
 
   if (usuarioData.role === 'dono' && (!restaurantData || !restaurantData.onboardingCompleto)) {
-    return <Onboarding onComplete={async () => {
+    return <Onboarding onConcluir={async () => {
       const r = await getDoc(doc(db, 'restaurants', user.uid))
       if (r.exists()) {
         const restData = r.data()

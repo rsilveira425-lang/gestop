@@ -10,9 +10,10 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
   const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [setores, setSetores] = useState([])
+  const [codigoGerado, setCodigoGerado] = useState('')
 
   async function concluir() {
-    await updateDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true })
+    await updateDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado })
     onConcluir()
   }
 
@@ -38,13 +39,17 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
           <Step2Tarefas
             restaurantId={user.uid}
             setores={setores}
-            onNext={() => setStep(3)}
+            onNext={() => {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase()
+            setCodigoGerado(code)
+            setStep(3)
+          }}
             onBack={() => setStep(1)}
           />
         )}
         {step === 3 && (
           <Step3Colaboradores
-            codigoAcesso={codigoAcesso || restaurant?.codigoAcesso}
+            codigoAcesso={codigoGerado}
             onConcluir={concluir}
             onBack={() => setStep(2)}
           />
