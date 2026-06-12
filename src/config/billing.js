@@ -4,7 +4,7 @@ export const DIAS_TRIAL = 14
 
 // Link do plano de assinatura criado no painel do Mercado Pago.
 // Enquanto estiver vazio, o paywall mostra instrução de contato.
-export const LINK_ASSINATURA = ''
+export const LINK_ASSINATURA = 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=115c7b4d916747d587ad812f5d99f06c'
 
 export const EMAIL_CONTATO = 'rsilveira425@gmail.com'
 
