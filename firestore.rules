@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() {
+      return request.auth != null;
+    }
+
+    function meuUsuario() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function membroDe(rid) {
+      return logado()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && meuUsuario().restaurantId == rid
+        && meuUsuario().ativo != false;
+    }
+
+    function donoDe(rid) {
+      return membroDe(rid) && meuUsuario().role == 'dono';
+    }
+
+    // Perfis de usuário
+    match /usuarios/{uid} {
+      allow read: if logado() && (request.auth.uid == uid || donoDe(resource.data.restaurantId));
+      // Dono cria o próprio perfil (restaurantId == uid).
+      // Funcionário cria o próprio perfil somente com um código de convite válido.
+      allow create: if logado() && request.auth.uid == uid && (
+        (request.resource.data.role == 'dono' && request.resource.data.restaurantId == request.auth.uid) ||
+        (request.resource.data.role == 'funcionario'
+          && request.resource.data.codigo is string
+          && get(/databases/$(database)/documents/convites/$(request.resource.data.codigo)).data.restaurantId == request.resource.data.restaurantId)
+      );
+      // Dono do restaurante gerencia (ex.: desativar funcionário)
+      allow update, delete: if logado() && donoDe(resource.data.restaurantId);
+    }
+
+    // Convites (código de acesso -> restaurante)
+    match /convites/{codigo} {
+      allow read: if logado();
+      allow create: if logado() && request.resource.data.restaurantId == request.auth.uid;
+      allow delete: if logado() && resource.data.restaurantId == request.auth.uid;
+    }
+
+    // Restaurante
+    match /restaurants/{rid} {
+      allow read: if membroDe(rid);
+      allow create, update: if logado() && request.auth.uid == rid;
+      allow delete: if false;
+
+      match /setores/{id} {
+        allow read: if membroDe(rid);
+        allow write: if donoDe(rid);
+      }
+
+      match /tarefas/{id} {
+        allow read: if membroDe(rid);
+        allow write: if donoDe(rid);
+      }
+
+      match /checklists/{cid} {
+        allow read: if membroDe(rid);
+        allow create: if membroDe(rid) && request.resource.data.funcionarioId == request.auth.uid;
+        allow update: if membroDe(rid) && (resource.data.funcionarioId == request.auth.uid || donoDe(rid));
+        allow delete: if donoDe(rid);
+
+        match /fotos/{tarefaId} {
+          allow read: if membroDe(rid);
+          allow write: if membroDe(rid);
+        }
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

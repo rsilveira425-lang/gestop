@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { db } from '../../services/firebase'
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore'
+import { DEFAULT_TURNOS } from '../../config/turnos'
 
-const TURNOS = ['Abertura', 'Pr\u00e9 pico', 'Fechamento']
-
-export default function GerenciarTarefas({ restaurantId, onVoltar }) {
+export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS, onTurnosAtualizados = () => {}, onVoltar }) {
+  const TURNOS = turnos.map(t => t.nome)
   const [setores, setSetores] = useState([])
   const [tarefas, setTarefas] = useState([])
   const [setorAtivo, setSetorAtivo] = useState(null)
@@ -15,6 +15,8 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
   const [saving, setSaving] = useState(false)
   const [verSetores, setVerSetores] = useState(false)
   const [novoSetor, setNovoSetor] = useState('')
+  const [verTurnos, setVerTurnos] = useState(false)
+  const [turnosEdit, setTurnosEdit] = useState(null)
 
   useEffect(() => { carregar() }, [])
 
@@ -94,6 +96,44 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
     setSaving(false)
   }
 
+  async function salvarTurnos() {
+    const limpos = turnosEdit
+      .map(t => ({ _orig: t._orig, nome: String(t.nome || '').trim(), horaLimite: Math.min(23, Math.max(0, parseInt(t.horaLimite, 10) || 0)) }))
+      .filter(t => t.nome)
+    if (limpos.length === 0) { alert('Cadastre pelo menos um turno.'); return }
+    const nomes = limpos.map(t => t.nome.toLowerCase())
+    if (new Set(nomes).size !== nomes.length) { alert('Os nomes dos turnos precisam ser diferentes entre si.'); return }
+
+    // Turnos removidos não podem ter tarefas
+    const origsRestantes = limpos.map(t => t._orig).filter(Boolean)
+    for (const t of turnos) {
+      if (!origsRestantes.includes(t.nome) && tarefas.some(tf => tf.turno === t.nome)) {
+        alert(`O turno "${t.nome}" tem tarefas. Mova ou exclua as tarefas antes de removê-lo.`)
+        return
+      }
+    }
+
+    setSaving(true)
+    try {
+      // Renomeações: propagar o novo nome para as tarefas existentes
+      for (const t of limpos) {
+        if (t._orig && t._orig !== t.nome) {
+          const snap = await getDocs(query(collection(db, 'restaurants', restaurantId, 'tarefas'), where('turno', '==', t._orig)))
+          for (const d of snap.docs) {
+            await updateDoc(doc(db, 'restaurants', restaurantId, 'tarefas', d.id), { turno: t.nome })
+          }
+        }
+      }
+      const finais = limpos.map(({ nome, horaLimite }) => ({ nome, horaLimite }))
+      await updateDoc(doc(db, 'restaurants', restaurantId), { turnos: finais })
+      onTurnosAtualizados(finais)
+      setVerTurnos(false)
+      setTurnosEdit(null)
+      await carregar()
+    } catch(e) { alert('Erro: ' + e.message) }
+    setSaving(false)
+  }
+
   async function excluirSetor(id, nome) {
     const temTarefas = tarefas.some(t => t.setorNome?.toLowerCase() === nome.toLowerCase())
     if (temTarefas) { alert('Remova as tarefas do setor antes de excluir.'); return }
@@ -111,7 +151,29 @@ export default function GerenciarTarefas({ restaurantId, onVoltar }) {
         <button style={s.back} onClick={onVoltar}>{String.fromCharCode(8592)}</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>Gerenciar Tarefas</h1>
           <button onClick={() => setVerSetores(p => !p)} style={{ marginLeft:'auto', padding:'6px 12px', backgroundColor: verSetores ? '#2563eb' : '#f1f5f9', color: verSetores ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Setores</button>
+          <button onClick={() => { setVerTurnos(p => !p); setTurnosEdit(turnos.map(t => ({ ...t, _orig: t.nome }))) }} style={{ padding:'6px 12px', backgroundColor: verTurnos ? '#2563eb' : '#f1f5f9', color: verTurnos ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Turnos</button>
       </div>
+
+      {verTurnos && turnosEdit && (
+        <div style={{ padding:'16px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', marginBottom:'8px' }}>
+          <p style={{ margin:'0 0 4px', fontWeight:'600', fontSize:'14px', color:'#1e293b' }}>Turnos do restaurante</p>
+          <p style={{ margin:'0 0 12px', fontSize:'12px', color:'#94a3b8' }}>Hora limite = horário em que o turno deve estar concluído (gera alerta).</p>
+          {turnosEdit.map((t, i) => (
+            <div key={i} style={{ display:'flex', gap:'8px', alignItems:'center', marginBottom:'8px' }}>
+              <input value={t.nome} onChange={e => setTurnosEdit(prev => prev.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))}
+                placeholder="Nome do turno" style={{ flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', minWidth:0 }} />
+              <input type="number" min={0} max={23} value={t.horaLimite} onChange={e => setTurnosEdit(prev => prev.map((x, j) => j === i ? { ...x, horaLimite: e.target.value } : x))}
+                style={{ width:'60px', padding:'8px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', textAlign:'center' }} />
+              <span style={{ fontSize:'12px', color:'#94a3b8' }}>h</span>
+              <button onClick={() => setTurnosEdit(prev => prev.filter((_, j) => j !== i))} style={{ padding:'6px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', color:'#dc2626', fontSize:'12px', cursor:'pointer' }}>remover</button>
+            </div>
+          ))}
+          <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
+            <button onClick={() => setTurnosEdit(prev => [...prev, { nome:'', horaLimite: 12, _orig: null }])} style={{ padding:'8px 14px', backgroundColor:'#f1f5f9', border:'1px dashed #cbd5e1', borderRadius:'8px', fontSize:'13px', color:'#475569', cursor:'pointer' }}>+ Turno</button>
+            <button onClick={salvarTurnos} disabled={saving} style={{ marginLeft:'auto', padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>{saving ? 'Salvando...' : 'Salvar turnos'}</button>
+          </div>
+        </div>
+      )}
 
       {verSetores && (
         <div style={{ padding:'16px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', marginBottom:'8px' }}>

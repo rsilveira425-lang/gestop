@@ -1,41 +1,56 @@
-
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
 import { db } from '../../services/firebase'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { DEFAULT_TURNOS } from '../../config/turnos'
 
-const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
-
-export default function Historico({ restaurantId: restaurantIdProp, onVoltar }) {
-  const { user } = useAuth()
-  const restaurantId = restaurantIdProp || user.uid
+export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVoltar }) {
+  const TURNOS = turnos.map(t => t.nome)
   const [checklists, setChecklists] = useState([])
+  const [mapaT, setMapaT] = useState({})
   const [loading, setLoading] = useState(true)
   const [detalhe, setDetalhe] = useState(null)
+  const [fotoAmpliada, setFotoAmpliada] = useState(null)
+  const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 
   useEffect(() => { carregar() }, [])
 
   async function carregar() {
     setLoading(true)
-    const hoje = new Date()
-    const d15 = new Date()
-    d15.setDate(hoje.getDate() - 15)
-    const dataInicio = d15.toISOString().split('T')[0]
+    try {
+      const d15 = new Date()
+      d15.setDate(d15.getDate() - 15)
+      const dataInicio = localDate(d15)
 
-    const ref = collection(db, 'restaurants', restaurantId, 'checklists')
-    const q = query(ref, where('data', '>=', dataInicio))
-    const snap = await getDocs(q)
-    const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    lista.sort((a, b) => b.data.localeCompare(a.data))
-    setChecklists(lista)
+      const tSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
+      const mapa = {}
+      tSnap.docs.forEach(d => { mapa[d.id] = d.data().texto })
+      setMapaT(mapa)
+
+      const ref = collection(db, 'restaurants', restaurantId, 'checklists')
+      const q = query(ref, where('data', '>=', dataInicio))
+      const snap = await getDocs(q)
+      const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      lista.sort((a, b) => b.data.localeCompare(a.data))
+      setChecklists(lista)
+    } catch(e) { console.error(e) }
     setLoading(false)
   }
 
-  // Agrupa por data
+  async function abrirDetalhe(cl) {
+    const f = { ...(cl.fotos || {}) }
+    try {
+      const fSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'checklists', cl.id, 'fotos'))
+      fSnap.docs.forEach(fd => { f[fd.id] = fd.data().b64 })
+    } catch(e) {}
+    setDetalhe({ ...cl, fotos: f })
+  }
+
+  // Agrupa por data -> turno -> lista de checklists (um por funcionário)
   const porData = {}
   checklists.forEach(cl => {
     if (!porData[cl.data]) porData[cl.data] = {}
-    porData[cl.data][cl.turno] = cl
+    if (!porData[cl.data][cl.turno]) porData[cl.data][cl.turno] = []
+    porData[cl.data][cl.turno].push(cl)
   })
 
   function formatarData(dataStr) {
@@ -54,12 +69,13 @@ export default function Historico({ restaurantId: restaurantIdProp, onVoltar }) 
   if (detalhe) {
     const pct = calcularPorcentagem(detalhe.respostas)
     return (
+      <>
       <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '80px' }}>
         <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => setDetalhe(null)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>{detalhe.turno}</h1>
-            <p style={{ margin: 0, fontSize: '13px', opacity: 0.85 }}>{formatarData(detalhe.data)}</p>
+            <p style={{ margin: 0, fontSize: '13px', opacity: 0.85 }}>{detalhe.funcionarioNome ? detalhe.funcionarioNome + ' · ' : ''}{formatarData(detalhe.data)}</p>
           </div>
         </div>
         <div style={{ padding: '20px 24px' }}>
@@ -82,14 +98,25 @@ export default function Historico({ restaurantId: restaurantIdProp, onVoltar }) 
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 borderLeft: resp === 'sim' ? '4px solid #16a34a' : '4px solid #dc2626'
               }}>
-                <span style={{ fontWeight: '700', color: resp === 'sim' ? '#16a34a' : '#dc2626' }}>
-                  {resp === 'sim' ? '✓ Sim' : '✗ Não'}
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>{mapaT[tarefaId] || 'Tarefa #' + tarefaId.slice(-4)}</span>
+                  <span style={{ fontWeight: '700', whiteSpace: 'nowrap', color: resp === 'sim' ? '#16a34a' : '#dc2626' }}>
+                    {resp === 'sim' ? '✓ Sim' : '✗ Não'}
+                  </span>
+                </div>
+                {detalhe.comentarios?.[tarefaId] && <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#475569' }}>💬 {detalhe.comentarios[tarefaId]}</p>}
+                {detalhe.fotos?.[tarefaId] && <img src={detalhe.fotos[tarefaId]} alt="foto" onClick={() => setFotoAmpliada(detalhe.fotos[tarefaId])} style={{ marginTop: '8px', width: '100%', borderRadius: '8px', maxHeight: '200px', objectFit: 'cover', cursor: 'pointer' }} />}
               </div>
             ))}
           </div>
         </div>
       </div>
+      {fotoAmpliada && (
+        <div onClick={() => setFotoAmpliada(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <img src={fotoAmpliada} alt="foto" style={{ maxWidth: '96vw', maxHeight: '96vh', objectFit: 'contain', borderRadius: '8px' }} />
+        </div>
+      )}
+      </>
     )
   }
 
@@ -112,32 +139,34 @@ export default function Historico({ restaurantId: restaurantIdProp, onVoltar }) 
             <p>Nenhum checklist registrado ainda.</p>
           </div>
         ) : (
-          Object.entries(porData).map(([data, turnos]) => (
+          Object.entries(porData).map(([data, turnosData]) => (
             <div key={data} style={{ marginBottom: '24px' }}>
               <p style={{ fontSize: '13px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>
                 {formatarData(data)}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {TURNOS.map(turno => {
-                  const cl = turnos[turno]
-                  if (!cl) return (
+                  const lista = turnosData[turno] || []
+                  if (lista.length === 0) return (
                     <div key={turno} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', borderLeft: '4px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: '#94a3b8' }}>{turno}</span>
                       <span style={{ fontSize: '12px', color: '#94a3b8' }}>Não iniciado</span>
                     </div>
                   )
-                  const pct = calcularPorcentagem(cl.respostas)
-                  return (
-                    <div key={turno} onClick={() => setDetalhe(cl)} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', borderLeft: cl.concluido ? '4px solid #16a34a' : '4px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-                      <div>
-                        <p style={{ margin: 0, fontWeight: '600', color: '#1e293b' }}>{turno}</p>
-                        <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: cl.concluido ? '#16a34a' : '#f59e0b' }}>
-                          {cl.concluido ? '✅ Concluído' : '⚠️ Incompleto'} · {pct}%
-                        </p>
+                  return lista.map(cl => {
+                    const pct = calcularPorcentagem(cl.respostas)
+                    return (
+                      <div key={cl.id} onClick={() => abrirDetalhe(cl)} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', borderLeft: cl.concluido ? '4px solid #16a34a' : '4px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: '600', color: '#1e293b' }}>{turno}{cl.funcionarioNome ? <span style={{ fontWeight: 400, color: '#94a3b8' }}> · {cl.funcionarioNome}</span> : null}</p>
+                          <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: cl.concluido ? '#16a34a' : '#f59e0b' }}>
+                            {cl.concluido ? '✅ Concluído' : '⚠️ Incompleto'} · {pct}%
+                          </p>
+                        </div>
+                        <span style={{ color: '#94a3b8', fontSize: '18px' }}>›</span>
                       </div>
-                      <span style={{ color: '#94a3b8', fontSize: '18px' }}>›</span>
-                    </div>
-                  )
+                    )
+                  })
                 })}
               </div>
             </div>

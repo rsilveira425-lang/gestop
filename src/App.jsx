@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore'
-import { db } from './services/firebase'
+import { signOut } from 'firebase/auth'
+import { db, auth } from './services/firebase'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { getTurnos } from './config/turnos'
 import Login from './pages/auth/Login'
 import Cadastro from './pages/auth/Cadastro'
 import Recuperar from './pages/auth/Recuperar'
@@ -85,14 +87,25 @@ function AppContent() {
           setUsuarioData(u)
           setRestaurantData(null)
         }}
-        onEntrou={async (restaurantId) => {
-          const u = { restaurantId, role: 'funcionario', nome: user.displayName || user.email, email: user.email }
+        onEntrou={async (restaurantId, codigo) => {
+          const u = { restaurantId, role: 'funcionario', nome: user.displayName || user.email, email: user.email, codigo, ativo: true }
           await setDoc(doc(db, 'usuarios', user.uid), u)
           setUsuarioData(u)
           const r = await getDoc(doc(db, 'restaurants', restaurantId))
           setRestaurantData(r.exists() ? r.data() : null)
         }}
       />
+    )
+  }
+
+  if (usuarioData.ativo === false) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', backgroundColor: '#f8fafc', textAlign: 'center' }}>
+        <p style={{ fontSize: '40px', margin: 0 }}>🔒</p>
+        <h2 style={{ color: '#1e293b', margin: '12px 0 4px' }}>Acesso desativado</h2>
+        <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '300px' }}>Seu acesso a este restaurante foi desativado pelo gestor.</p>
+        <button onClick={() => signOut(auth)} style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }}>Sair</button>
+      </div>
     )
   }
 
@@ -117,6 +130,8 @@ function AppContent() {
       userRole={usuarioData.role}
       userName={usuarioData.nome || user.email}
       codigoAcesso={restaurantData?.codigoAcesso || ''}
+      turnos={getTurnos(restaurantData)}
+      onRestaurantUpdate={partial => setRestaurantData(prev => ({ ...(prev || {}), ...partial }))}
     />
   )
 }

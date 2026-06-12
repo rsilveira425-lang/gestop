@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { doc, setDoc } from 'firebase/firestore'
-import { auth, db } from '../../services/firebase'
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth'
+import { auth } from '../../services/firebase'
 
 export default function Cadastro({ onNavigate }) {
   const [form, setForm] = useState({ responsavel:'', email:'', senha:'', confirmar:'' })
@@ -21,9 +20,9 @@ export default function Cadastro({ onNavigate }) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, form.email, form.senha)
       if (form.responsavel) {
-        const { updateProfile } = await import('firebase/auth')
         await updateProfile(cred.user, { displayName: form.responsavel })
       }
+      try { await sendEmailVerification(cred.user) } catch(e) { /* não bloqueia o cadastro */ }
       // restaurante criado no Onboarding (dono) ou via convite (funcionario)
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') setErro('Este e-mail já está cadastrado.')

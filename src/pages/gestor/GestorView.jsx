@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { db } from '../../services/firebase'
-import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import Historico from '../historico/Historico'
+import { DEFAULT_TURNOS } from '../../config/turnos'
 
-const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
-
-export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoProp, onVoltar }) {
+export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoProp, turnos = DEFAULT_TURNOS, onVoltar }) {
+  const TURNOS = turnos.map(t => t.nome)
   const [checklists, setChecklists] = useState([])
   const [loading, setLoading] = useState(true)
   const codigoAcesso = codigoAcessoProp || '—'
@@ -13,8 +14,19 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const [detalhe, setDetalhe] = useState(null)
   const [mapaT, setMapaT] = useState({})
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
+  const [verHistorico, setVerHistorico] = useState(false)
 
   useEffect(() => { carregarDados() }, [data])
+
+  async function abrirDetalhe(cl) {
+    // Carrega fotos dos subdocumentos (novo formato) e mescla com o campo antigo
+    const f = { ...(cl.fotos || {}) }
+    try {
+      const fSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'checklists', cl.id, 'fotos'))
+      fSnap.docs.forEach(fd => { f[fd.id] = fd.data().b64 })
+    } catch(e) {}
+    setDetalhe({ ...cl, fotos: f })
+  }
 
   async function carregarDados() {
     setLoading(true)
@@ -44,6 +56,8 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   }
 
   const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
+
+  if (verHistorico) return <Historico restaurantId={restaurantId} turnos={turnos} onVoltar={() => setVerHistorico(false)} />
 
   if (detalhe) return (
     <>
@@ -83,6 +97,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
         <button onClick={onVoltar} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>👑 Painel do Gestor</h1>
+        <button onClick={() => setVerHistorico(true)} style={{ marginLeft:'auto', padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Histórico</button>
       </div>
 
       <div style={{ margin:'16px 24px', backgroundColor:'#eff6ff', borderRadius:'12px', padding:'16px', border:'1px solid #bfdbfe' }}>
@@ -110,7 +125,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
             {TURNOS.map(turno => {
               const cl = turnos[turno]; const st = status(cl)
               return (
-                <button key={turno} onClick={() => cl && setDetalhe(cl)}
+                <button key={turno} onClick={() => cl && abrirDetalhe(cl)}
                   style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', padding:'10px 12px', borderRadius:'8px', border:'1px solid #f1f5f9', backgroundColor:'#f8fafc', cursor: cl?'pointer':'default', marginBottom:'6px', textAlign:'left' }}>
                   <span style={{ fontSize:'13px', fontWeight:'600', color:'#475569' }}>{turno}</span>
                   <span style={{ fontSize:'13px', color: st.cor, fontWeight:'600' }}>{st.emoji} {st.label}</span>

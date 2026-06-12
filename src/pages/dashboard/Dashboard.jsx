@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { db, auth } from '../../services/firebase'
-import { signOut } from 'firebase/auth'
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { signOut, sendEmailVerification } from 'firebase/auth'
+import { collection, query, where, getDocs, addDoc, updateDoc, setDoc, doc, serverTimestamp } from 'firebase/firestore'
 import GestorView from '../gestor/GestorView'
 import GerenciarTarefas from '../tarefas/GerenciarTarefas'
+import Equipe from '../equipe/Equipe'
+import { DEFAULT_TURNOS } from '../../config/turnos'
 
-const TURNOS = ['Abertura', 'Pré pico', 'Fechamento']
-const HORARIO_LIMITE = { 'Abertura': 11, 'Pré pico': 15, 'Fechamento': 25 }
-
-export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso }) {
+export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, onRestaurantUpdate = () => {} }) {
   const { user } = useAuth()
+  const TURNOS = turnos.map(t => t.nome)
+  const HORARIO_LIMITE = Object.fromEntries(turnos.map(t => [t.nome, t.horaLimite]))
   const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  const [turnoAtivo, setTurnoAtivo] = useState('Abertura')
+  const [turnoAtivo, setTurnoAtivo] = useState(TURNOS[0] || 'Abertura')
   const [tarefas, setTarefas] = useState([])
   const [respostas, setRespostas] = useState({})
   const [comentarios, setComentarios] = useState({})
@@ -24,9 +25,12 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [alertas, setAlertas] = useState([])
   const [verGestor, setVerGestor] = useState(false)
   const [verTarefas, setVerTarefas] = useState(false)
+  const [verEquipe, setVerEquipe] = useState(false)
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const [setorAtivo, setSetorAtivo] = useState(null)
+  const [emailReenviado, setEmailReenviado] = useState(false)
   const fileRefs = useRef({})
+  const checklistIdRef = useRef(null)
   const hoje = localDate()
 
   useEffect(() => { carregarDados() }, [turnoAtivo])
@@ -49,7 +53,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   }
 
   async function carregarDados() {
-    setLoading(true); setConcluido(false); setRespostas({}); setComentarios({}); setFotos({}); setChecklistId(null)
+    setLoading(true); setConcluido(false); setRespostas({}); setComentarios({}); setFotos({}); setChecklistId(null); checklistIdRef.current = null
     try {
       const tRef = collection(db, 'restaurants', restaurantId, 'tarefas')
       const tSnap = await getDocs(query(tRef, where('turno', '==', turnoAtivo)))
@@ -58,24 +62,35 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       const cSnap = await getDocs(query(cRef, where('data', '==', hoje), where('turno', '==', turnoAtivo), where('funcionarioId', '==', user.uid)))
       if (!cSnap.empty) {
         const cl = cSnap.docs[0]; const d = cl.data()
-        setChecklistId(cl.id); setRespostas(d.respostas || {}); setComentarios(d.comentarios || {}); setFotos(d.fotos || {}); setConcluido(d.concluido || false)
+        setChecklistId(cl.id); checklistIdRef.current = cl.id
+        setRespostas(d.respostas || {}); setComentarios(d.comentarios || {}); setConcluido(d.concluido || false)
+        // Fotos: subdocumentos (novo formato) + campo fotos (formato antigo)
+        const f = { ...(d.fotos || {}) }
+        const fSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'checklists', cl.id, 'fotos'))
+        fSnap.docs.forEach(fd => { f[fd.id] = fd.data().b64 })
+        setFotos(f)
       }
     } catch(e) { console.error(e) }
     setLoading(false)
   }
 
   async function salvarResposta(id, val) {
-    const n = { ...respostas, [id]: val }; setRespostas(n); await persistir(n, comentarios, fotos)
+    const n = { ...respostas, [id]: val }; setRespostas(n); await persistir(n, comentarios)
   }
   async function salvarComentario(id, txt) {
-    const n = { ...comentarios, [id]: txt }; setComentarios(n); await persistir(respostas, n, fotos)
+    const n = { ...comentarios, [id]: txt }; setComentarios(n); await persistir(respostas, n)
   }
   async function handleFoto(id, file) {
     if (!file) return
     const reader = new FileReader()
     reader.onload = async (e) => {
-      const b64 = await comprimirImagem(e.target.result)
-      const n = { ...fotos, [id]: b64 }; setFotos(n); await persistir(respostas, comentarios, n)
+      try {
+        const b64 = await comprimirImagem(e.target.result)
+        const clId = await garantirChecklist()
+        // Foto vai num subdocumento próprio para não estourar o limite de 1MB do checklist
+        await setDoc(doc(db, 'restaurants', restaurantId, 'checklists', clId, 'fotos', id), { b64 })
+        setFotos(prev => ({ ...prev, [id]: b64 }))
+      } catch(err) { console.error(err); alert('Erro ao salvar foto: ' + err.message) }
     }
     reader.readAsDataURL(file)
   }
@@ -91,27 +106,31 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       img.src = b64
     })
   }
-  async function persistir(resp, coment, fts) {
+  async function garantirChecklist() {
+    if (checklistIdRef.current) return checklistIdRef.current
+    const ref = await addDoc(collection(db, 'restaurants', restaurantId, 'checklists'), {
+      data: hoje, turno: turnoAtivo, respostas: {}, comentarios: {},
+      concluido: false, funcionarioId: user.uid, funcionarioNome: userName, criadoEm: serverTimestamp()
+    })
+    checklistIdRef.current = ref.id
+    setChecklistId(ref.id)
+    return ref.id
+  }
+  async function persistir(resp, coment) {
     try {
-      if (!checklistId) {
-        const ref = await addDoc(collection(db, 'restaurants', restaurantId, 'checklists'), {
-          data: hoje, turno: turnoAtivo, respostas: resp, comentarios: coment, fotos: fts,
-          concluido: false, funcionarioId: user.uid, funcionarioNome: userName, criadoEm: serverTimestamp()
-        })
-        setChecklistId(ref.id)
-      } else {
-        await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistId), { respostas: resp, comentarios: coment, fotos: fts })
-      }
+      const id = await garantirChecklist()
+      await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { respostas: resp, comentarios: coment })
     } catch(e) { console.error(e) }
   }
   async function concluirChecklist() {
-    if (!checklistId) return; setSalvando(true)
-    await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistId), { concluido: true, concluidoEm: serverTimestamp() })
+    if (!checklistIdRef.current) return; setSalvando(true)
+    await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistIdRef.current), { concluido: true, concluidoEm: serverTimestamp() })
     setConcluido(true); setSalvando(false); verificarAlertas()
   }
 
-  if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} onVoltar={() => setVerGestor(false)} />
-  if (verTarefas) return <GerenciarTarefas restaurantId={restaurantId} onVoltar={() => setVerTarefas(false)} />
+  if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} turnos={turnos} onVoltar={() => setVerGestor(false)} />
+  if (verTarefas) return <GerenciarTarefas restaurantId={restaurantId} turnos={turnos} onTurnosAtualizados={t => onRestaurantUpdate({ turnos: t })} onVoltar={() => setVerTarefas(false)} />
+  if (verEquipe) return <Equipe restaurantId={restaurantId} codigoAcesso={codigoAcesso} onCodigoAtualizado={c => onRestaurantUpdate({ codigoAcesso: c })} onVoltar={() => setVerEquipe(false)} />
 
   const totalResp = Object.keys(respostas).length
   const total = tarefas.length
@@ -138,11 +157,22 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
             <>
               <button onClick={() => setVerTarefas(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Tarefas</button>
               <button onClick={() => setVerGestor(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Gestor</button>
+              <button onClick={() => setVerEquipe(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Equipe</button>
             </>
           )}
           <button onClick={() => signOut(auth)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
         </div>
       </div>
+
+      {user && !user.emailVerified && (
+        <div style={{ backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', padding:'10px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
+          <p style={{ margin:0, fontSize:'13px', color:'#1e40af' }}>Confirme seu e-mail pelo link que enviamos para <strong>{user.email}</strong></p>
+          <button disabled={emailReenviado} onClick={async () => { try { await sendEmailVerification(user); setEmailReenviado(true) } catch(e) { alert('Aguarde alguns minutos antes de reenviar.') } }}
+            style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: emailReenviado ? '#cbd5e1' : '#2563eb', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
+            {emailReenviado ? 'Enviado ✓' : 'Reenviar'}
+          </button>
+        </div>
+      )}
 
       {alertas.length > 0 && (
         <div style={{ backgroundColor:'#fef3c7', borderBottom:'1px solid #fcd34d', padding:'12px 24px' }}>

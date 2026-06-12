@@ -12,9 +12,10 @@ export default function EntrarRestaurante({ onCriarRestaurante, onEntrou }) {
     setCarregando(true)
     setErro('')
     try {
-      const snap = await getDoc(doc(db, 'convites', codigo.trim().toUpperCase()))
+      const cod = codigo.trim().toUpperCase()
+      const snap = await getDoc(doc(db, 'convites', cod))
       if (snap.exists()) {
-        await onEntrou(snap.data().restaurantId)
+        await onEntrou(snap.data().restaurantId, cod)
       } else {
         setErro('Código não encontrado. Confirme com o dono do restaurante.')
       }
