@@ -122,7 +122,7 @@ function AppContent() {
   // Trial expirado e sem assinatura: bloqueia
   const diasTrial = diasRestantesTrial(restaurantData)
   if (restaurantData?.onboardingCompleto && !restaurantData?.assinaturaAtiva && diasTrial !== null && diasTrial <= 0) {
-    return <Paywall papel={usuarioData.role} />
+    return <Paywall papel={usuarioData.role} restaurantId={usuarioData.restaurantId} />
   }
 
   if (usuarioData.role === 'dono' && (!restaurantData || !restaurantData.onboardingCompleto)) {

@@ -1,8 +1,8 @@
 import { signOut } from 'firebase/auth'
 import { auth } from '../../services/firebase'
-import { PRECO_MENSAL, DIAS_TRIAL, LINK_ASSINATURA, EMAIL_CONTATO } from '../../config/billing'
+import { PRECO_MENSAL, DIAS_TRIAL, LINK_ASSINATURA, EMAIL_CONTATO, linkAssinaturaPara } from '../../config/billing'
 
-export default function Paywall({ papel = 'dono' }) {
+export default function Paywall({ papel = 'dono', restaurantId = '' }) {
   if (papel !== 'dono') {
     return (
       <div style={s.screen}>
@@ -28,10 +28,10 @@ export default function Paywall({ papel = 'dono' }) {
         <p style={s.preco}>{PRECO_MENSAL}<span style={s.precoMes}>/mês</span></p>
         {LINK_ASSINATURA ? (
           <>
-            <a href={LINK_ASSINATURA} target="_blank" rel="noreferrer" style={s.btnAssinar}>
+            <a href={linkAssinaturaPara(restaurantId)} target="_blank" rel="noreferrer" style={s.btnAssinar}>
               Assinar com Mercado Pago →
             </a>
-            <p style={s.nota}>Pagou? Seu acesso é liberado em até 1 dia útil. Dúvidas: {EMAIL_CONTATO}</p>
+            <p style={s.nota}>Após o pagamento, seu acesso é liberado automaticamente em alguns minutos. Dúvidas: {EMAIL_CONTATO}</p>
           </>
         ) : (
           <p style={s.nota}>

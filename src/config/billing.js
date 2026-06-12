@@ -8,6 +8,13 @@ export const LINK_ASSINATURA = 'https://www.mercadopago.com.br/subscriptions/che
 
 export const EMAIL_CONTATO = 'rsilveira425@gmail.com'
 
+// Link de assinatura com o restaurante identificado — o webhook usa isso pra ativar a conta certa
+export function linkAssinaturaPara(restaurantId) {
+  if (!LINK_ASSINATURA) return ''
+  const sep = LINK_ASSINATURA.includes('?') ? '&' : '?'
+  return restaurantId ? `${LINK_ASSINATURA}${sep}external_reference=${restaurantId}` : LINK_ASSINATURA
+}
+
 // Calcula quantos dias de teste restam. Retorna null se o trial nem começou.
 export function diasRestantesTrial(restaurantData) {
   const inicio = restaurantData?.trialInicio
