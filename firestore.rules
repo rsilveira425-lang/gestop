@@ -14,7 +14,7 @@ service cloud.firestore {
       return logado()
         && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
         && meuUsuario().restaurantId == rid
-        && meuUsuario().ativo != false;
+        && meuUsuario().get('ativo', true) != false;
     }
 
     function donoDe(rid) {
