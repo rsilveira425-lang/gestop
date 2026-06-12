@@ -14,7 +14,7 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
 
   async function concluir() {
     try {
-      await setDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado }, { merge: true })
+      await setDoc(doc(db, 'restaurants', user.uid), { onboardingCompleto: true, codigoAcesso: codigoGerado, trialInicio: new Date().toISOString() }, { merge: true })
       await setDoc(doc(db, 'convites', codigoGerado), { restaurantId: user.uid })
       await onConcluir()
     } catch(e) {

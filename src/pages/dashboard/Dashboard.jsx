@@ -8,7 +8,7 @@ import GerenciarTarefas from '../tarefas/GerenciarTarefas'
 import Equipe from '../equipe/Equipe'
 import { DEFAULT_TURNOS } from '../../config/turnos'
 
-export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, onRestaurantUpdate = () => {} }) {
+export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, diasTrial = null, onRestaurantUpdate = () => {} }) {
   const { user } = useAuth()
   const TURNOS = turnos.map(t => t.nome)
   const HORARIO_LIMITE = Object.fromEntries(turnos.map(t => [t.nome, t.horaLimite]))
@@ -163,6 +163,14 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           <button onClick={() => signOut(auth)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
         </div>
       </div>
+
+      {userRole === 'dono' && typeof diasTrial === 'number' && isFinite(diasTrial) && diasTrial > 0 && (
+        <div style={{ backgroundColor:'#f0fdf4', borderBottom:'1px solid #86efac', padding:'10px 24px' }}>
+          <p style={{ margin:0, fontSize:'13px', color:'#166534' }}>
+            <strong>Teste grátis:</strong> {diasTrial === 1 ? 'último dia' : `${diasTrial} dias restantes`}
+          </p>
+        </div>
+      )}
 
       {user && !user.emailVerified && (
         <div style={{ backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', padding:'10px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>

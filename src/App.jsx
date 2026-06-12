@@ -10,10 +10,13 @@ import Recuperar from './pages/auth/Recuperar'
 import Onboarding from './pages/onboarding/Onboarding'
 import Dashboard from './pages/dashboard/Dashboard'
 import EntrarRestaurante from './pages/auth/EntrarRestaurante'
+import Landing from './pages/landing/Landing'
+import Paywall from './pages/billing/Paywall'
+import { diasRestantesTrial } from './config/billing'
 
 function AppContent() {
   const { user, loading } = useAuth()
-  const [page, setPage] = useState('login')
+  const [page, setPage] = useState('landing')
   const [restaurantData, setRestaurantData] = useState(null)
   const [usuarioData, setUsuarioData] = useState(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -33,6 +36,12 @@ function AppContent() {
               await updateDoc(doc(db, 'restaurants', u.restaurantId), { codigoAcesso: code })
               await setDoc(doc(db, 'convites', code), { restaurantId: u.restaurantId, nomeRestaurante: restData.nomeRestaurante || '' })
               restData.codigoAcesso = code
+            }
+            // Inicia o trial de contas que ainda não têm (contas antigas)
+            if (u.role === 'dono' && restData.onboardingCompleto && !restData.trialInicio) {
+              const inicio = new Date().toISOString()
+              await updateDoc(doc(db, 'restaurants', u.restaurantId), { trialInicio: inicio })
+              restData.trialInicio = inicio
             }
             setRestaurantData(restData)
           } else { setRestaurantData(null) }
@@ -73,9 +82,10 @@ function AppContent() {
   )
 
   if (!user) {
-    if (page === 'cadastro') return <Cadastro onBack={() => setPage('login')} onSuccess={() => setPage('login')} />
+    if (page === 'cadastro') return <Cadastro onNavigate={setPage} onBack={() => setPage('login')} onSuccess={() => setPage('login')} />
     if (page === 'recuperar') return <Recuperar onBack={() => setPage('login')} />
-    return <Login onNavigate={setPage} />
+    if (page === 'login') return <Login onNavigate={setPage} />
+    return <Landing onNavigate={setPage} />
   }
 
   if (!usuarioData) {
@@ -109,6 +119,12 @@ function AppContent() {
     )
   }
 
+  // Trial expirado e sem assinatura: bloqueia
+  const diasTrial = diasRestantesTrial(restaurantData)
+  if (restaurantData?.onboardingCompleto && !restaurantData?.assinaturaAtiva && diasTrial !== null && diasTrial <= 0) {
+    return <Paywall papel={usuarioData.role} />
+  }
+
   if (usuarioData.role === 'dono' && (!restaurantData || !restaurantData.onboardingCompleto)) {
     return <Onboarding onConcluir={async () => {
       const r = await getDoc(doc(db, 'restaurants', user.uid))
@@ -131,6 +147,7 @@ function AppContent() {
       userName={usuarioData.nome || user.email}
       codigoAcesso={restaurantData?.codigoAcesso || ''}
       turnos={getTurnos(restaurantData)}
+      diasTrial={diasTrial}
       onRestaurantUpdate={partial => setRestaurantData(prev => ({ ...(prev || {}), ...partial }))}
     />
   )

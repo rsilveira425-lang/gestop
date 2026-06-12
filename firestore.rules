@@ -46,7 +46,11 @@ service cloud.firestore {
     // Restaurante
     match /restaurants/{rid} {
       allow read: if membroDe(rid);
-      allow create, update: if logado() && request.auth.uid == rid;
+      // O campo assinaturaAtiva só é alterado pelo administrador (console), nunca pelo app
+      allow create: if logado() && request.auth.uid == rid
+        && request.resource.data.get('assinaturaAtiva', false) == false;
+      allow update: if logado() && request.auth.uid == rid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['assinaturaAtiva']);
       allow delete: if false;
 
       match /setores/{id} {
