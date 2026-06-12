@@ -33,6 +33,14 @@ export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado,
     } catch(e) { alert('Erro: ' + e.message) }
   }
 
+  async function excluirMembro(m) {
+    if (!window.confirm(`Excluir ${m.nome || m.email} da equipe? Essa pessoa perde o acesso e some da lista. Para voltar, precisará entrar com o código de novo.`)) return
+    try {
+      await deleteDoc(doc(db, 'usuarios', m.id))
+      await carregar()
+    } catch(e) { alert('Erro: ' + e.message) }
+  }
+
   async function regenerarCodigo() {
     if (!window.confirm('Gerar um novo código? O código atual deixa de funcionar para novas entradas. Quem já está na equipe continua com acesso.')) return
     setGerando(true)
@@ -77,11 +85,18 @@ export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado,
               </p>
             </div>
             {m.role !== 'dono' && (
-              <button onClick={() => alternarAcesso(m)}
-                style={{ padding:'6px 12px', borderRadius:'8px', border:'none', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
-                  backgroundColor: m.ativo === false ? '#f0fdf4' : '#fef2f2', color: m.ativo === false ? '#16a34a' : '#dc2626' }}>
-                {m.ativo === false ? 'Reativar' : 'Desativar'}
-              </button>
+              <div style={{ display:'flex', gap:'6px', flexShrink:0 }}>
+                <button onClick={() => alternarAcesso(m)}
+                  style={{ padding:'6px 12px', borderRadius:'8px', border:'none', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
+                    backgroundColor: m.ativo === false ? '#f0fdf4' : '#fef2f2', color: m.ativo === false ? '#16a34a' : '#dc2626' }}>
+                  {m.ativo === false ? 'Reativar' : 'Desativar'}
+                </button>
+                <button onClick={() => excluirMembro(m)}
+                  style={{ padding:'6px 12px', borderRadius:'8px', border:'1px solid #fecaca', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
+                    backgroundColor:'white', color:'#dc2626' }}>
+                  Excluir
+                </button>
+              </div>
             )}
           </div>
         ))}
