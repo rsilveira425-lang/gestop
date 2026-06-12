@@ -30,13 +30,19 @@ export default function Step1Setores({ restaurantId, nomeRestaurante, onNext }) 
   async function salvar() {
     if (setores.length === 0) return
     setLoading(true)
-    const col = collection(db, 'restaurants', restaurantId, 'setores')
-    const saved = []
-    for (const s of setores) {
-      const ref = await addDoc(col, { nome: s.nome, turnos: s.turnos, criadoEm: new Date().toISOString() })
-      saved.push({ id: ref.id, ...s })
+    try {
+      const col = collection(db, 'restaurants', restaurantId, 'setores')
+      const saved = []
+      for (const s of setores) {
+        const ref = await addDoc(col, { nome: s.nome, turnos: s.turnos, criadoEm: new Date().toISOString() })
+        saved.push({ id: ref.id, ...s })
+      }
+      onNext(saved)
+    } catch(e) {
+      console.error('Erro ao salvar setores:', e)
+      alert('Erro ao salvar: ' + e.message)
+      setLoading(false)
     }
-    onNext(saved)
   }
 
   return (
