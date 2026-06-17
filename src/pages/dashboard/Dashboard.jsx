@@ -22,6 +22,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [concluido, setConcluido] = useState(false)
+  const [celebrar, setCelebrar] = useState(false)
+  const [ultimaResp, setUltimaResp] = useState(null)
   const [alertas, setAlertas] = useState([])
   const [verGestor, setVerGestor] = useState(false)
   const [verTarefas, setVerTarefas] = useState(false)
@@ -35,6 +37,25 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
   useEffect(() => { carregarDados() }, [turnoAtivo])
   useEffect(() => { verificarAlertas() }, [])
+
+  // Confete sóbrio ao concluir o turno
+  useEffect(() => {
+    if (!celebrar) return
+    const cores = ['#2563eb', '#16a34a', '#f59e0b', '#ffffff', '#60a5fa']
+    const nodes = []
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement('div')
+      c.style.cssText = `position:fixed;top:-12px;left:${Math.random()*100}%;width:8px;height:13px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]}`
+      document.body.appendChild(c); nodes.push(c)
+      const x = (Math.random()*2-1)*140, rot = Math.random()*720
+      c.animate(
+        [{ transform:'translate(0,0) rotate(0)', opacity:1 }, { transform:`translate(${x}px,${window.innerHeight+60}px) rotate(${rot}deg)`, opacity:0.85 }],
+        { duration: 1800 + Math.random()*900, delay: Math.random()*300, easing:'cubic-bezier(.2,.6,.4,1)' }
+      )
+    }
+    const t = setTimeout(() => nodes.forEach(n => n.remove()), 3600)
+    return () => { clearTimeout(t); nodes.forEach(n => n.remove()) }
+  }, [celebrar])
 
   async function verificarAlertas() {
     const hora = new Date().getHours()
@@ -75,6 +96,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   }
 
   async function salvarResposta(id, val) {
+    setUltimaResp(id)
     const n = { ...respostas, [id]: val }; setRespostas(n); await persistir(n, comentarios)
   }
   async function salvarComentario(id, txt) {
@@ -125,7 +147,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   async function concluirChecklist() {
     if (!checklistIdRef.current) return; setSalvando(true)
     await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistIdRef.current), { concluido: true, concluidoEm: serverTimestamp() })
-    setConcluido(true); setSalvando(false); verificarAlertas()
+    setConcluido(true); setCelebrar(true); setSalvando(false); verificarAlertas()
   }
 
   if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} turnos={turnos} onVoltar={() => setVerGestor(false)} />
@@ -141,6 +163,26 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
   return (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'80px' }}>
+      <style>{`
+        @keyframes gestopPop { 0%{transform:scale(1)} 40%{transform:scale(1.03)} 100%{transform:scale(1)} }
+        @keyframes gestopBigRing { from{stroke-dashoffset:326.73} to{stroke-dashoffset:0} }
+        @keyframes gestopCheck { from{stroke-dashoffset:60} to{stroke-dashoffset:0} }
+        @keyframes gestopFade { from{opacity:0} to{opacity:1} }
+      `}</style>
+
+      {celebrar && (
+        <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(15,23,42,0.78)', backdropFilter:'blur(3px)', zIndex:2000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', animation:'gestopFade 0.25s ease' }}>
+          <svg width="130" height="130" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="8" />
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#22c55e" strokeWidth="8" strokeLinecap="round" strokeDasharray="326.73" strokeDashoffset="326.73" transform="rotate(-90 60 60)" style={{ animation:'gestopBigRing 1s cubic-bezier(.4,0,.2,1) forwards' }} />
+            <path d="M40 62 l13 13 27 -29" fill="none" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="60" strokeDashoffset="60" style={{ animation:'gestopCheck 0.5s ease 0.9s forwards' }} />
+          </svg>
+          <h2 style={{ color:'white', margin:'18px 0 0 0', fontSize:'22px', fontWeight:'700', textAlign:'center' }}>Turno concluído!</h2>
+          <p style={{ color:'rgba(255,255,255,0.85)', margin:'6px 0 22px 0', fontSize:'14px', textAlign:'center' }}>Tudo verificado e registrado.</p>
+          <button onClick={() => setCelebrar(false)} style={{ backgroundColor:'white', color:'#16a34a', border:'none', borderRadius:'12px', padding:'12px 30px', fontSize:'15px', fontWeight:'700', cursor:'pointer' }}>Continuar</button>
+        </div>
+      )}
+
       {fotoAmpliada && (
         <div onClick={() => setFotoAmpliada(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(0,0,0,0.92)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
           <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
@@ -195,13 +237,19 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       </div>
 
       <div style={{ padding:'20px 24px' }}>
-        <div style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', marginBottom:'20px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'8px' }}>
-            <span style={{ fontSize:'13px', color:'#64748b' }}>Progresso do turno</span>
-            <span style={{ fontSize:'13px', fontWeight:'700', color:'#2563eb' }}>{totalResp}/{total}</span>
+        <div style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', marginBottom:'20px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', display:'flex', alignItems:'center', gap:'16px' }}>
+          <div style={{ position:'relative', width:'62px', height:'62px', flexShrink:0 }}>
+            <svg width="62" height="62" viewBox="0 0 62 62">
+              <circle cx="31" cy="31" r="26" fill="none" stroke="#f1f5f9" strokeWidth="7" />
+              <circle cx="31" cy="31" r="26" fill="none" stroke={prog===100 ? '#16a34a' : '#2563eb'} strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={163.36} strokeDashoffset={163.36 * (1 - prog/100)} transform="rotate(-90 31 31)"
+                style={{ transition:'stroke-dashoffset 0.4s ease, stroke 0.3s' }} />
+            </svg>
+            <span style={{ position:'absolute', top:0, left:0, width:'62px', height:'62px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'700', color: prog===100 ? '#16a34a' : '#2563eb' }}>{prog}%</span>
           </div>
-          <div style={{ height:'8px', backgroundColor:'#f1f5f9', borderRadius:'4px', overflow:'hidden' }}>
-            <div style={{ height:'100%', width:prog+'%', backgroundColor: prog===100 ? '#16a34a' : '#2563eb', borderRadius:'4px', transition:'width 0.3s' }} />
+          <div>
+            <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Progresso do turno</p>
+            <p style={{ margin:'2px 0 0 0', fontSize:'15px', fontWeight:'700', color:'#1e293b' }}>{totalResp} de {total} tarefas</p>
           </div>
         </div>
 
@@ -230,7 +278,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
             {tf.map(tarefa => {
               const resp = respostas[tarefa.id]; const coment = comentarios[tarefa.id]||''; const foto = fotos[tarefa.id]
               return (
-                <div key={tarefa.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', borderLeft: resp==='sim' ? '4px solid #16a34a' : resp==='nao' ? '4px solid #dc2626' : '4px solid #e2e8f0' }}>
+                <div key={tarefa.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', borderLeft: resp==='sim' ? '4px solid #16a34a' : resp==='nao' ? '4px solid #dc2626' : '4px solid #e2e8f0', animation: tarefa.id === ultimaResp ? 'gestopPop 0.4s ease' : undefined }}>
                   <p style={{ margin:'0 0 4px 0', fontSize:'15px', color:'#1e293b', fontWeight:'500' }}>{tarefa.texto}</p>
                   {tarefa.setorNome && <span style={{ fontSize:'11px', color:'#94a3b8', backgroundColor:'#f8fafc', padding:'2px 8px', borderRadius:'10px' }}>{tarefa.setorNome}</span>}
                   {!concluido && (
