@@ -23,6 +23,7 @@ export default function Cadastro({ onNavigate }) {
         await updateProfile(cred.user, { displayName: form.responsavel })
       }
       try { await sendEmailVerification(cred.user) } catch(e) { /* não bloqueia o cadastro */ }
+      if (window.fbq) window.fbq('track', 'CompleteRegistration')
       // restaurante criado no Onboarding (dono) ou via convite (funcionario)
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') setErro('Este e-mail já está cadastrado.')

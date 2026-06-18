@@ -28,7 +28,8 @@ export default function Paywall({ papel = 'dono', restaurantId = '' }) {
         <p style={s.preco}>{PRECO_MENSAL}<span style={s.precoMes}>/mês</span></p>
         {LINK_ASSINATURA ? (
           <>
-            <a href={linkAssinaturaPara(restaurantId)} target="_blank" rel="noreferrer" style={s.btnAssinar}>
+            <a href={linkAssinaturaPara(restaurantId)} target="_blank" rel="noreferrer" style={s.btnAssinar}
+              onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout', { value: 49.90, currency: 'BRL' }) }}>
               Assinar com Mercado Pago →
             </a>
             <p style={s.nota}>Após o pagamento, seu acesso é liberado automaticamente em alguns minutos. Dúvidas: {EMAIL_CONTATO}</p>
