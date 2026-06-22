@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,6 +14,14 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
+
+// App Check (reCAPTCHA v3): faz o Firebase só aceitar requisicoes vindas do app
+// legitimo, barrando bots/abuso. A chave do site e PUBLICA (vai no cliente);
+// a chave secreta fica somente no console do Firebase.
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LeA-y0tAAAAAKceaFfzo6weaNB20jNmiLnar9hq'),
+  isTokenAutoRefreshEnabled: true,
+})
 
 export const auth = getAuth(app)
 export const db = getFirestore(app)
