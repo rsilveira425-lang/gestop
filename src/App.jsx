@@ -11,6 +11,7 @@ import Onboarding from './pages/onboarding/Onboarding'
 import Dashboard from './pages/dashboard/Dashboard'
 import EntrarRestaurante from './pages/auth/EntrarRestaurante'
 import Landing from './pages/landing/Landing'
+import Privacidade from './pages/legal/Privacidade'
 import Paywall from './pages/billing/Paywall'
 import { diasRestantesTrial } from './config/billing'
 
@@ -80,6 +81,8 @@ function AppContent() {
       <p style={{ color: '#64748b', fontSize: '16px' }}>Carregando...</p>
     </div>
   )
+
+  if (page === 'privacidade') return <Privacidade onBack={() => setPage(user ? 'app' : 'landing')} />
 
   if (!user) {
     if (page === 'cadastro') return <Cadastro onNavigate={setPage} onBack={() => setPage('login')} onSuccess={() => setPage('login')} />

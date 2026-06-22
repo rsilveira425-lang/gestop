@@ -98,6 +98,8 @@ export default function Landing({ onNavigate }) {
 
       <footer style={s.footer}>
         <span style={{ fontWeight: 700, color: '#2563eb' }}>Gestop</span> · Operação sob controle · {new Date().getFullYear()}
+        <br />
+        <button onClick={() => onNavigate('privacidade')} style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline', padding: '8px 0 0' }}>Política de Privacidade</button>
       </footer>
     </div>
   )

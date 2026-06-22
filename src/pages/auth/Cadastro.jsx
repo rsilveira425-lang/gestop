@@ -56,6 +56,10 @@ export default function Cadastro({ onNavigate }) {
               {loading ? 'Criando conta...' : 'Criar conta'}
             </button>
           </form>
+          <p style={{ fontSize:'12px', color:'#94a3b8', textAlign:'center', margin:'12px 0 0', lineHeight:1.5 }}>
+            Ao criar conta, você concorda com a{' '}
+            <button type="button" onClick={() => onNavigate('privacidade')} style={{ background:'none', border:'none', color:'#2563eb', cursor:'pointer', fontSize:'12px', textDecoration:'underline', padding:0 }}>Política de Privacidade</button>.
+          </p>
           <div style={styles.links}>
             <button style={styles.link} onClick={() => onNavigate('login')}>Já tenho conta</button>
           </div>
