@@ -4,6 +4,32 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import Historico from '../historico/Historico'
 import { DEFAULT_TURNOS } from '../../config/turnos'
 
+function Kpi({ titulo, valor, sub, alerta }) {
+  return (
+    <div style={{ backgroundColor:'#f8fafc', border:'1px solid #f1f5f9', borderRadius:'12px', padding:'14px' }}>
+      <p style={{ margin:0, fontSize:'11px', fontWeight:700, letterSpacing:'0.5px', textTransform:'uppercase', color:'#94a3b8' }}>{titulo}</p>
+      <p style={{ margin:'6px 0 0', fontSize:'28px', fontWeight:800, color: alerta ? '#dc2626' : '#1e293b' }}>{valor}</p>
+      <p style={{ margin:'2px 0 0', fontSize:'12px', color:'#64748b' }}>{sub}</p>
+    </div>
+  )
+}
+
+function Anel({ pct, label }) {
+  const R = 26, C = 2 * Math.PI * R
+  const cor = pct >= 100 ? '#16a34a' : pct >= 50 ? '#f59e0b' : '#dc2626'
+  return (
+    <div style={{ textAlign:'center', flexShrink:0 }}>
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r={R} fill="none" stroke="#e2e8f0" strokeWidth="7" />
+        <circle cx="36" cy="36" r={R} fill="none" stroke={cor} strokeWidth="7" strokeLinecap="round"
+          strokeDasharray={C} strokeDashoffset={C * (1 - Math.min(pct, 100) / 100)} transform="rotate(-90 36 36)" />
+        <text x="36" y="41" textAnchor="middle" fontSize="15" fontWeight="700" fill="#1e293b">{pct}%</text>
+      </svg>
+      <p style={{ margin:'2px 0 0', fontSize:'12px', color:'#64748b', fontWeight:600 }}>{label}</p>
+    </div>
+  )
+}
+
 export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoProp, turnos = DEFAULT_TURNOS, onVoltar }) {
   const TURNOS = turnos.map(t => t.nome)
   const [checklists, setChecklists] = useState([])
@@ -15,6 +41,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const [mapaT, setMapaT] = useState({})
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const [verHistorico, setVerHistorico] = useState(false)
+  const [fotosHoje, setFotosHoje] = useState(0)
 
   useEffect(() => { carregarDados() }, [data])
 
@@ -33,11 +60,23 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
     try {
       const tSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
       const mapa = {}
-      tSnap.docs.forEach(d => { const t = d.data(); mapa[d.id] = { texto: t.texto, turno: t.turno } })
+      tSnap.docs.forEach(d => { const t = d.data(); mapa[d.id] = { texto: t.texto, turno: t.turno, setorNome: t.setorNome } })
       setMapaT(mapa)
       const q = query(collection(db, 'restaurants', restaurantId, 'checklists'), where('data', '==', data))
       const s = await getDocs(q)
-      setChecklists(s.docs.map(d => ({ id: d.id, ...d.data() })))
+      const cls = s.docs.map(d => ({ id: d.id, ...d.data() }))
+      setChecklists(cls)
+      // conta fotos do dia (campo antigo + subcoleção), sem duplicar por tarefa
+      let totFotos = 0
+      await Promise.all(cls.map(async cl => {
+        const ids = new Set(Object.keys(cl.fotos || {}))
+        try {
+          const fSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'checklists', cl.id, 'fotos'))
+          fSnap.forEach(fd => ids.add(fd.id))
+        } catch (e) {}
+        totFotos += ids.size
+      }))
+      setFotosHoje(totFotos)
     } catch(e) {}
     setLoading(false)
   }
@@ -54,6 +93,36 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
     if (cl.concluido) return { emoji: '✅', label: 'Concluído', cor: '#16a34a' }
     return { emoji: '🔄', label: `${Object.keys(cl.respostas||{}).length} resp.`, cor: '#2563eb' }
   }
+
+  // ----- Resumo do dia (Painel do Dono) -----
+  const ehHoje = data === localDate()
+  let totalEsp = 0, totalResp = 0, naoCount = 0
+  const porSetor = {}
+  checklists.forEach(cl => {
+    const respostas = cl.respostas || {}
+    Object.entries(mapaT).forEach(([id, t]) => {
+      if (t.turno !== cl.turno) return
+      const setor = t.setorNome || 'Outros'
+      if (!porSetor[setor]) porSetor[setor] = { esp: 0, resp: 0 }
+      porSetor[setor].esp++; totalEsp++
+      if (respostas[id] !== undefined) { porSetor[setor].resp++; totalResp++ }
+    })
+    Object.values(respostas).forEach(v => { if (v !== 'sim') naoCount++ })
+  })
+  let atrasados = 0
+  if (ehHoje) {
+    const horaAgora = new Date().getHours()
+    turnos.forEach(t => {
+      if (typeof t.horaLimite === 'number' && horaAgora >= t.horaLimite) {
+        const concluido = checklists.some(cl => cl.turno === t.nome && cl.concluido)
+        if (!concluido) atrasados++
+      }
+    })
+  }
+  const pendencias = naoCount + atrasados
+  const ativos = Object.keys(porFuncionario).length
+  const progresso = totalEsp ? Math.round(totalResp / totalEsp * 100) : 0
+  const setoresResumo = Object.entries(porSetor)
 
   const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
 
@@ -114,6 +183,28 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
           })}
         </div>
       </div>
+
+      {!loading && (
+        <div style={{ margin:'0 24px 16px', backgroundColor:'white', borderRadius:'16px', padding:'18px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)' }}>
+          <p style={{ margin:'0 0 14px', fontSize:'13px', fontWeight:700, color:'#475569' }}>Resumo do dia</p>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+            <Kpi titulo="Progresso do dia" valor={progresso + '%'} sub={totalResp + ' de ' + totalEsp + ' tarefas'} />
+            <Kpi titulo="Funcionários ativos" valor={ativos} sub="hoje" />
+            <Kpi titulo="Fotos registradas" valor={fotosHoje} sub="no dia" />
+            <Kpi titulo="Pendências" valor={pendencias} sub="abertas" alerta={pendencias > 0} />
+          </div>
+          {setoresResumo.length > 0 && (
+            <>
+              <p style={{ margin:'18px 0 10px', fontSize:'13px', fontWeight:700, color:'#475569' }}>Progresso por área</p>
+              <div style={{ display:'flex', gap:'12px', overflowX:'auto', paddingBottom:'4px' }}>
+                {setoresResumo.map(([nome, o]) => (
+                  <Anel key={nome} pct={o.esp ? Math.round(o.resp / o.esp * 100) : 0} label={nome} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div style={{ padding:'0 24px 40px' }}>
         {loading ? <p style={{ textAlign:'center', color:'#94a3b8' }}>Carregando...</p>
