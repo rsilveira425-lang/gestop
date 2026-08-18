@@ -66,7 +66,8 @@ service cloud.firestore {
       match /checklists/{cid} {
         allow read: if membroDe(rid);
         allow create: if membroDe(rid) && request.resource.data.funcionarioId == request.auth.uid;
-        allow update: if membroDe(rid) && (resource.data.funcionarioId == request.auth.uid || donoDe(rid));
+        // Checklist é compartilhado pelo turno: qualquer membro ativo pode responder
+        allow update: if membroDe(rid);
         allow delete: if donoDe(rid);
 
         match /fotos/{tarefaId} {

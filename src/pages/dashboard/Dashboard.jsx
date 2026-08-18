@@ -22,7 +22,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [concluido, setConcluido] = useState(false)
-  const [celebrar, setCelebrar] = useState(false)
+  const [setoresConcluidos, setSetoresConcluidos] = useState({})
+  const [celebrar, setCelebrar] = useState(null) // { titulo, sub } ou null
   const [ultimaResp, setUltimaResp] = useState(null)
   const [alertas, setAlertas] = useState([])
   const [verGestor, setVerGestor] = useState(false)
@@ -33,6 +34,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [emailReenviado, setEmailReenviado] = useState(false)
   const fileRefs = useRef({})
   const checklistIdRef = useRef(null)
+  const criandoChecklistRef = useRef(null)
   const hoje = localDate()
 
   useEffect(() => { carregarDados() }, [turnoAtivo])
@@ -69,27 +71,41 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           if (s.empty) novos.push(t)
         }
       }
-    } catch(e) {}
+    } catch(e) { console.error(e) }
     setAlertas(novos)
   }
 
   async function carregarDados() {
-    setLoading(true); setConcluido(false); setRespostas({}); setComentarios({}); setFotos({}); setChecklistId(null); checklistIdRef.current = null
+    setLoading(true); setConcluido(false); setRespostas({}); setComentarios({}); setFotos({}); setSetoresConcluidos({}); setChecklistId(null); checklistIdRef.current = null
     try {
       const tRef = collection(db, 'restaurants', restaurantId, 'tarefas')
       const tSnap = await getDocs(query(tRef, where('turno', '==', turnoAtivo)))
       setTarefas(tSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+      // Checklist compartilhado pelo turno: busca por dia/turno (sem filtrar por funcionário)
       const cRef = collection(db, 'restaurants', restaurantId, 'checklists')
-      const cSnap = await getDocs(query(cRef, where('data', '==', hoje), where('turno', '==', turnoAtivo), where('funcionarioId', '==', user.uid)))
+      const cSnap = await getDocs(query(cRef, where('data', '==', hoje), where('turno', '==', turnoAtivo)))
       if (!cSnap.empty) {
-        const cl = cSnap.docs[0]; const d = cl.data()
-        setChecklistId(cl.id); checklistIdRef.current = cl.id
-        setRespostas(d.respostas || {}); setComentarios(d.comentarios || {}); setConcluido(d.concluido || false)
-        // Fotos: subdocumentos (novo formato) + campo fotos (formato antigo)
-        const f = { ...(d.fotos || {}) }
-        const fSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'checklists', cl.id, 'fotos'))
-        fSnap.docs.forEach(fd => { f[fd.id] = fd.data().b64 })
-        setFotos(f)
+        // Se houver documentos duplicados (corrida/versão antiga por funcionário), mescla tudo
+        const docs = cSnap.docs.slice().sort((a, b) => (a.data().criadoEm?.seconds || 0) - (b.data().criadoEm?.seconds || 0))
+        const principal = docs[0]
+        checklistIdRef.current = principal.id; setChecklistId(principal.id)
+        const resp = {}, coment = {}, f = {}, sc = {}
+        let conc = false
+        for (const cl of docs) {
+          const d = cl.data()
+          Object.assign(resp, d.respostas || {})
+          Object.assign(coment, d.comentarios || {})
+          Object.assign(f, d.fotos || {}) // formato antigo
+          Object.assign(sc, d.setoresConcluidos || {})
+          if (d.concluido) conc = true
+          const fSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'checklists', cl.id, 'fotos'))
+          fSnap.docs.forEach(fd => { f[fd.id] = fd.data().b64 })
+        }
+        setRespostas(resp); setComentarios(coment); setConcluido(conc); setFotos(f); setSetoresConcluidos(sc)
+        // Consolida as respostas mescladas no documento principal
+        if (docs.length > 1) {
+          try { await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', principal.id), { respostas: resp, comentarios: coment }) } catch(e) { console.error(e) }
+        }
       }
     } catch(e) { console.error(e) }
     setLoading(false)
@@ -97,10 +113,12 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
   async function salvarResposta(id, val) {
     setUltimaResp(id)
-    const n = { ...respostas, [id]: val }; setRespostas(n); await persistir(n, comentarios)
+    setRespostas(prev => ({ ...prev, [id]: val }))
+    await persistir(`respostas.${id}`, val)
   }
   async function salvarComentario(id, txt) {
-    const n = { ...comentarios, [id]: txt }; setComentarios(n); await persistir(respostas, n)
+    setComentarios(prev => ({ ...prev, [id]: txt }))
+    await persistir(`comentarios.${id}`, txt)
   }
   async function handleFoto(id, file) {
     if (!file) return
@@ -130,31 +148,75 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   }
   async function garantirChecklist() {
     if (checklistIdRef.current) return checklistIdRef.current
-    const ref = await addDoc(collection(db, 'restaurants', restaurantId, 'checklists'), {
-      data: hoje, turno: turnoAtivo, respostas: {}, comentarios: {},
-      concluido: false, funcionarioId: user.uid, funcionarioNome: userName, criadoEm: serverTimestamp()
-    })
-    checklistIdRef.current = ref.id
-    setChecklistId(ref.id)
-    return ref.id
+    // Trava: chamadas simultâneas (resposta + foto) esperam a mesma criação
+    if (criandoChecklistRef.current) return criandoChecklistRef.current
+    criandoChecklistRef.current = (async () => {
+      // Revalida no servidor: outro celular pode já ter criado o checklist deste turno
+      const cRef = collection(db, 'restaurants', restaurantId, 'checklists')
+      const cSnap = await getDocs(query(cRef, where('data', '==', hoje), where('turno', '==', turnoAtivo)))
+      if (!cSnap.empty) {
+        const docs = cSnap.docs.slice().sort((a, b) => (a.data().criadoEm?.seconds || 0) - (b.data().criadoEm?.seconds || 0))
+        checklistIdRef.current = docs[0].id
+        setChecklistId(docs[0].id)
+        return docs[0].id
+      }
+      const ref = await addDoc(cRef, {
+        data: hoje, turno: turnoAtivo, respostas: {}, comentarios: {},
+        concluido: false, funcionarioId: user.uid, funcionarioNome: userName, criadoEm: serverTimestamp()
+      })
+      checklistIdRef.current = ref.id
+      setChecklistId(ref.id)
+      return ref.id
+    })()
+    try { return await criandoChecklistRef.current } finally { criandoChecklistRef.current = null }
   }
-  async function persistir(resp, coment) {
+  async function persistir(campo, valor) {
     try {
       const id = await garantirChecklist()
-      await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { respostas: resp, comentarios: coment })
+      await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { [campo]: valor })
     } catch(e) { console.error(e) }
   }
   async function concluirChecklist() {
     if (!checklistIdRef.current) return; setSalvando(true)
     await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistIdRef.current), { concluido: true, concluidoEm: serverTimestamp() })
-    setConcluido(true); setCelebrar(true); setSalvando(false); verificarAlertas()
+    setConcluido(true); setCelebrar({ titulo:'Turno concluído!', sub:'Tudo verificado e registrado.' }); setSalvando(false); verificarAlertas()
+  }
+
+  // Setores: nomes vêm das tarefas, então setores novos entram automaticamente
+  const normSetor = s => (s || '').trim().toLowerCase()
+  const chaveSetor = s => normSetor(s).replace(/[.~*/[\]]/g, '_') // caracteres proibidos em nomes de campo do Firestore
+  const tarefasDoSetor = s => tarefas.filter(t => normSetor(t.setorNome) === normSetor(s))
+  const setorCompleto = s => { const ts = tarefasDoSetor(s); return ts.length > 0 && ts.every(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao') }
+
+  async function concluirSetor(nome) {
+    setSalvando(true)
+    try {
+      const id = await garantirChecklist()
+      await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), {
+        [`setoresConcluidos.${chaveSetor(nome)}`]: { nome, por: userName || user.email || '', em: serverTimestamp() }
+      })
+      const novo = { ...setoresConcluidos, [chaveSetor(nome)]: { nome, por: userName || '' } }
+      setSetoresConcluidos(novo)
+      // Se todas as tarefas do turno estão respondidas e todos os setores concluídos, fecha o turno
+      const setores = [...new Set(tarefas.map(t => t.setorNome).filter(Boolean))]
+      const tudoRespondido = tarefas.length > 0 && tarefas.every(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao')
+      const todosSetores = setores.every(s => novo[chaveSetor(s)])
+      if (tudoRespondido && todosSetores) {
+        await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { concluido: true, concluidoEm: serverTimestamp() })
+        setConcluido(true); setCelebrar({ titulo:'Turno concluído!', sub:'Todos os setores fechados. Tudo registrado.' }); verificarAlertas()
+      } else {
+        setCelebrar({ titulo:`${nome} concluído!`, sub:'Setor registrado. Bora pro próximo!' })
+      }
+    } catch(e) { console.error(e); alert('Erro ao concluir setor: ' + e.message) }
+    setSalvando(false)
   }
 
   if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} turnos={turnos} onVoltar={() => setVerGestor(false)} />
   if (verTarefas) return <GerenciarTarefas restaurantId={restaurantId} turnos={turnos} onTurnosAtualizados={t => onRestaurantUpdate({ turnos: t })} onVoltar={() => setVerTarefas(false)} />
   if (verEquipe) return <Equipe restaurantId={restaurantId} codigoAcesso={codigoAcesso} onCodigoAtualizado={c => onRestaurantUpdate({ codigoAcesso: c })} onVoltar={() => setVerEquipe(false)} />
 
-  const totalResp = Object.keys(respostas).length
+  // Conta apenas respostas de tarefas que ainda existem (ignora IDs de tarefas editadas/excluídas)
+  const totalResp = tarefas.filter(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao').length
   const total = tarefas.length
   const todas = total > 0 && totalResp === total
   const prog = total > 0 ? Math.round((totalResp/total)*100) : 0
@@ -177,9 +239,9 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
             <circle cx="60" cy="60" r="52" fill="none" stroke="#22c55e" strokeWidth="8" strokeLinecap="round" strokeDasharray="326.73" strokeDashoffset="326.73" transform="rotate(-90 60 60)" style={{ animation:'gestopBigRing 1s cubic-bezier(.4,0,.2,1) forwards' }} />
             <path d="M40 62 l13 13 27 -29" fill="none" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="60" strokeDashoffset="60" style={{ animation:'gestopCheck 0.5s ease 0.9s forwards' }} />
           </svg>
-          <h2 style={{ color:'white', margin:'18px 0 0 0', fontSize:'22px', fontWeight:'700', textAlign:'center' }}>Turno concluído!</h2>
-          <p style={{ color:'rgba(255,255,255,0.85)', margin:'6px 0 22px 0', fontSize:'14px', textAlign:'center' }}>Tudo verificado e registrado.</p>
-          <button onClick={() => setCelebrar(false)} style={{ backgroundColor:'white', color:'#16a34a', border:'none', borderRadius:'12px', padding:'12px 30px', fontSize:'15px', fontWeight:'700', cursor:'pointer' }}>Continuar</button>
+          <h2 style={{ color:'white', margin:'18px 0 0 0', fontSize:'22px', fontWeight:'700', textAlign:'center' }}>{celebrar.titulo}</h2>
+          <p style={{ color:'rgba(255,255,255,0.85)', margin:'6px 0 22px 0', fontSize:'14px', textAlign:'center' }}>{celebrar.sub}</p>
+          <button onClick={() => setCelebrar(null)} style={{ backgroundColor:'white', color:'#16a34a', border:'none', borderRadius:'12px', padding:'12px 30px', fontSize:'15px', fontWeight:'700', cursor:'pointer' }}>Continuar</button>
         </div>
       )}
 
@@ -266,9 +328,19 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           {su.length > 1 && (
             <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px' }}>
               <button onClick={() => setSetorAtivo(null)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? '700' : '400', backgroundColor: setorAtivo === null ? '#2563eb' : '#f1f5f9', color: setorAtivo === null ? 'white' : '#475569' }}>Todos</button>
-              {su.map(s => (
-                <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo?.toLowerCase() === s?.toLowerCase() ? '700' : '400', backgroundColor: setorAtivo?.toLowerCase() === s?.toLowerCase() ? '#2563eb' : '#f1f5f9', color: setorAtivo?.toLowerCase() === s?.toLowerCase() ? 'white' : '#475569' }}>{s}</button>
-              ))}
+              {su.map(s => {
+                const ativo = normSetor(setorAtivo) === normSetor(s)
+                const fechado = !!setoresConcluidos[chaveSetor(s)]
+                const ts = tarefasDoSetor(s)
+                const nResp = ts.filter(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao').length
+                return (
+                  <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: ativo || fechado ? '700' : '400',
+                    backgroundColor: ativo ? '#2563eb' : fechado ? '#dcfce7' : '#f1f5f9',
+                    color: ativo ? 'white' : fechado ? '#16a34a' : '#475569' }}>
+                    {s} {fechado ? '✓' : `${nResp}/${ts.length}`}
+                  </button>
+                )
+              })}
             </div>
           )}
           {tf.length === 0 ? (
@@ -307,6 +379,17 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
                 </div>
               )
             })}
+          </div>
+        )}
+        {/* Concluir setor: aparece dentro do filtro quando todas as tarefas do setor foram respondidas */}
+        {!concluido && setorAtivo && setorCompleto(setorAtivo) && !setoresConcluidos[chaveSetor(setorAtivo)] && (
+          <button onClick={() => concluirSetor(setorAtivo)} disabled={salvando} style={{ width:'100%', padding:'14px', marginTop:'20px', backgroundColor:'#16a34a', color:'white', border:'none', borderRadius:'12px', fontSize:'15px', fontWeight:'700', cursor:'pointer' }}>
+            {salvando ? 'Salvando...' : `Concluir ${setorAtivo}`}
+          </button>
+        )}
+        {!concluido && setorAtivo && setoresConcluidos[chaveSetor(setorAtivo)] && (
+          <div style={{ backgroundColor:'#dcfce7', border:'1px solid #86efac', borderRadius:'12px', padding:'12px', marginTop:'20px', textAlign:'center' }}>
+            <p style={{ margin:0, fontWeight:'700', color:'#16a34a', fontSize:'14px' }}>{setorAtivo} concluído ✓{setoresConcluidos[chaveSetor(setorAtivo)]?.por ? ` · ${setoresConcluidos[chaveSetor(setorAtivo)].por}` : ''}</p>
           </div>
         )}
         </>)
