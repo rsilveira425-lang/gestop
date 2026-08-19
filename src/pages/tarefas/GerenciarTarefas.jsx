@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../../services/firebase'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../config/turnos'
+import { ordenarTarefas, proximaOrdem, calcularBackfill } from '../../config/tarefas'
 
 export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS, onTurnosAtualizados = () => {}, onVoltar }) {
   const TURNOS = turnos.map(t => t.nome)
@@ -27,9 +28,22 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
       getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
     ])
     const s = sSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-    const t = tSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    let t = tSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    // Tarefas criadas antes da ordenação existir não têm `ordem`. Esta tela é
+    // do dono (único papel com permissão de escrita), então é aqui que elas
+    // ganham número — sem isso o arrastar não teria em que se apoiar.
+    const pendentes = calcularBackfill(t)
+    if (pendentes.length > 0) {
+      try {
+        await Promise.all(pendentes.map(p =>
+          updateDoc(doc(db, 'restaurants', restaurantId, 'tarefas', p.id), { ordem: p.ordem })
+        ))
+        const mapa = Object.fromEntries(pendentes.map(p => [p.id, p.ordem]))
+        t = t.map(tarefa => (mapa[tarefa.id] !== undefined ? { ...tarefa, ordem: mapa[tarefa.id] } : tarefa))
+      } catch(e) { console.error(e) }
+    }
     setSetores(s)
-    setTarefas(t)
+    setTarefas(ordenarTarefas(t))
     if (s.length > 0) setSetorAtivo(prev => prev || s[0].nome)
     setLoading(false)
   }
@@ -41,7 +55,9 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
     await addDoc(collection(db, 'restaurants', restaurantId, 'tarefas'), {
       texto: novoTexto.trim(),
       setorNome: ctx.setor,
-      turno: ctx.turno
+      turno: ctx.turno,
+      ordem: proximaOrdem(tarefas, ctx.setor, ctx.turno),
+      criadoEm: new Date().toISOString()
     })
     setNovoTexto('')
     await carregar()

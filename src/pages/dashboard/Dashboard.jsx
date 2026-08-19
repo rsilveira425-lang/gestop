@@ -7,6 +7,7 @@ import GestorView from '../gestor/GestorView'
 import GerenciarTarefas from '../tarefas/GerenciarTarefas'
 import Equipe from '../equipe/Equipe'
 import { DEFAULT_TURNOS } from '../../config/turnos'
+import { ordenarTarefas } from '../../config/tarefas'
 
 export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, diasTrial = null, onRestaurantUpdate = () => {} }) {
   const { user } = useAuth()
@@ -80,7 +81,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
     try {
       const tRef = collection(db, 'restaurants', restaurantId, 'tarefas')
       const tSnap = await getDocs(query(tRef, where('turno', '==', turnoAtivo)))
-      setTarefas(tSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+      setTarefas(ordenarTarefas(tSnap.docs.map(d => ({ id: d.id, ...d.data() }))))
       // Checklist compartilhado pelo turno: busca por dia/turno (sem filtrar por funcionário)
       const cRef = collection(db, 'restaurants', restaurantId, 'checklists')
       const cSnap = await getDocs(query(cRef, where('data', '==', hoje), where('turno', '==', turnoAtivo)))

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../config/turnos'
+import { compararTarefas } from '../../config/tarefas'
 
 export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVoltar }) {
   const TURNOS = turnos.map(t => t.nome)
@@ -23,7 +24,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVol
 
       const tSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
       const mapa = {}
-      tSnap.docs.forEach(d => { mapa[d.id] = d.data().texto })
+      tSnap.docs.forEach(d => { const t = d.data(); mapa[d.id] = { texto: t.texto, setorNome: t.setorNome, ordem: t.ordem, criadoEm: t.criadoEm } })
       setMapaT(mapa)
 
       const ref = collection(db, 'restaurants', restaurantId, 'checklists')
@@ -92,14 +93,14 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVol
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {Object.entries(detalhe.respostas || {}).map(([tarefaId, resp]) => (
+            {Object.entries(detalhe.respostas || {}).sort(([a], [b]) => compararTarefas({ ...mapaT[a], id: a }, { ...mapaT[b], id: b })).map(([tarefaId, resp]) => (
               <div key={tarefaId} style={{
                 backgroundColor: 'white', borderRadius: '10px', padding: '14px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 borderLeft: resp === 'sim' ? '4px solid #16a34a' : '4px solid #dc2626'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', color: '#64748b' }}>{mapaT[tarefaId] || 'Tarefa #' + tarefaId.slice(-4)}</span>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>{mapaT[tarefaId]?.texto || 'Tarefa #' + tarefaId.slice(-4)}</span>
                   <span style={{ fontWeight: '700', whiteSpace: 'nowrap', color: resp === 'sim' ? '#16a34a' : '#dc2626' }}>
                     {resp === 'sim' ? '✓ Sim' : '✗ Não'}
                   </span>

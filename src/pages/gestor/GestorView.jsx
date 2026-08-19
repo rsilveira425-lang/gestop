@@ -3,6 +3,7 @@ import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import Historico from '../historico/Historico'
 import { DEFAULT_TURNOS } from '../../config/turnos'
+import { compararTarefas } from '../../config/tarefas'
 
 function Kpi({ titulo, valor, sub, alerta }) {
   return (
@@ -60,7 +61,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
     try {
       const tSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
       const mapa = {}
-      tSnap.docs.forEach(d => { const t = d.data(); mapa[d.id] = { texto: t.texto, turno: t.turno, setorNome: t.setorNome } })
+      tSnap.docs.forEach(d => { const t = d.data(); mapa[d.id] = { texto: t.texto, turno: t.turno, setorNome: t.setorNome, ordem: t.ordem, criadoEm: t.criadoEm } })
       setMapaT(mapa)
       const q = query(collection(db, 'restaurants', restaurantId, 'checklists'), where('data', '==', data))
       const s = await getDocs(q)
@@ -141,7 +142,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
       <div style={{ padding:'20px 24px' }}>
         {Object.keys(mapaT).length === 0 ? (
           <p style={{ color:'#94a3b8', textAlign:'center' }}>Nenhuma resposta.</p>
-        ) : [...new Set([...Object.keys(mapaT).filter(id => mapaT[id].turno === detalhe.turno), ...Object.keys(detalhe.respostas||{})])].map(id => [id, (detalhe.respostas||{})[id]]).map(([id, resp]) => (
+        ) : [...new Set([...Object.keys(mapaT).filter(id => mapaT[id].turno === detalhe.turno), ...Object.keys(detalhe.respostas||{})])].sort((a, b) => compararTarefas({ ...mapaT[a], id: a }, { ...mapaT[b], id: b })).map(id => [id, (detalhe.respostas||{})[id]]).map(([id, resp]) => (
           <div key={id} style={{ backgroundColor:'white', borderRadius:'10px', padding:'14px', marginBottom:'10px', boxShadow:'0 1px 2px rgba(0,0,0,0.06)', borderLeft:`4px solid ${resp===undefined?'#e2e8f0':resp==='sim'?'#16a34a':'#dc2626'}` }}>
             <div style={{ display:'flex', justifyContent:'space-between' }}>
               <span style={{ fontSize:'13px', color:'#64748b' }}>{mapaT[id]?.texto || 'Tarefa #' + id.slice(-4)}</span>
