@@ -22,14 +22,25 @@ export function ordenarTarefas(tarefas) {
   return [...tarefas].sort(compararTarefas)
 }
 
-// Chave do grupo que a numeração respeita.
+// Chave do grupo que a numeração respeita. Normalizada em minúsculas porque
+// o Dashboard já agrupa setores sem diferenciar maiúscula de minúscula.
 export function grupoDaTarefa(t) {
-  return `${(t?.setorNome || '').trim()}__${(t?.turno || '').trim()}`
+  return chaveGrupo(t?.setorNome, t?.turno)
+}
+
+export function chaveGrupo(setor, turno) {
+  return `${(setor || '').trim().toLowerCase()}__${(turno || '').trim().toLowerCase()}`
+}
+
+// As tarefas de um grupo, já na ordem de execução.
+export function tarefasDoGrupo(tarefas, setor, turno) {
+  const alvo = chaveGrupo(setor, turno)
+  return ordenarTarefas(tarefas.filter(t => grupoDaTarefa(t) === alvo))
 }
 
 // Próximo número livre do grupo, para uma tarefa nova entrar no fim da lista.
 export function proximaOrdem(tarefas, setor, turno) {
-  const alvo = `${(setor || '').trim()}__${(turno || '').trim()}`
+  const alvo = chaveGrupo(setor, turno)
   const maior = tarefas.reduce((m, t) => (
     grupoDaTarefa(t) === alvo && typeof t.ordem === 'number' && t.ordem > m ? t.ordem : m
   ), -1)
@@ -55,4 +66,49 @@ export function calcularBackfill(tarefas) {
     for (const t of semOrdem) pendentes.push({ id: t.id, ordem: proxima++ })
   }
   return pendentes
+}
+
+// Renumera um grupo a partir dos ids na ordem desejada e devolve só os
+// documentos que realmente mudaram — evita gravar escrita à toa no Firestore.
+export function aplicarNovaOrdem(tarefas, { setor, turno, ids }) {
+  const porId = Object.fromEntries(tarefas.map(t => [t.id, t]))
+  const mudancas = []
+  ids.forEach((id, i) => {
+    const t = porId[id]
+    if (!t) return
+    const patch = {}
+    if (t.ordem !== i) patch.ordem = i
+    if ((t.setorNome || '').trim().toLowerCase() !== (setor || '').trim().toLowerCase()) patch.setorNome = setor
+    if ((t.turno || '').trim().toLowerCase() !== (turno || '').trim().toLowerCase()) patch.turno = turno
+    if (Object.keys(patch).length > 0) mudancas.push({ id, ...patch })
+  })
+  return mudancas
+}
+
+// Move uma tarefa para uma posição — no mesmo grupo ou em outro setor/turno —
+// e renumera os grupos afetados. `posicao` nula joga para o fim.
+export function moverTarefa(tarefas, { tarefaId, paraSetor, paraTurno, posicao = null }) {
+  const alvo = tarefas.find(t => t.id === tarefaId)
+  if (!alvo) return []
+
+  const origemSetor = alvo.setorNome, origemTurno = alvo.turno
+  const destinoSetor = paraSetor != null ? paraSetor : alvo.setorNome
+  const destinoTurno = paraTurno != null ? paraTurno : alvo.turno
+  const mesmoGrupo = chaveGrupo(origemSetor, origemTurno) === chaveGrupo(destinoSetor, destinoTurno)
+
+  const idsDestino = tarefasDoGrupo(tarefas, destinoSetor, destinoTurno)
+    .filter(t => t.id !== tarefaId)
+    .map(t => t.id)
+  const pos = posicao == null ? idsDestino.length : Math.max(0, Math.min(posicao, idsDestino.length))
+  idsDestino.splice(pos, 0, tarefaId)
+
+  const mudancas = aplicarNovaOrdem(tarefas, { setor: destinoSetor, turno: destinoTurno, ids: idsDestino })
+  if (!mesmoGrupo) {
+    // O grupo de origem fica com um buraco na numeração; renumera também.
+    const idsOrigem = tarefasDoGrupo(tarefas, origemSetor, origemTurno)
+      .filter(t => t.id !== tarefaId)
+      .map(t => t.id)
+    mudancas.push(...aplicarNovaOrdem(tarefas, { setor: origemSetor, turno: origemTurno, ids: idsOrigem }))
+  }
+  return mudancas
 }
