@@ -7,7 +7,11 @@ import { horariosDeAviso, rotuloAntecedencia } from './turnos.js'
 
 // Quantos minutos para trás o disparo olha. Precisa ser maior que o intervalo
 // do agendador, senão um aviso pode cair entre duas execuções e nunca sair.
-export const JANELA_PADRAO = 15
+//
+// 5 porque o agendador roda de 1 em 1 minuto: dá quatro tentativas de folga
+// se alguma execução falhar, sem atrasar o aviso de forma perceptível.
+// Ajustável pela variável LEMBRETES_JANELA se o agendador mudar de ritmo.
+export const JANELA_PADRAO = 5
 
 // `agora` = { hora, minuto, diaSemana }. Devolve os avisos cuja hora caiu
 // dentro da janela — o de menor antecedência primeiro, que é o mais urgente.

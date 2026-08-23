@@ -93,6 +93,14 @@ export default async function handler(req, res) {
 
         if (!deveAvisar({ total, feitas, concluido })) continue
 
+        // Os aparelhos vêm ANTES do registro de envio de propósito: marcar o
+        // aviso como enviado sem ter para quem mandar o queimaria em silêncio,
+        // e ele nunca mais sairia — mesmo que alguém ative os lembretes logo
+        // depois, ainda dentro da janela.
+        const aparelhos = await db.collection('restaurants').doc(rest.id).collection('dispositivos').get()
+        const tokens = aparelhos.docs.map(d => d.data().token).filter(Boolean)
+        if (tokens.length === 0) { relatorio.pulados.push(`${rest.id}: sem aparelho`); continue }
+
         // Trava contra envio repetido: se o agendador rodar duas vezes na
         // mesma janela, a segunda encontra o registro e desiste.
         const criou = await db.runTransaction(async tx => {
@@ -102,10 +110,6 @@ export default async function handler(req, res) {
           return true
         })
         if (!criou) continue
-
-        const aparelhos = await db.collection('restaurants').doc(rest.id).collection('dispositivos').get()
-        const tokens = aparelhos.docs.map(d => d.data().token).filter(Boolean)
-        if (tokens.length === 0) { relatorio.pulados.push(`${rest.id}: sem aparelho`); continue }
 
         const { titulo, corpo } = textoDoAviso({ turno: aviso.turno, antes: aviso.antes, feitas, total })
         const resposta = await adm.messaging().sendEachForMulticast({
