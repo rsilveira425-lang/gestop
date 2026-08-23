@@ -5,7 +5,7 @@ import { DndContext, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useS
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { DEFAULT_TURNOS } from '../../config/turnos'
+import { DEFAULT_TURNOS, DIAS_SEMANA, AVISOS_PADRAO, horariosDeAviso, formatarHorario, rotuloAntecedencia } from '../../config/turnos'
 import { ordenarTarefas, proximaOrdem, calcularBackfill, tarefasDoGrupo, aplicarNovaOrdem, moverTarefa, chaveGrupo } from '../../config/tarefas'
 
 // Largura a partir da qual cabem colunas lado a lado. Abaixo disso o kanban
@@ -251,7 +251,24 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
 
   async function salvarTurnos() {
     const limpos = turnosEdit
-      .map(t => ({ _orig: t._orig, nome: String(t.nome || '').trim(), horaLimite: Math.min(23, Math.max(0, parseInt(t.horaLimite, 10) || 0)) }))
+      .map(t => ({
+        _orig: t._orig,
+        nome: String(t.nome || '').trim(),
+        horaLimite: Math.min(23, Math.max(0, parseInt(t.horaLimite, 10) || 0)),
+        minutoLimite: Math.min(59, Math.max(0, parseInt(t.minutoLimite, 10) || 0)),
+        avisos: (Array.isArray(t.avisos) && t.avisos.length > 0 ? t.avisos : AVISOS_PADRAO)
+          .map(a => Math.max(0, parseInt(a, 10) || 0))
+          .filter((a, i, arr) => arr.indexOf(a) === i)
+          .sort((a, b) => b - a),
+        // Só guarda a exceção se ela tiver dias marcados
+        excecoes: (t._diasExcecao || []).length > 0
+          ? [{
+              dias: [...t._diasExcecao].sort((a, b) => a - b),
+              hora: Math.min(23, Math.max(0, parseInt(t._horaExcecao, 10) || 0)),
+              minuto: Math.min(59, Math.max(0, parseInt(t._minutoExcecao, 10) || 0)),
+            }]
+          : [],
+      }))
       .filter(t => t.nome)
     if (limpos.length === 0) { alert('Cadastre pelo menos um turno.'); return }
     const nomes = limpos.map(t => t.nome.toLowerCase())
@@ -277,7 +294,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
           }
         }
       }
-      const finais = limpos.map(({ nome, horaLimite }) => ({ nome, horaLimite }))
+      const finais = limpos.map(({ nome, horaLimite, minutoLimite, avisos, excecoes }) => ({ nome, horaLimite, minutoLimite, avisos, excecoes }))
       await updateDoc(doc(db, 'restaurants', restaurantId), { turnos: finais })
       onTurnosAtualizados(finais)
       setVerTurnos(false)
@@ -342,25 +359,95 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
         <button style={s.back} onClick={onVoltar}>{String.fromCharCode(8592)}</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>Gerenciar Tarefas</h1>
           <button onClick={() => setVerSetores(p => !p)} style={{ marginLeft:'auto', padding:'6px 12px', backgroundColor: verSetores ? '#2563eb' : '#f1f5f9', color: verSetores ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Setores</button>
-          <button onClick={() => { setVerTurnos(p => !p); setTurnosEdit(turnos.map(t => ({ ...t, _orig: t.nome }))) }} style={{ padding:'6px 12px', backgroundColor: verTurnos ? '#2563eb' : '#f1f5f9', color: verTurnos ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Turnos</button>
+          <button onClick={() => { setVerTurnos(p => !p); setTurnosEdit(turnos.map(t => ({ ...t, _orig: t.nome, minutoLimite: t.minutoLimite ?? 0, avisos: t.avisos?.length ? t.avisos : AVISOS_PADRAO, _diasExcecao: t.excecoes?.[0]?.dias || [], _horaExcecao: t.excecoes?.[0]?.hora ?? (t.horaLimite ?? 0), _minutoExcecao: t.excecoes?.[0]?.minuto ?? 0 }))) }} style={{ padding:'6px 12px', backgroundColor: verTurnos ? '#2563eb' : '#f1f5f9', color: verTurnos ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Turnos</button>
       </div>
 
       {verTurnos && turnosEdit && (
         <div style={{ padding:'16px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', marginBottom:'8px' }}>
           <p style={{ margin:'0 0 4px', fontWeight:'600', fontSize:'14px', color:'#1e293b' }}>Turnos do restaurante</p>
           <p style={{ margin:'0 0 12px', fontSize:'12px', color:'#94a3b8' }}>Hora limite = horário em que o turno deve estar concluído (gera alerta).</p>
-          {turnosEdit.map((t, i) => (
-            <div key={i} style={{ display:'flex', gap:'8px', alignItems:'center', marginBottom:'8px' }}>
-              <input value={t.nome} onChange={e => setTurnosEdit(prev => prev.map((x, j) => j === i ? { ...x, nome: e.target.value } : x))}
-                placeholder="Nome do turno" style={{ flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', minWidth:0 }} />
-              <input type="number" min={0} max={23} value={t.horaLimite} onChange={e => setTurnosEdit(prev => prev.map((x, j) => j === i ? { ...x, horaLimite: e.target.value } : x))}
-                style={{ width:'60px', padding:'8px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', textAlign:'center' }} />
-              <span style={{ fontSize:'12px', color:'#94a3b8' }}>h</span>
-              <button onClick={() => setTurnosEdit(prev => prev.filter((_, j) => j !== i))} style={{ padding:'6px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', color:'#dc2626', fontSize:'12px', cursor:'pointer' }}>remover</button>
-            </div>
-          ))}
+          {turnosEdit.map((t, i) => {
+            const mudar = campos => setTurnosEdit(prev => prev.map((x, j) => j === i ? { ...x, ...campos } : x))
+            const temExcecao = (t._diasExcecao || []).length > 0
+            const inputHora = { width:'54px', padding:'8px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', textAlign:'center' }
+            return (
+              <div key={i} style={{ backgroundColor:'white', border:'1px solid #e2e8f0', borderRadius:'10px', padding:'14px', marginBottom:'10px' }}>
+                <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+                  <input value={t.nome} onChange={e => mudar({ nome: e.target.value })}
+                    placeholder="Nome do turno" style={{ flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', minWidth:0 }} />
+                  <input type="number" min={0} max={23} value={t.horaLimite} onChange={e => mudar({ horaLimite: e.target.value })} style={inputHora} />
+                  <span style={{ fontSize:'15px', color:'#94a3b8', fontWeight:'700' }}>:</span>
+                  <input type="number" min={0} max={59} step={5} value={t.minutoLimite ?? 0} onChange={e => mudar({ minutoLimite: e.target.value })} style={inputHora} />
+                  <button onClick={() => setTurnosEdit(prev => prev.filter((_, j) => j !== i))} style={{ padding:'6px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', color:'#dc2626', fontSize:'12px', cursor:'pointer' }}>remover</button>
+                </div>
+
+                {/* Quando avisar a equipe, contado para trás a partir do horário acima */}
+                <div style={{ marginTop:'12px' }}>
+                  <p style={{ margin:'0 0 6px', fontSize:'12px', color:'#64748b', fontWeight:'600' }}>Avisar a equipe</p>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', alignItems:'center' }}>
+                    {(t.avisos || []).map((a, k) => (
+                      <span key={k} style={{ display:'inline-flex', alignItems:'center', gap:'6px', backgroundColor:'#eff6ff', color:'#2563eb', borderRadius:'20px', padding:'5px 10px', fontSize:'12px', fontWeight:'600' }}>
+                        {rotuloAntecedencia(a)}
+                        <button onClick={() => mudar({ avisos: t.avisos.filter((_, m) => m !== k) })}
+                          aria-label="Remover aviso" style={{ border:'none', background:'none', color:'#2563eb', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>{String.fromCharCode(215)}</button>
+                      </span>
+                    ))}
+                    <select value="" onChange={e => { const v = parseInt(e.target.value, 10); if (!Number.isNaN(v) && !(t.avisos || []).includes(v)) mudar({ avisos: [...(t.avisos || []), v].sort((a, b) => b - a) }) }}
+                      style={{ padding:'5px 8px', border:'1px dashed #cbd5e1', borderRadius:'20px', fontSize:'12px', color:'#64748b', cursor:'pointer', background:'#f8fafc' }}>
+                      <option value="">+ aviso</option>
+                      <option value="120">2h antes</option>
+                      <option value="60">1h antes</option>
+                      <option value="30">30 min antes</option>
+                      <option value="15">15 min antes</option>
+                      <option value="0">na hora</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Fim de semana costuma ter horário diferente */}
+                <div style={{ marginTop:'12px' }}>
+                  <p style={{ margin:'0 0 6px', fontSize:'12px', color:'#64748b', fontWeight:'600' }}>Dias com horário diferente</p>
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'4px', alignItems:'center' }}>
+                    {DIAS_SEMANA.map(d => {
+                      const marcado = (t._diasExcecao || []).includes(d.n)
+                      return (
+                        <button key={d.n} onClick={() => mudar({ _diasExcecao: marcado ? t._diasExcecao.filter(x => x !== d.n) : [...(t._diasExcecao || []), d.n] })}
+                          style={{ padding:'5px 9px', borderRadius:'6px', border:'1px solid ' + (marcado ? '#2563eb' : '#e2e8f0'), backgroundColor: marcado ? '#2563eb' : 'white', color: marcado ? 'white' : '#64748b', fontSize:'12px', fontWeight:'600', cursor:'pointer' }}>
+                          {d.curto}
+                        </button>
+                      )
+                    })}
+                    {temExcecao && (
+                      <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', marginLeft:'6px' }}>
+                        <input type="number" min={0} max={23} value={t._horaExcecao ?? 0} onChange={e => mudar({ _horaExcecao: e.target.value })} style={inputHora} />
+                        <span style={{ fontSize:'15px', color:'#94a3b8', fontWeight:'700' }}>:</span>
+                        <input type="number" min={0} max={59} step={5} value={t._minutoExcecao ?? 0} onChange={e => mudar({ _minutoExcecao: e.target.value })} style={inputHora} />
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Confere na hora: mostra os horários que vão realmente disparar */}
+                <div style={{ marginTop:'12px', backgroundColor:'#f8fafc', borderRadius:'8px', padding:'10px 12px' }}>
+                  {[
+                    { rotulo: temExcecao ? 'Nos outros dias' : 'Todos os dias', dia: DIAS_SEMANA.find(d => !(t._diasExcecao || []).includes(d.n))?.n ?? 0 },
+                    ...(temExcecao ? [{ rotulo: (t._diasExcecao || []).slice().sort((a,b)=>a-b).map(n => DIAS_SEMANA[n].curto).join(', '), dia: t._diasExcecao[0] }] : []),
+                  ].map((linha, k) => {
+                    const previa = { horaLimite: t.horaLimite, minutoLimite: t.minutoLimite, avisos: t.avisos, excecoes: temExcecao ? [{ dias: t._diasExcecao, hora: t._horaExcecao, minuto: t._minutoExcecao }] : [] }
+                    const horarios = horariosDeAviso(previa, linha.dia)
+                    return (
+                      <p key={k} style={{ margin: k === 0 ? 0 : '4px 0 0', fontSize:'12px', color:'#475569' }}>
+                        <strong style={{ color:'#1e293b' }}>{linha.rotulo}:</strong>{' '}
+                        {horarios.length === 0 ? 'nenhum aviso' : horarios.map(h => formatarHorario(h)).join(' · ')}
+                      </p>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
           <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-            <button onClick={() => setTurnosEdit(prev => [...prev, { nome:'', horaLimite: 12, _orig: null }])} style={{ padding:'8px 14px', backgroundColor:'#f1f5f9', border:'1px dashed #cbd5e1', borderRadius:'8px', fontSize:'13px', color:'#475569', cursor:'pointer' }}>+ Turno</button>
+            <button onClick={() => setTurnosEdit(prev => [...prev, { nome:'', horaLimite: 12, minutoLimite: 0, avisos: AVISOS_PADRAO, _diasExcecao: [], _horaExcecao: 12, _minutoExcecao: 0, _orig: null }])} style={{ padding:'8px 14px', backgroundColor:'#f1f5f9', border:'1px dashed #cbd5e1', borderRadius:'8px', fontSize:'13px', color:'#475569', cursor:'pointer' }}>+ Turno</button>
             <button onClick={salvarTurnos} disabled={saving} style={{ marginLeft:'auto', padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>{saving ? 'Salvando...' : 'Salvar turnos'}</button>
           </div>
         </div>
