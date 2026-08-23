@@ -377,7 +377,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
                     placeholder="Nome do turno" style={{ flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none', minWidth:0 }} />
                   <input type="number" min={0} max={23} value={t.horaLimite} onChange={e => mudar({ horaLimite: e.target.value })} style={inputHora} />
                   <span style={{ fontSize:'15px', color:'#94a3b8', fontWeight:'700' }}>:</span>
-                  <input type="number" min={0} max={59} step={5} value={t.minutoLimite ?? 0} onChange={e => mudar({ minutoLimite: e.target.value })} style={inputHora} />
+                  <input type="number" min={0} max={55} step={5} value={t.minutoLimite ?? 0} onChange={e => mudar({ minutoLimite: e.target.value })} style={inputHora} />
                   <button onClick={() => setTurnosEdit(prev => prev.filter((_, j) => j !== i))} style={{ padding:'6px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', color:'#dc2626', fontSize:'12px', cursor:'pointer' }}>remover</button>
                 </div>
 
@@ -421,7 +421,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
                       <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', marginLeft:'6px' }}>
                         <input type="number" min={0} max={23} value={t._horaExcecao ?? 0} onChange={e => mudar({ _horaExcecao: e.target.value })} style={inputHora} />
                         <span style={{ fontSize:'15px', color:'#94a3b8', fontWeight:'700' }}>:</span>
-                        <input type="number" min={0} max={59} step={5} value={t._minutoExcecao ?? 0} onChange={e => mudar({ _minutoExcecao: e.target.value })} style={inputHora} />
+                        <input type="number" min={0} max={55} step={5} value={t._minutoExcecao ?? 0} onChange={e => mudar({ _minutoExcecao: e.target.value })} style={inputHora} />
                       </span>
                     )}
                   </div>
@@ -429,10 +429,14 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
 
                 {/* Confere na hora: mostra os horários que vão realmente disparar */}
                 <div style={{ marginTop:'12px', backgroundColor:'#f8fafc', borderRadius:'8px', padding:'10px 12px' }}>
-                  {[
-                    { rotulo: temExcecao ? 'Nos outros dias' : 'Todos os dias', dia: DIAS_SEMANA.find(d => !(t._diasExcecao || []).includes(d.n))?.n ?? 0 },
-                    ...(temExcecao ? [{ rotulo: (t._diasExcecao || []).slice().sort((a,b)=>a-b).map(n => DIAS_SEMANA[n].curto).join(', '), dia: t._diasExcecao[0] }] : []),
-                  ].map((linha, k) => {
+                  {(() => {
+                    const diaNormal = DIAS_SEMANA.find(d => !(t._diasExcecao || []).includes(d.n))
+                    return [
+                      // Com os 7 dias marcados não sobra dia usando o horário principal
+                      ...(diaNormal ? [{ rotulo: temExcecao ? 'Nos outros dias' : 'Todos os dias', dia: diaNormal.n }] : []),
+                      ...(temExcecao ? [{ rotulo: (t._diasExcecao || []).slice().sort((a,b)=>a-b).map(n => DIAS_SEMANA[n].curto).join(', '), dia: t._diasExcecao[0] }] : []),
+                    ]
+                  })().map((linha, k) => {
                     const previa = { horaLimite: t.horaLimite, minutoLimite: t.minutoLimite, avisos: t.avisos, excecoes: temExcecao ? [{ dias: t._diasExcecao, hora: t._horaExcecao, minuto: t._minutoExcecao }] : [] }
                     const horarios = horariosDeAviso(previa, linha.dia)
                     return (
@@ -442,6 +446,11 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
                       </p>
                     )
                   })}
+                  {(t._diasExcecao || []).length === DIAS_SEMANA.length && (
+                    <p style={{ margin:'6px 0 0', fontSize:'12px', color:'#b45309' }}>
+                      Todos os dias estão marcados como diferentes, então o horário de cima nunca é usado. Desmarque os dias que seguem o horário normal.
+                    </p>
+                  )}
                 </div>
               </div>
             )
