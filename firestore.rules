@@ -63,6 +63,19 @@ service cloud.firestore {
         allow write: if donoDe(rid);
       }
 
+      // Cada aparelho que ativou os lembretes. O funcionário grava o próprio;
+      // o envio é feito pelo servidor, que não passa por estas regras.
+      match /dispositivos/{aparelho} {
+        allow read: if donoDe(rid);
+        allow create, update: if membroDe(rid) && request.resource.data.uid == request.auth.uid;
+        allow delete: if membroDe(rid) || donoDe(rid);
+      }
+
+      // Registro de lembrete já enviado: só o servidor escreve e lê.
+      match /lembretes/{id} {
+        allow read, write: if false;
+      }
+
       match /checklists/{cid} {
         allow read: if membroDe(rid);
         allow create: if membroDe(rid) && request.resource.data.funcionarioId == request.auth.uid;

@@ -18,4 +18,14 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Funções da Vercel rodam no Node, não no navegador
+    files: ['api/**/*.js'],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Service worker tem os próprios globais (self, caches, clients)
+    files: ['public/sw.js'],
+    languageOptions: { globals: { ...globals.serviceworker } },
+  },
 ])

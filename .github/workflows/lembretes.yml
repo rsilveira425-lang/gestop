@@ -1,0 +1,30 @@
+# Agendador dos lembretes do Gestop.
+#
+# A Vercel no plano gratuito só dispara uma vez por dia, então quem chama a
+# função é o GitHub — que é de graça em repositório público.
+#
+# Roda de 5 em 5 minutos e a função decide se algum aviso vence agora. Enviar
+# repetido não é problema: a função guarda o que já mandou e ignora o segundo.
+name: Lembretes do checklist
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:   # permite disparar na mão pela aba Actions, para testar
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar o endpoint de lembretes
+        run: |
+          resposta=$(curl -sS -w "\n%{http_code}" -X POST \
+            "https://gestop.vercel.app/api/enviar-lembretes" \
+            -H "x-lembretes-secret: ${{ secrets.LEMBRETES_SECRET }}")
+          corpo=$(echo "$resposta" | sed '$d')
+          codigo=$(echo "$resposta" | tail -n1)
+          echo "$corpo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::Falhou com HTTP $codigo"
+            exit 1
+          fi

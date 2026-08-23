@@ -8,6 +8,7 @@ import GerenciarTarefas from '../tarefas/GerenciarTarefas'
 import Equipe from '../equipe/Equipe'
 import { DEFAULT_TURNOS } from '../../config/turnos'
 import { ordenarTarefas } from '../../config/tarefas'
+import { pushDisponivel, permissaoAtual, ativarNotificacoes, jaAtivouNesteAparelho, ehIOS, instaladoNaTelaInicial, registrarServiceWorker } from '../../services/push'
 
 export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, diasTrial = null, onRestaurantUpdate = () => {} }) {
   const { user } = useAuth()
@@ -33,13 +34,11 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const [setorAtivo, setSetorAtivo] = useState(null)
   const [emailReenviado, setEmailReenviado] = useState(false)
+  const [avisoPush, setAvisoPush] = useState({ mostrar: false, estado: 'convite' })
   const fileRefs = useRef({})
   const checklistIdRef = useRef(null)
   const criandoChecklistRef = useRef(null)
   const hoje = localDate()
-
-  useEffect(() => { carregarDados() }, [turnoAtivo])
-  useEffect(() => { verificarAlertas() }, [])
 
   // Confete sóbrio ao concluir o turno
   useEffect(() => {
@@ -59,6 +58,24 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
     const t = setTimeout(() => nodes.forEach(n => n.remove()), 3600)
     return () => { clearTimeout(t); nodes.forEach(n => n.remove()) }
   }, [celebrar])
+
+  // Registra o service worker sempre (é ele que faz o app abrir sem internet)
+  // e só oferece os lembretes a quem ainda não ativou neste aparelho.
+  async function registrarPush() {
+    registrarServiceWorker().catch(e => console.error(e))
+    if (!(await pushDisponivel())) return
+    if (jaAtivouNesteAparelho() || permissaoAtual() === 'denied') return
+    if (ehIOS() && !instaladoNaTelaInicial()) { setAvisoPush({ mostrar: true, estado: 'ios' }); return }
+    setAvisoPush({ mostrar: true, estado: 'convite' })
+  }
+
+  async function ligarLembretes() {
+    setAvisoPush(p => ({ ...p, estado: 'ativando' }))
+    const r = await ativarNotificacoes({ restaurantId, uid: user.uid, nome: userName })
+    if (r.ok) { setAvisoPush({ mostrar: true, estado: 'pronto' }); return }
+    if (r.motivo === 'ios-sem-instalar') { setAvisoPush({ mostrar: true, estado: 'ios' }); return }
+    setAvisoPush({ mostrar: true, estado: r.motivo === 'negada' ? 'negada' : 'erro' })
+  }
 
   async function verificarAlertas() {
     const hora = new Date().getHours()
@@ -111,6 +128,12 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
     } catch(e) { console.error(e) }
     setLoading(false)
   }
+
+  // Ficam depois das funções acima de propósito: efeito que chama função
+  // declarada abaixo dele engana o linter e esconde closure velha.
+  useEffect(() => { carregarDados() }, [turnoAtivo])
+  useEffect(() => { verificarAlertas() }, [])
+  useEffect(() => { registrarPush() }, [])
 
   async function salvarResposta(id, val) {
     setUltimaResp(id)
@@ -284,6 +307,38 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
             style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: emailReenviado ? '#cbd5e1' : '#2563eb', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
             {emailReenviado ? 'Enviado ✓' : 'Reenviar'}
           </button>
+        </div>
+      )}
+
+      {avisoPush.mostrar && (
+        <div style={{ backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', padding:'10px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
+          {avisoPush.estado === 'ios' ? (
+            <p style={{ margin:0, fontSize:'13px', color:'#1e40af' }}>
+              <strong>Para receber os lembretes no iPhone:</strong> toque em Compartilhar no Safari e escolha "Adicionar à Tela de Início". Depois abra o Gestop por esse ícone.
+            </p>
+          ) : avisoPush.estado === 'pronto' ? (
+            <p style={{ margin:0, fontSize:'13px', color:'#166534' }}>Lembretes ativados neste aparelho ✓</p>
+          ) : avisoPush.estado === 'negada' ? (
+            <p style={{ margin:0, fontSize:'13px', color:'#1e40af' }}>
+              Notificação bloqueada neste aparelho. Para liberar, ajuste nas configurações do navegador para este site.
+            </p>
+          ) : avisoPush.estado === 'erro' ? (
+            <p style={{ margin:0, fontSize:'13px', color:'#991b1b' }}>Não consegui ativar os lembretes agora. Tente de novo mais tarde.</p>
+          ) : (
+            <p style={{ margin:0, fontSize:'13px', color:'#1e40af' }}>Quer ser avisado no celular quando o checklist estiver perto do prazo?</p>
+          )}
+          <div style={{ display:'flex', gap:'8px' }}>
+            {(avisoPush.estado === 'convite' || avisoPush.estado === 'ativando') && (
+              <button disabled={avisoPush.estado === 'ativando'} onClick={ligarLembretes}
+                style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: avisoPush.estado === 'ativando' ? '#cbd5e1' : '#2563eb', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
+                {avisoPush.estado === 'ativando' ? 'Ativando...' : 'Ativar lembretes'}
+              </button>
+            )}
+            <button onClick={() => setAvisoPush({ mostrar: false, estado: 'convite' })}
+              style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor:'#e2e8f0', color:'#475569', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
+              {avisoPush.estado === 'pronto' ? 'Fechar' : 'Agora não'}
+            </button>
+          </div>
         </div>
       )}
 
