@@ -199,7 +199,7 @@ export default function Landing({ onNavigate }) {
   return (
     <div className="glp-page">
       <style>{`
-.glp-page{--blue:#2563eb;--blue-dark:#1d4ed8;--blue-soft:#eff4ff;--brand-bright:#3b82f6;--ink:#0f172a;--dark:#0a1330;--muted:#64748b;--line:#e2e8f0;--bg:#ffffff;--bg-soft:#f8fafc;--green:#16a34a;--radius:16px;--shadow:0 10px 30px -12px rgba(15,23,42,.18);--shadow-lg:0 30px 60px -20px rgba(15,23,42,.30);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+.glp-page{--blue:#1d4ed8;--blue-dark:#0f1f4d;--blue-soft:#eef4ff;--brand-bright:#60a5fa;--ink:#0f172a;--dark:#050b24;--muted:#64748b;--line:#e2e8f0;--bg:#ffffff;--bg-soft:#f8fafc;--green:#16a34a;--radius:16px;--shadow:0 10px 30px -12px rgba(15,23,42,.18);--shadow-lg:0 30px 60px -20px rgba(15,23,42,.30);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
 .glp-page *{box-sizing:border-box}
 .glp-page svg{display:block;max-width:100%}
 .glp-page a{color:inherit;text-decoration:none}
@@ -233,7 +233,7 @@ export default function Landing({ onNavigate }) {
 .glp-hero-art{display:flex;justify-content:center;position:relative}
 .glp-badges{display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center;align-items:center;margin-top:18px;padding:22px 0 0;color:var(--muted);font-weight:600;font-size:14px}
 .glp-badges span{display:inline-flex;align-items:center;gap:7px}
-.glp-stats{background:linear-gradient(100deg,var(--blue-dark),var(--blue));color:#fff;padding:42px 0}
+.glp-stats{background:linear-gradient(100deg,var(--dark),var(--blue-dark) 55%,var(--blue));color:#fff;padding:42px 0}
 .glp-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;text-align:center}
 @media(min-width:760px){.glp-stats-grid{grid-template-columns:repeat(4,1fr)}}
 .glp-stat b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em}
