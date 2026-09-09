@@ -70,6 +70,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
   const [loading, setLoading] = useState(true)
   const [adicionando, setAdicionando] = useState(null)
   const [novoTexto, setNovoTexto] = useState('')
+  const [novoFotoObrigatoria, setNovoFotoObrigatoria] = useState(false)
   const [editando, setEditando] = useState(null)
   const [saving, setSaving] = useState(false)
   const [verSetores, setVerSetores] = useState(false)
@@ -193,9 +194,11 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
       setorNome: ctx.setor,
       turno: ctx.turno,
       ordem: proximaOrdem(tarefas, ctx.setor, ctx.turno),
-      criadoEm: new Date().toISOString()
+      criadoEm: new Date().toISOString(),
+      fotoObrigatoria: novoFotoObrigatoria
     })
     setNovoTexto('')
+    setNovoFotoObrigatoria(false)
     await carregar()
     setAdicionando(ctx)
     setSaving(false)
@@ -205,7 +208,8 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
     if (!editando || !editando.texto.trim()) return
     setSaving(true)
     await updateDoc(doc(db, 'restaurants', restaurantId, 'tarefas', editando.id), {
-      texto: editando.texto.trim()
+      texto: editando.texto.trim(),
+      fotoObrigatoria: !!editando.fotoObrigatoria
     })
     setEditando(null)
     await carregar()
@@ -238,6 +242,8 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
     btnAdd: { width:'100%', padding:'10px', backgroundColor:'#f8fafc', border:'1px dashed #cbd5e1', borderRadius:'0', fontSize:'13px', color:'#64748b', cursor:'pointer', textAlign:'left' },
     editBox: { padding:'12px 20px', backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', display:'flex', gap:'8px', alignItems:'center' },
     dica: { margin:'0 0 14px', fontSize:'13px', color:'#64748b', backgroundColor:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:'8px', padding:'10px 14px' },
+    checkboxFoto: { display:'flex', alignItems:'center', gap:'5px', fontSize:'12px', color:'#b45309', whiteSpace:'nowrap', cursor:'pointer' },
+    badgeFoto: { fontSize:'11px', color:'#b45309', backgroundColor:'#fffbeb', padding:'2px 8px', borderRadius:'10px', fontWeight:'600', marginLeft:'8px' },
   }
 
   async function adicionarSetor() {
@@ -318,14 +324,18 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
   // Linha de tarefa: o miolo é igual nos dois layouts
   const linhaTarefa = (tarefa, setorDaLinha) => (
     editando?.id === tarefa.id ? (
-      <div key={tarefa.id} style={s.editBox}>
+      <div key={tarefa.id} style={{ ...s.editBox, flexWrap:'wrap' }}>
         <input style={s.addInput} value={editando.texto} onChange={e => setEditando({...editando, texto: e.target.value})} autoFocus />
+        <label style={s.checkboxFoto}>
+          <input type="checkbox" checked={!!editando.fotoObrigatoria} onChange={e => setEditando({...editando, fotoObrigatoria: e.target.checked})} />
+          Foto obrigatória
+        </label>
         <button style={s.btnConfirm} onClick={salvarEdicao} disabled={saving}>Salvar</button>
         <button style={s.btnCancel} onClick={() => setEditando(null)}>{String.fromCharCode(215)}</button>
       </div>
     ) : (
       <TarefaArrastavel key={tarefa.id} tarefa={tarefa}>
-        <span style={s.tarefaTexto}>{tarefa.texto}</span>
+        <span style={s.tarefaTexto}>{tarefa.texto}{tarefa.fotoObrigatoria && <span style={s.badgeFoto}>📷 foto obrigatória</span>}</span>
         <button style={s.btnEdit} onClick={() => setEditando({...tarefa})}>editar</button>
         {!kanban && nomesSetores.length > 1 && (
           <button style={s.btnMover} onClick={() => setMovendo({ id: tarefa.id, setor: setorDaLinha })}>mover</button>
@@ -338,14 +348,18 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
   const blocoAdicionar = (setor, turno) => {
     const esteAdicionando = adicionando?.setor === setor && adicionando?.turno === turno
     return esteAdicionando ? (
-      <div style={s.addRow}>
+      <div style={{ ...s.addRow, flexWrap:'wrap' }}>
         <input style={s.addInput} placeholder="Nome da tarefa..." value={novoTexto} onChange={e => setNovoTexto(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') adicionarTarefa() }} autoFocus />
+        <label style={s.checkboxFoto}>
+          <input type="checkbox" checked={novoFotoObrigatoria} onChange={e => setNovoFotoObrigatoria(e.target.checked)} />
+          Foto obrigatória
+        </label>
         <button style={s.btnConfirm} onClick={adicionarTarefa} disabled={saving}>Salvar</button>
-        <button style={s.btnCancel} onClick={() => { setAdicionando(null); setNovoTexto('') }}>{String.fromCharCode(215)}</button>
+        <button style={s.btnCancel} onClick={() => { setAdicionando(null); setNovoTexto(''); setNovoFotoObrigatoria(false) }}>{String.fromCharCode(215)}</button>
       </div>
     ) : (
-      <button style={s.btnAdd} onClick={() => { setAdicionando({ setor, turno }); setNovoTexto('') }}>
+      <button style={s.btnAdd} onClick={() => { setAdicionando({ setor, turno }); setNovoTexto(''); setNovoFotoObrigatoria(false) }}>
         + Adicionar Tarefa
       </button>
     )

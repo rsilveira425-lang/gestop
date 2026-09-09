@@ -43,11 +43,11 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   // Confete sóbrio ao concluir o turno
   useEffect(() => {
     if (!celebrar) return
-    const cores = celebrar.marca ? ['#0a0a0a', '#f97316', '#0a0a0a', '#fb923c', '#0a0a0a'] : ['#2563eb', '#16a34a', '#f59e0b', '#ffffff', '#60a5fa']
+    const cores = ['#0a0a0a', '#f97316', '#0a0a0a', '#fb923c', '#0a0a0a']
     const nodes = []
     for (let i = 0; i < 40; i++) {
       const c = document.createElement('div')
-      c.style.cssText = `position:fixed;top:-12px;left:${Math.random()*100}%;width:8px;height:13px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]};${celebrar.marca ? 'box-shadow:0 0 0 1px rgba(255,255,255,0.25);' : ''}`
+      c.style.cssText = `position:fixed;top:-12px;left:${Math.random()*100}%;width:8px;height:13px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]};box-shadow:0 0 0 1px rgba(255,255,255,0.25);`
       document.body.appendChild(c); nodes.push(c)
       const x = (Math.random()*2-1)*140, rot = Math.random()*720
       c.animate(
@@ -210,7 +210,15 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const normSetor = s => (s || '').trim().toLowerCase()
   const chaveSetor = s => normSetor(s).replace(/[.~*/[\]]/g, '_') // caracteres proibidos em nomes de campo do Firestore
   const tarefasDoSetor = s => tarefas.filter(t => normSetor(t.setorNome) === normSetor(s))
-  const setorCompleto = s => { const ts = tarefasDoSetor(s); return ts.length > 0 && ts.every(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao') }
+  // "Não" exige comentário explicando o motivo; foto obrigatória da tarefa também trava a conclusão até ter foto
+  const respostaCompleta = t => {
+    const r = respostas[t.id]
+    if (r !== 'sim' && r !== 'nao') return false
+    if (r === 'nao' && !(comentarios[t.id] || '').trim()) return false
+    if (t.fotoObrigatoria && !fotos[t.id]) return false
+    return true
+  }
+  const setorCompleto = s => { const ts = tarefasDoSetor(s); return ts.length > 0 && ts.every(respostaCompleta) }
 
   async function concluirSetor(nome) {
     setSalvando(true)
@@ -223,7 +231,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       setSetoresConcluidos(novo)
       // Se todas as tarefas do turno estão respondidas e todos os setores concluídos, fecha o turno
       const setores = [...new Set(tarefas.map(t => t.setorNome).filter(Boolean))]
-      const tudoRespondido = tarefas.length > 0 && tarefas.every(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao')
+      const tudoRespondido = tarefas.length > 0 && tarefas.every(respostaCompleta)
       const todosSetores = setores.every(s => novo[chaveSetor(s)])
       if (tudoRespondido && todosSetores) {
         await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { concluido: true, concluidoEm: serverTimestamp(), concluidoPor: { uid: user.uid, nome: userName || user.email || '' } })
@@ -240,7 +248,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   if (verEquipe) return <Equipe restaurantId={restaurantId} codigoAcesso={codigoAcesso} onCodigoAtualizado={c => onRestaurantUpdate({ codigoAcesso: c })} onVoltar={() => setVerEquipe(false)} />
 
   // Conta apenas respostas de tarefas que ainda existem (ignora IDs de tarefas editadas/excluídas)
-  const totalResp = tarefas.filter(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao').length
+  const totalResp = tarefas.filter(respostaCompleta).length
   const total = tarefas.length
   const todas = total > 0 && totalResp === total
   const prog = total > 0 ? Math.round((totalResp/total)*100) : 0
@@ -409,18 +417,27 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
               return (
                 <div key={tarefa.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', borderLeft: resp==='sim' ? '4px solid #16a34a' : resp==='nao' ? '4px solid #dc2626' : '4px solid #e2e8f0', animation: tarefa.id === ultimaResp ? 'gestopPop 0.4s ease' : undefined }}>
                   <p style={{ margin:'0 0 4px 0', fontSize:'15px', color:'#1e293b', fontWeight:'500' }}>{tarefa.texto}</p>
-                  {tarefa.setorNome && <span style={{ fontSize:'11px', color:'#94a3b8', backgroundColor:'#f8fafc', padding:'2px 8px', borderRadius:'10px' }}>{tarefa.setorNome}</span>}
+                  <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+                    {tarefa.setorNome && <span style={{ fontSize:'11px', color:'#94a3b8', backgroundColor:'#f8fafc', padding:'2px 8px', borderRadius:'10px' }}>{tarefa.setorNome}</span>}
+                    {tarefa.fotoObrigatoria && <span style={{ fontSize:'11px', color:'#b45309', backgroundColor:'#fffbeb', padding:'2px 8px', borderRadius:'10px', fontWeight:'600' }}>📷 Foto obrigatória</span>}
+                  </div>
                   {!concluido && (
                     <>
                       <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
                         <button onClick={() => salvarResposta(tarefa.id, 'sim')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='sim' ? '#16a34a' : '#f0fdf4', color: resp==='sim' ? 'white' : '#16a34a' }}>Sim</button>
                         <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='nao' ? '#dc2626' : '#fef2f2', color: resp==='nao' ? 'white' : '#dc2626' }}>Nao</button>
                       </div>
-                      <textarea placeholder="Comentario (opcional)..." value={coment} onChange={e => salvarComentario(tarefa.id, e.target.value)}
-                        style={{ width:'100%', marginTop:'10px', padding:'8px 10px', borderRadius:'8px', border:'1px solid #e2e8f0', fontSize:'13px', resize:'none', fontFamily:'inherit', boxSizing:'border-box', height:'60px' }} />
+                      {resp === 'nao' && !coment.trim() && (
+                        <p style={{ margin:'8px 0 0 0', fontSize:'12px', color:'#dc2626', fontWeight:'600' }}>Comentário obrigatório: explique por que não foi feito.</p>
+                      )}
+                      <textarea placeholder={resp === 'nao' ? 'Explique o motivo...' : 'Comentario (opcional)...'} value={coment} onChange={e => salvarComentario(tarefa.id, e.target.value)}
+                        style={{ width:'100%', marginTop:'10px', padding:'8px 10px', borderRadius:'8px', border: resp === 'nao' && !coment.trim() ? '1px solid #dc2626' : '1px solid #e2e8f0', fontSize:'13px', resize:'none', fontFamily:'inherit', boxSizing:'border-box', height:'60px' }} />
+                      {tarefa.fotoObrigatoria && !foto && (
+                        <p style={{ margin:'8px 0 0 0', fontSize:'12px', color:'#b45309', fontWeight:'600' }}>📷 Essa tarefa exige foto para concluir o checklist.</p>
+                      )}
                       <div style={{ marginTop:'8px' }}>
                         <input type="file" accept="image/*" capture="environment" style={{ display:'none' }} ref={el => fileRefs.current[tarefa.id]=el} onChange={e => handleFoto(tarefa.id, e.target.files[0])} />
-                        <button onClick={() => fileRefs.current[tarefa.id]?.click()} style={{ padding:'8px 14px', borderRadius:'8px', border:'1px solid #e2e8f0', backgroundColor:'#f8fafc', fontSize:'13px', cursor:'pointer', color:'#475569' }}>{foto ? 'Trocar foto' : 'Tirar foto'}</button>
+                        <button onClick={() => fileRefs.current[tarefa.id]?.click()} style={{ padding:'8px 14px', borderRadius:'8px', border: tarefa.fotoObrigatoria && !foto ? '1px solid #f59e0b' : '1px solid #e2e8f0', backgroundColor:'#f8fafc', fontSize:'13px', cursor:'pointer', color:'#475569' }}>{foto ? 'Trocar foto' : 'Tirar foto'}</button>
                         {foto && <span style={{ marginLeft:'8px', fontSize:'12px', color:'#16a34a' }}>Foto salva</span>}
                       </div>
                       {foto && <img src={foto} alt="foto" onClick={() => setFotoAmpliada(foto)} style={{ marginTop:'8px', width:'100%', borderRadius:'8px', maxHeight:'200px', objectFit:'cover', cursor:'pointer' }} />}
