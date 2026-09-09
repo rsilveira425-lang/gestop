@@ -54,19 +54,22 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
     const CORES = ['#0a0a0a', '#f97316', '#1a1a1a', '#fb923c', '#000000']
     const TOTAL = 2000
-    const DURACAO = 4200 // ms
-    const EMPILHADO = 260 // px acima do topo onde as peças começam empilhadas — fixo, não escala com a altura da tela (era o bug: numa tela alta de celular, a pilha ficava tão longe que a queda não terminava a tempo)
+    // Cada peça começa a cair num instante diferente (não numa altura diferente) e percorre
+    // a tela inteira num progresso 0→1 — assim a variedade não depende do tamanho da tela,
+    // e cada peça sempre termina exatamente a tempo, em qualquer aparelho.
+    const ATRASO_MAX = 500 // ms — janela em que as peças começam a cair, dá o efeito de cortina se abrindo
+    const QUEDA_BASE = 2200 // ms
+    const QUEDA_VAR = 1200 // ms
+    const DURACAO = ATRASO_MAX + QUEDA_BASE + QUEDA_VAR + 300 // ms de margem antes de limpar tudo
     const particulas = Array.from({ length: TOTAL }, () => {
       const fita = Math.random() < 0.25
-      const y0 = -20 - Math.random() * EMPILHADO
-      const distancia = H + 40 - y0 // até sair por baixo da tela
-      const vy = (distancia / (DURACAO / 1000)) * (1 + Math.random() * 0.35) // px/s — sempre rápido o bastante pra sair a tempo, com variação
       return {
-        x: Math.random() * W,
-        y: y0,
-        vy,
-        vx: (Math.random() - 0.5) * 130, // px/s
-        rot: Math.random() * Math.PI * 2,
+        x0: Math.random() * W,
+        y0: -20 - Math.random() * 20,
+        atraso: Math.random() * ATRASO_MAX,
+        duracao: QUEDA_BASE + Math.random() * QUEDA_VAR,
+        xDrift: (Math.random() * 2 - 1) * 160,
+        rot0: Math.random() * Math.PI * 2,
         vrot: (Math.random() - 0.5) * 18, // rad/s
         w: fita ? 4 + Math.random() * 2 : 5 + Math.random() * 5,
         h: fita ? 16 + Math.random() * 12 : 8 + Math.random() * 5,
@@ -74,25 +77,28 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       }
     })
 
-    let quadro, inicio, ultimoT
+    let quadro, inicio
     function desenhar(t) {
-      if (!inicio) { inicio = t; ultimoT = t }
-      const dt = Math.min((t - ultimoT) / 1000, 0.05) // trava saltos grandes (aba em segundo plano etc.)
-      ultimoT = t
+      if (!inicio) inicio = t
+      const decorrido = t - inicio
       ctx.clearRect(0, 0, W, H)
       for (const p of particulas) {
-        p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vrot * dt
-        if (p.y > H + 20) continue
+        const local = decorrido - p.atraso
+        if (local < 0) { ctx.save(); ctx.translate(p.x0, p.y0); ctx.rotate(p.rot0); ctx.fillStyle = p.cor; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); continue }
+        const progresso = local / p.duracao
+        if (progresso >= 1) continue
+        const x = p.x0 + progresso * p.xDrift
+        const y = p.y0 + progresso * (H + 80 - p.y0)
         ctx.save()
-        ctx.translate(p.x, p.y)
-        ctx.rotate(p.rot)
+        ctx.translate(x, y)
+        ctx.rotate(p.rot0 + p.vrot * (local / 1000))
         ctx.fillStyle = p.cor
         ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
         ctx.strokeStyle = 'rgba(255,255,255,0.25)'
         ctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h)
         ctx.restore()
       }
-      quadro = t - inicio < DURACAO ? requestAnimationFrame(desenhar) : null
+      quadro = decorrido < DURACAO ? requestAnimationFrame(desenhar) : null
       if (!quadro) canvas.remove()
     }
     quadro = requestAnimationFrame(desenhar)
