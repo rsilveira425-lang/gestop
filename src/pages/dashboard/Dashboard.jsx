@@ -40,27 +40,58 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const criandoChecklistRef = useRef(null)
   const hoje = localDate()
 
-  // Cortina de confete preto e laranja: uma parede de peças no topo que se abre caindo
+  // Cortina de confete preto e laranja num canvas — 2000 peças em DOM travariam o celular,
+  // então isso aqui é desenhado quadro a quadro em vez de virar 2000 elementos animados.
   useEffect(() => {
     if (!celebrar) return
-    const cores = ['#0a0a0a', '#f97316', '#0a0a0a', '#fb923c', '#0a0a0a']
-    const nodes = []
-    const TOTAL = 140
-    for (let i = 0; i < TOTAL; i++) {
-      const c = document.createElement('div')
+    const W = window.innerWidth, H = window.innerHeight
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const canvas = document.createElement('canvas')
+    canvas.style.cssText = `position:fixed;top:0;left:0;width:${W}px;height:${H}px;z-index:2001;pointer-events:none;`
+    canvas.width = W * dpr; canvas.height = H * dpr
+    document.body.appendChild(canvas)
+    const ctx = canvas.getContext('2d')
+    ctx.scale(dpr, dpr)
+
+    const CORES = ['#0a0a0a', '#f97316', '#1a1a1a', '#fb923c', '#000000']
+    const TOTAL = 2000
+    const particulas = Array.from({ length: TOTAL }, () => {
       const fita = Math.random() < 0.25
-      const largura = fita ? 5 + Math.random() * 3 : 6 + Math.random() * 6
-      const altura = fita ? 18 + Math.random() * 14 : 10 + Math.random() * 6
-      c.style.cssText = `position:fixed;top:-24px;left:${Math.random()*100}%;width:${largura}px;height:${altura}px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]};box-shadow:0 0 0 1px rgba(255,255,255,0.25);`
-      document.body.appendChild(c); nodes.push(c)
-      const x = (Math.random()*2-1)*180, rot = Math.random()*900 - 450
-      c.animate(
-        [{ transform:'translate(0,0) rotate(0)', opacity:1 }, { transform:`translate(${x}px,${window.innerHeight+80}px) rotate(${rot}deg)`, opacity:0.85 }],
-        { duration: 2200 + Math.random()*1200, delay: Math.random()*500, easing:'cubic-bezier(.2,.6,.4,1)' }
-      )
+      return {
+        x: Math.random() * W,
+        y: -20 - Math.random() * H * 1.4, // pilha "empurrada" acima da tela: cai em cascata, como cortina se abrindo
+        vy: 2.5 + Math.random() * 3.5,
+        vx: (Math.random() - 0.5) * 2.2,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.35,
+        w: fita ? 4 + Math.random() * 2 : 5 + Math.random() * 5,
+        h: fita ? 16 + Math.random() * 12 : 8 + Math.random() * 5,
+        cor: CORES[Math.floor(Math.random() * CORES.length)],
+      }
+    })
+
+    let quadro, inicio
+    const DURACAO = 4200
+    function desenhar(t) {
+      if (!inicio) inicio = t
+      ctx.clearRect(0, 0, W, H)
+      for (const p of particulas) {
+        p.x += p.vx; p.y += p.vy; p.rot += p.vrot
+        if (p.y > H + 20) continue
+        ctx.save()
+        ctx.translate(p.x, p.y)
+        ctx.rotate(p.rot)
+        ctx.fillStyle = p.cor
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'
+        ctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h)
+        ctx.restore()
+      }
+      quadro = t - inicio < DURACAO ? requestAnimationFrame(desenhar) : null
+      if (!quadro) canvas.remove()
     }
-    const t = setTimeout(() => nodes.forEach(n => n.remove()), 4400)
-    return () => { clearTimeout(t); nodes.forEach(n => n.remove()) }
+    quadro = requestAnimationFrame(desenhar)
+    return () => { if (quadro) cancelAnimationFrame(quadro); canvas.remove() }
   }, [celebrar])
 
   // Registra o service worker sempre (é ele que faz o app abrir sem internet)
