@@ -40,22 +40,26 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const criandoChecklistRef = useRef(null)
   const hoje = localDate()
 
-  // Confete sóbrio ao concluir o turno
+  // Cortina de confete preto e laranja: uma parede de peças no topo que se abre caindo
   useEffect(() => {
     if (!celebrar) return
     const cores = ['#0a0a0a', '#f97316', '#0a0a0a', '#fb923c', '#0a0a0a']
     const nodes = []
-    for (let i = 0; i < 40; i++) {
+    const TOTAL = 140
+    for (let i = 0; i < TOTAL; i++) {
       const c = document.createElement('div')
-      c.style.cssText = `position:fixed;top:-12px;left:${Math.random()*100}%;width:8px;height:13px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]};box-shadow:0 0 0 1px rgba(255,255,255,0.25);`
+      const fita = Math.random() < 0.25
+      const largura = fita ? 5 + Math.random() * 3 : 6 + Math.random() * 6
+      const altura = fita ? 18 + Math.random() * 14 : 10 + Math.random() * 6
+      c.style.cssText = `position:fixed;top:-24px;left:${Math.random()*100}%;width:${largura}px;height:${altura}px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]};box-shadow:0 0 0 1px rgba(255,255,255,0.25);`
       document.body.appendChild(c); nodes.push(c)
-      const x = (Math.random()*2-1)*140, rot = Math.random()*720
+      const x = (Math.random()*2-1)*180, rot = Math.random()*900 - 450
       c.animate(
-        [{ transform:'translate(0,0) rotate(0)', opacity:1 }, { transform:`translate(${x}px,${window.innerHeight+60}px) rotate(${rot}deg)`, opacity:0.85 }],
-        { duration: 1800 + Math.random()*900, delay: Math.random()*300, easing:'cubic-bezier(.2,.6,.4,1)' }
+        [{ transform:'translate(0,0) rotate(0)', opacity:1 }, { transform:`translate(${x}px,${window.innerHeight+80}px) rotate(${rot}deg)`, opacity:0.85 }],
+        { duration: 2200 + Math.random()*1200, delay: Math.random()*500, easing:'cubic-bezier(.2,.6,.4,1)' }
       )
     }
-    const t = setTimeout(() => nodes.forEach(n => n.remove()), 3600)
+    const t = setTimeout(() => nodes.forEach(n => n.remove()), 4400)
     return () => { clearTimeout(t); nodes.forEach(n => n.remove()) }
   }, [celebrar])
 
