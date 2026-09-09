@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../config/turnos'
@@ -12,29 +12,64 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVol
   const [detalhe, setDetalhe] = useState(null)
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  const [filtro, setFiltro] = useState('recente') // 'recente' | 'semana' | 'mes' | 'periodo'
+  const [rangeDias, setRangeDias] = useState(15)
+  const [temMais, setTemMais] = useState(true)
+  const [periodoInicio, setPeriodoInicio] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 30); return localDate(d) })
+  const [periodoFim, setPeriodoFim] = useState(() => localDate())
+  const totalAnteriorRef = useRef(0)
 
-  useEffect(() => { carregar() }, [])
+  function calcularIntervalo() {
+    const hoje = localDate()
+    if (filtro === 'semana') {
+      const d = new Date(); const diaSemana = d.getDay(); const diff = diaSemana === 0 ? -6 : 1 - diaSemana
+      const seg = new Date(d); seg.setDate(d.getDate() + diff)
+      return { inicio: localDate(seg), fim: hoje }
+    }
+    if (filtro === 'mes') {
+      const d = new Date()
+      return { inicio: localDate(new Date(d.getFullYear(), d.getMonth(), 1)), fim: hoje }
+    }
+    if (filtro === 'periodo') return { inicio: periodoInicio, fim: periodoFim }
+    const d = new Date(); d.setDate(d.getDate() - rangeDias)
+    return { inicio: localDate(d), fim: null }
+  }
+
+  useEffect(() => { carregar() }, [filtro, rangeDias, periodoInicio, periodoFim])
 
   async function carregar() {
     setLoading(true)
     try {
-      const d15 = new Date()
-      d15.setDate(d15.getDate() - 15)
-      const dataInicio = localDate(d15)
-
       const tSnap = await getDocs(collection(db, 'restaurants', restaurantId, 'tarefas'))
       const mapa = {}
       tSnap.docs.forEach(d => { const t = d.data(); mapa[d.id] = { texto: t.texto, setorNome: t.setorNome, ordem: t.ordem, criadoEm: t.criadoEm } })
       setMapaT(mapa)
 
+      const { inicio, fim } = calcularIntervalo()
       const ref = collection(db, 'restaurants', restaurantId, 'checklists')
-      const q = query(ref, where('data', '>=', dataInicio))
+      const q = fim ? query(ref, where('data', '>=', inicio), where('data', '<=', fim)) : query(ref, where('data', '>=', inicio))
       const snap = await getDocs(q)
       const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       lista.sort((a, b) => b.data.localeCompare(a.data))
+      if (filtro === 'recente') { setTemMais(lista.length > totalAnteriorRef.current); totalAnteriorRef.current = lista.length }
       setChecklists(lista)
     } catch(e) { console.error(e) }
     setLoading(false)
+  }
+
+  function selecionarFiltro(novo) {
+    setFiltro(novo)
+    if (novo === 'recente') { setRangeDias(15); totalAnteriorRef.current = 0 }
+  }
+
+  function legendaPeriodo() {
+    if (filtro === 'semana') return 'Esta semana'
+    if (filtro === 'mes') return 'Este mês'
+    if (filtro === 'periodo') {
+      const fmt = s => { const [a,m,d] = s.split('-'); return `${d}/${m}/${a}` }
+      return `De ${fmt(periodoInicio)} até ${fmt(periodoFim)}`
+    }
+    return `Últimos ${rangeDias} dias`
   }
 
   async function abrirDetalhe(cl) {
@@ -127,9 +162,28 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVol
         <button onClick={onVoltar} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700' }}>Histórico</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', opacity: 0.85 }}>Últimos 15 dias</p>
+          <p style={{ margin: '4px 0 0 0', fontSize: '13px', opacity: 0.85 }}>{legendaPeriodo()}</p>
         </div>
       </div>
+
+      <div style={{ padding: '16px 24px 0', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {[['recente', 'Recente'], ['semana', 'Esta semana'], ['mes', 'Este mês'], ['periodo', 'Período']].map(([id, label]) => (
+          <button key={id} onClick={() => selecionarFiltro(id)} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', backgroundColor: filtro === id ? '#2563eb' : '#f1f5f9', color: filtro === id ? 'white' : '#64748b' }}>{label}</button>
+        ))}
+      </div>
+
+      {filtro === 'periodo' && (
+        <div style={{ padding: '12px 24px 0', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '12px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            De
+            <input type="date" value={periodoInicio} max={periodoFim} onChange={e => setPeriodoInicio(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }} />
+          </label>
+          <label style={{ fontSize: '12px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            Até
+            <input type="date" value={periodoFim} min={periodoInicio} max={localDate()} onChange={e => setPeriodoFim(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }} />
+          </label>
+        </div>
+      )}
 
       <div style={{ padding: '20px 24px' }}>
         {loading ? (
@@ -172,6 +226,11 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVol
               </div>
             </div>
           ))
+        )}
+        {!loading && filtro === 'recente' && temMais && Object.keys(porData).length > 0 && (
+          <button onClick={() => setRangeDias(d => d + 15)} style={{ width: '100%', padding: '12px', marginTop: '4px', backgroundColor: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+            Carregar mais
+          </button>
         )}
       </div>
     </div>

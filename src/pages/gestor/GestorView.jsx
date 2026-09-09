@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import Historico from '../historico/Historico'
+import Gamificacao from '../gamificacao/Gamificacao'
 import { DEFAULT_TURNOS } from '../../config/turnos'
 import { compararTarefas } from '../../config/tarefas'
 
@@ -42,6 +43,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const [mapaT, setMapaT] = useState({})
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const [verHistorico, setVerHistorico] = useState(false)
+  const [verRanking, setVerRanking] = useState(false)
   const [fotosHoje, setFotosHoje] = useState(0)
 
   useEffect(() => { carregarDados() }, [data])
@@ -128,6 +130,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
 
   if (verHistorico) return <Historico restaurantId={restaurantId} turnos={turnos} onVoltar={() => setVerHistorico(false)} />
+  if (verRanking) return <Gamificacao restaurantId={restaurantId} turnos={turnos} onVoltar={() => setVerRanking(false)} />
 
   if (detalhe) return (
     <>
@@ -167,7 +170,10 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
         <button onClick={onVoltar} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>👑 Painel do Gestor</h1>
-        <button onClick={() => setVerHistorico(true)} style={{ marginLeft:'auto', padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Histórico</button>
+        <div style={{ marginLeft:'auto', display:'flex', gap:'8px' }}>
+          <button onClick={() => setVerRanking(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Ranking</button>
+          <button onClick={() => setVerHistorico(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Histórico</button>
+        </div>
       </div>
 
       <div style={{ margin:'16px 24px', backgroundColor:'#eff6ff', borderRadius:'12px', padding:'16px', border:'1px solid #bfdbfe' }}>

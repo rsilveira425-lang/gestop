@@ -43,11 +43,11 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   // Confete sóbrio ao concluir o turno
   useEffect(() => {
     if (!celebrar) return
-    const cores = ['#2563eb', '#16a34a', '#f59e0b', '#ffffff', '#60a5fa']
+    const cores = celebrar.marca ? ['#0a0a0a', '#f97316', '#0a0a0a', '#fb923c', '#0a0a0a'] : ['#2563eb', '#16a34a', '#f59e0b', '#ffffff', '#60a5fa']
     const nodes = []
     for (let i = 0; i < 40; i++) {
       const c = document.createElement('div')
-      c.style.cssText = `position:fixed;top:-12px;left:${Math.random()*100}%;width:8px;height:13px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]}`
+      c.style.cssText = `position:fixed;top:-12px;left:${Math.random()*100}%;width:8px;height:13px;border-radius:2px;z-index:2001;pointer-events:none;background:${cores[i%cores.length]};${celebrar.marca ? 'box-shadow:0 0 0 1px rgba(255,255,255,0.25);' : ''}`
       document.body.appendChild(c); nodes.push(c)
       const x = (Math.random()*2-1)*140, rot = Math.random()*720
       c.animate(
@@ -202,8 +202,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   }
   async function concluirChecklist() {
     if (!checklistIdRef.current) return; setSalvando(true)
-    await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistIdRef.current), { concluido: true, concluidoEm: serverTimestamp() })
-    setConcluido(true); setCelebrar({ titulo:'Turno concluído!', sub:'Tudo verificado e registrado.' }); setSalvando(false); verificarAlertas()
+    await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', checklistIdRef.current), { concluido: true, concluidoEm: serverTimestamp(), concluidoPor: { uid: user.uid, nome: userName || user.email || '' } })
+    setConcluido(true); setCelebrar({ titulo:'Turno concluído!', sub:'Tudo verificado e registrado.', marca:true }); setSalvando(false); verificarAlertas()
   }
 
   // Setores: nomes vêm das tarefas, então setores novos entram automaticamente
@@ -226,8 +226,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       const tudoRespondido = tarefas.length > 0 && tarefas.every(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao')
       const todosSetores = setores.every(s => novo[chaveSetor(s)])
       if (tudoRespondido && todosSetores) {
-        await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { concluido: true, concluidoEm: serverTimestamp() })
-        setConcluido(true); setCelebrar({ titulo:'Turno concluído!', sub:'Todos os setores fechados. Tudo registrado.' }); verificarAlertas()
+        await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), { concluido: true, concluidoEm: serverTimestamp(), concluidoPor: { uid: user.uid, nome: userName || user.email || '' } })
+        setConcluido(true); setCelebrar({ titulo:'Turno concluído!', sub:'Todos os setores fechados. Tudo registrado.', marca:true }); verificarAlertas()
       } else {
         setCelebrar({ titulo:`${nome} concluído!`, sub:'Setor registrado. Bora pro próximo!' })
       }
@@ -260,12 +260,13 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(15,23,42,0.78)', backdropFilter:'blur(3px)', zIndex:2000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', animation:'gestopFade 0.25s ease' }}>
           <svg width="130" height="130" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="8" />
-            <circle cx="60" cy="60" r="52" fill="none" stroke="#22c55e" strokeWidth="8" strokeLinecap="round" strokeDasharray="326.73" strokeDashoffset="326.73" transform="rotate(-90 60 60)" style={{ animation:'gestopBigRing 1s cubic-bezier(.4,0,.2,1) forwards' }} />
+            <circle cx="60" cy="60" r="52" fill="none" stroke={celebrar.marca ? '#f97316' : '#22c55e'} strokeWidth="8" strokeLinecap="round" strokeDasharray="326.73" strokeDashoffset="326.73" transform="rotate(-90 60 60)" style={{ animation:'gestopBigRing 1s cubic-bezier(.4,0,.2,1) forwards' }} />
             <path d="M40 62 l13 13 27 -29" fill="none" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="60" strokeDashoffset="60" style={{ animation:'gestopCheck 0.5s ease 0.9s forwards' }} />
           </svg>
           <h2 style={{ color:'white', margin:'18px 0 0 0', fontSize:'22px', fontWeight:'700', textAlign:'center' }}>{celebrar.titulo}</h2>
-          <p style={{ color:'rgba(255,255,255,0.85)', margin:'6px 0 22px 0', fontSize:'14px', textAlign:'center' }}>{celebrar.sub}</p>
-          <button onClick={() => setCelebrar(null)} style={{ backgroundColor:'white', color:'#16a34a', border:'none', borderRadius:'12px', padding:'12px 30px', fontSize:'15px', fontWeight:'700', cursor:'pointer' }}>Continuar</button>
+          <p style={{ color:'rgba(255,255,255,0.85)', margin:'6px 0 0 0', fontSize:'14px', textAlign:'center' }}>{celebrar.sub}</p>
+          {celebrar.marca && <p style={{ color:'#f97316', margin:'10px 0 22px 0', fontSize:'17px', fontWeight:'800', letterSpacing:'0.3px', textAlign:'center' }}>Isso é The Black.</p>}
+          <button onClick={() => setCelebrar(null)} style={{ backgroundColor:'white', color: celebrar.marca ? '#ea580c' : '#16a34a', border:'none', borderRadius:'12px', padding:'12px 30px', fontSize:'15px', fontWeight:'700', cursor:'pointer', marginTop: celebrar.marca ? 0 : '22px' }}>Continuar</button>
         </div>
       )}
 
