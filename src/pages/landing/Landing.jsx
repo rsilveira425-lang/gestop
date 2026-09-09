@@ -106,8 +106,8 @@ const FOTO_SVG = `<svg width="240" height="430" viewBox="0 0 240 430" xmlns="htt
           <path d="M64 258 l30 -28 l22 18 l20 -16 l24 24 z" fill="#94a3b8"/>
           <text x="120" y="332" font-family="sans-serif" font-size="9" fill="#64748b" text-anchor="middle">📍 Registrado no local · 08:07</text>
           <!-- comment -->
-          <rect x="20" y="346" width="200" height="50" rx="10" fill="#fff3e8"/>
-          <text x="32" y="366" font-family="sans-serif" font-size="9" font-weight="700" fill="#c2410c">💬 Comentário</text>
+          <rect x="20" y="346" width="200" height="50" rx="10" fill="#eff4ff"/>
+          <text x="32" y="366" font-family="sans-serif" font-size="9" font-weight="700" fill="#2563eb">💬 Comentário</text>
           <text x="32" y="383" font-family="sans-serif" font-size="9" fill="#475569">"Tudo certo, sem variação hoje."</text>
         </svg>`
 const DASH_SVG = `<svg width="420" height="320" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Painel do gestor mostrando turnos e equipe">
@@ -157,17 +157,17 @@ const DASH_SVG = `<svg width="420" height="320" viewBox="0 0 420 320" xmlns="htt
         </svg>`
 const RANKING_SVG = `<svg width="420" height="320" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ranking mensal da equipe com pontos por turno concluído">
           <rect x="0" y="0" width="420" height="320" rx="16" fill="#fff" stroke="#e2e8f0"/>
-          <path d="M0 16 a16 16 0 0 1 16 -16 h388 a16 16 0 0 1 16 16 v22 h-420 z" fill="#160f08"/>
+          <path d="M0 16 a16 16 0 0 1 16 -16 h388 a16 16 0 0 1 16 16 v22 h-420 z" fill="#1a1a1a"/>
           <circle cx="18" cy="19" r="4" fill="#ff5f57"/><circle cx="34" cy="19" r="4" fill="#febc2e"/><circle cx="50" cy="19" r="4" fill="#28c840"/>
           <text x="210" y="23" font-family="sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">gestop.app · Ranking</text>
           <text x="22" y="62" font-family="sans-serif" font-size="14" font-weight="800" fill="#0f172a">🏆 Setembro · Ranking do mês</text>
-          <text x="398" y="62" font-family="sans-serif" font-size="9.5" fill="#c2410c" text-anchor="end" font-weight="700">1pt/turno · +1 no prazo</text>
+          <text x="398" y="62" font-family="sans-serif" font-size="9.5" fill="#2563eb" text-anchor="end" font-weight="700">1pt/turno · +1 no prazo</text>
 
-          <rect x="22" y="76" width="376" height="56" rx="12" fill="#fff3e8" stroke="#fdba74"/>
+          <rect x="22" y="76" width="376" height="56" rx="12" fill="#eff4ff" stroke="#93c5fd"/>
           <text x="41" y="112" font-family="sans-serif" font-size="22" text-anchor="middle">🥇</text>
           <text x="64" y="103" font-family="sans-serif" font-size="13" font-weight="700" fill="#0f172a">Marina Alves</text>
           <text x="64" y="119" font-family="sans-serif" font-size="10" fill="#64748b">8 turnos concluídos · 6 no prazo</text>
-          <text x="382" y="110" font-family="sans-serif" font-size="20" font-weight="800" fill="#c2410c" text-anchor="end">32 pts</text>
+          <text x="382" y="110" font-family="sans-serif" font-size="20" font-weight="800" fill="#2563eb" text-anchor="end">32 pts</text>
 
           <rect x="22" y="140" width="376" height="52" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
           <text x="41" y="173" font-family="sans-serif" font-size="19" text-anchor="middle">🥈</text>
@@ -199,7 +199,7 @@ export default function Landing({ onNavigate }) {
   return (
     <div className="glp-page">
       <style>{`
-.glp-page{--blue:#c2410c;--blue-dark:#9a3412;--blue-soft:#fff3e8;--brand-bright:#f97316;--ink:#0f172a;--dark:#160f08;--muted:#64748b;--line:#e2e8f0;--bg:#ffffff;--bg-soft:#f8fafc;--green:#16a34a;--radius:16px;--shadow:0 10px 30px -12px rgba(15,23,42,.18);--shadow-lg:0 30px 60px -20px rgba(15,23,42,.30);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+.glp-page{--blue:#2563eb;--blue-dark:#1d4ed8;--blue-soft:#eff4ff;--brand-bright:#3b82f6;--ink:#0f172a;--dark:#0a1330;--muted:#64748b;--line:#e2e8f0;--bg:#ffffff;--bg-soft:#f8fafc;--green:#16a34a;--radius:16px;--shadow:0 10px 30px -12px rgba(15,23,42,.18);--shadow-lg:0 30px 60px -20px rgba(15,23,42,.30);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
 .glp-page *{box-sizing:border-box}
 .glp-page svg{display:block;max-width:100%}
 .glp-page a{color:inherit;text-decoration:none}
@@ -222,7 +222,7 @@ export default function Landing({ onNavigate }) {
 .glp-nav-links{display:flex;align-items:center;gap:10px}
 .glp-nav-links a.glp-link{display:none;color:var(--muted);font-weight:600;padding:8px 12px}
 @media(min-width:860px){.glp-nav-links a.glp-link{display:inline}}
-.glp-hero{background:radial-gradient(1200px 500px at 80% -10%,#fff1e0 0%,transparent 60%),var(--bg);padding:64px 0 72px}
+.glp-hero{background:radial-gradient(1200px 500px at 80% -10%,#e8f0ff 0%,transparent 60%),var(--bg);padding:64px 0 72px}
 .glp-hero-grid{display:grid;gap:48px;align-items:center}
 @media(min-width:920px){.glp-hero-grid{grid-template-columns:1.05fr .95fr;gap:32px}}
 .glp-hero h1{font-size:clamp(32px,5.2vw,52px);font-weight:800}
