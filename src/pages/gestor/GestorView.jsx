@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import Historico from '../historico/Historico'
@@ -32,7 +33,8 @@ function Anel({ pct, label }) {
   )
 }
 
-export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoProp, turnos = DEFAULT_TURNOS, onVoltar }) {
+export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoProp, turnos = DEFAULT_TURNOS }) {
+  const navigate = useNavigate()
   const TURNOS = turnos.map(t => t.nome)
   const [checklists, setChecklists] = useState([])
   const [loading, setLoading] = useState(true)
@@ -42,8 +44,6 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const [detalhe, setDetalhe] = useState(null)
   const [mapaT, setMapaT] = useState({})
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
-  const [verHistorico, setVerHistorico] = useState(false)
-  const [verRanking, setVerRanking] = useState(false)
   const [fotosHoje, setFotosHoje] = useState(0)
 
   useEffect(() => { carregarDados() }, [data])
@@ -129,10 +129,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
 
   const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
 
-  if (verHistorico) return <Historico restaurantId={restaurantId} turnos={turnos} onVoltar={() => setVerHistorico(false)} />
-  if (verRanking) return <Gamificacao restaurantId={restaurantId} turnos={turnos} onVoltar={() => setVerRanking(false)} />
-
-  if (detalhe) return (
+  const painel = detalhe ? (
     <>
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc' }}>
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
@@ -163,16 +160,14 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
       </div>
     )}
     </>
-  )
-
-  return (
+  ) : (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc' }}>
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
-        <button onClick={onVoltar} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
+        <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>👑 Painel do Gestor</h1>
         <div style={{ marginLeft:'auto', display:'flex', gap:'8px' }}>
-          <button onClick={() => setVerRanking(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Ranking</button>
-          <button onClick={() => setVerHistorico(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Histórico</button>
+          <button onClick={() => navigate('ranking')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Ranking</button>
+          <button onClick={() => navigate('historico')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Histórico</button>
         </div>
       </div>
 
@@ -234,5 +229,13 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
         ))}
       </div>
     </div>
+  )
+
+  return (
+    <Routes>
+      <Route path="historico" element={<Historico restaurantId={restaurantId} turnos={turnos} />} />
+      <Route path="ranking" element={<Gamificacao restaurantId={restaurantId} turnos={turnos} />} />
+      <Route path="" element={painel} />
+    </Routes>
   )
 }

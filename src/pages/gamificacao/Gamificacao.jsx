@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../config/turnos'
@@ -6,7 +7,8 @@ import { calcularRanking } from '../../config/gamificacao'
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
-export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS, onVoltar }) {
+export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
+  const navigate = useNavigate()
   const hoje = new Date()
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth())
@@ -42,7 +44,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS, onV
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '80px' }}>
       <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onVoltar} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
+        <button onClick={() => navigate('/gestor')} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>🏆 Gamificação</h1>
       </div>
 

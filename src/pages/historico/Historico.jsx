@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../config/turnos'
 import { compararTarefas } from '../../config/tarefas'
 
-export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVoltar }) {
+export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
+  const navigate = useNavigate()
   const TURNOS = turnos.map(t => t.nome)
   const [checklists, setChecklists] = useState([])
   const [mapaT, setMapaT] = useState({})
@@ -159,7 +161,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS, onVol
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '80px' }}>
       <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <button onClick={onVoltar} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
+        <button onClick={() => navigate('/gestor')} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700' }}>Histórico</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', opacity: 0.85 }}>{legendaPeriodo()}</p>

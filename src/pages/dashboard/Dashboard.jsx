@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { db, auth } from '../../services/firebase'
 import { signOut, sendEmailVerification } from 'firebase/auth'
@@ -12,6 +13,7 @@ import { pushDisponivel, permissaoAtual, ativarNotificacoes, jaAtivouNesteAparel
 
 export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, diasTrial = null, onRestaurantUpdate = () => {} }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const TURNOS = turnos.map(t => t.nome)
   const HORARIO_LIMITE = Object.fromEntries(turnos.map(t => [t.nome, t.horaLimite]))
   const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
@@ -28,9 +30,6 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [celebrar, setCelebrar] = useState(null) // { titulo, sub } ou null
   const [ultimaResp, setUltimaResp] = useState(null)
   const [alertas, setAlertas] = useState([])
-  const [verGestor, setVerGestor] = useState(false)
-  const [verTarefas, setVerTarefas] = useState(false)
-  const [verEquipe, setVerEquipe] = useState(false)
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
   const [setorAtivo, setSetorAtivo] = useState(null)
   const [emailReenviado, setEmailReenviado] = useState(false)
@@ -278,19 +277,15 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
     setSalvando(false)
   }
 
-  if (verGestor) return <GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} turnos={turnos} onVoltar={() => setVerGestor(false)} />
-  if (verTarefas) return <GerenciarTarefas restaurantId={restaurantId} turnos={turnos} onTurnosAtualizados={t => onRestaurantUpdate({ turnos: t })} onVoltar={() => setVerTarefas(false)} />
-  if (verEquipe) return <Equipe restaurantId={restaurantId} codigoAcesso={codigoAcesso} onCodigoAtualizado={c => onRestaurantUpdate({ codigoAcesso: c })} onVoltar={() => setVerEquipe(false)} />
-
   // Conta apenas respostas de tarefas que ainda existem (ignora IDs de tarefas editadas/excluídas)
   const totalResp = tarefas.filter(respostaCompleta).length
   const total = tarefas.length
   const todas = total > 0 && totalResp === total
   const prog = total > 0 ? Math.round((totalResp/total)*100) : 0
 
-  if (loading) return <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh' }}><p style={{ color:'#64748b' }}>Carregando...</p></div>
-
-  return (
+  const telaChecklist = loading ? (
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh' }}><p style={{ color:'#64748b' }}>Carregando...</p></div>
+  ) : (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'80px' }}>
       <style>{`
         @keyframes gestopPop { 0%{transform:scale(1)} 40%{transform:scale(1.03)} 100%{transform:scale(1)} }
@@ -327,12 +322,12 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'flex-end' }}>
           {userRole === 'dono' && (
             <>
-              <button onClick={() => setVerTarefas(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Tarefas</button>
-              <button onClick={() => setVerGestor(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Gestor</button>
-              <button onClick={() => setVerEquipe(true)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Equipe</button>
+              <button onClick={() => navigate('/tarefas')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Tarefas</button>
+              <button onClick={() => navigate('/gestor')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Gestor</button>
+              <button onClick={() => navigate('/equipe')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Equipe</button>
             </>
           )}
-          <button onClick={() => signOut(auth)} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
+          <button onClick={() => { if (window.confirm('Tem certeza que quer sair?')) signOut(auth) }} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
         </div>
       </div>
 
@@ -510,5 +505,17 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         )}
       </div>
     </div>
+  )
+
+  const soDono = tela => userRole === 'dono' ? tela : <Navigate to="/" replace />
+
+  return (
+    <Routes>
+      <Route path="/gestor/*" element={soDono(<GestorView restaurantId={restaurantId} codigoAcesso={codigoAcesso} turnos={turnos} />)} />
+      <Route path="/tarefas" element={soDono(<GerenciarTarefas restaurantId={restaurantId} turnos={turnos} onTurnosAtualizados={t => onRestaurantUpdate({ turnos: t })} />)} />
+      <Route path="/equipe" element={soDono(<Equipe restaurantId={restaurantId} codigoAcesso={codigoAcesso} onCodigoAtualizado={c => onRestaurantUpdate({ codigoAcesso: c })} />)} />
+      <Route path="/" element={telaChecklist} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }

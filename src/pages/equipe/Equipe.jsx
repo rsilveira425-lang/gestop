@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { collection, query, where, getDocs, updateDoc, setDoc, deleteDoc, doc } from 'firebase/firestore'
 import { useAuth } from '../../contexts/AuthContext'
 
-export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado, onVoltar }) {
+export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [membros, setMembros] = useState([])
   const [loading, setLoading] = useState(true)
   const [codigo, setCodigo] = useState(codigoAcesso)
@@ -58,7 +60,7 @@ export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado,
   return (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'40px' }}>
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
-        <button onClick={onVoltar} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
+        <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>👥 Equipe</h1>
       </div>
 

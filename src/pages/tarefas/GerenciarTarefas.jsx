@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../../services/firebase'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, writeBatch } from 'firebase/firestore'
 import { DndContext, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, closestCenter, DragOverlay } from '@dnd-kit/core'
@@ -60,7 +61,8 @@ function Coluna({ setor, turno, children, vazia }) {
   )
 }
 
-export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS, onTurnosAtualizados = () => {}, onVoltar }) {
+export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS, onTurnosAtualizados = () => {} }) {
+  const navigate = useNavigate()
   const TURNOS = turnos.map(t => t.nome)
   const kanban = useKanban()
   const [setores, setSetores] = useState([])
@@ -370,7 +372,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
   return (
     <div style={s.screen}>
       <div style={s.header}>
-        <button style={s.back} onClick={onVoltar}>{String.fromCharCode(8592)}</button>
+        <button style={s.back} onClick={() => navigate('/')}>{String.fromCharCode(8592)}</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>Gerenciar Tarefas</h1>
           <button onClick={() => setVerSetores(p => !p)} style={{ marginLeft:'auto', padding:'6px 12px', backgroundColor: verSetores ? '#2563eb' : '#f1f5f9', color: verSetores ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Setores</button>
           <button onClick={() => { setVerTurnos(p => !p); setTurnosEdit(turnos.map(t => ({ ...t, _orig: t.nome, minutoLimite: t.minutoLimite ?? 0, avisos: t.avisos?.length ? t.avisos : AVISOS_PADRAO, _diasExcecao: t.excecoes?.[0]?.dias || [], _horaExcecao: t.excecoes?.[0]?.hora ?? (t.horaLimite ?? 0), _minutoExcecao: t.excecoes?.[0]?.minuto ?? 0 }))) }} style={{ padding:'6px 12px', backgroundColor: verTurnos ? '#2563eb' : '#f1f5f9', color: verTurnos ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Turnos</button>
