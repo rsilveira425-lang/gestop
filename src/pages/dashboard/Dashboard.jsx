@@ -54,28 +54,34 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
     const CORES = ['#0a0a0a', '#f97316', '#1a1a1a', '#fb923c', '#000000']
     const TOTAL = 2000
+    const DURACAO = 4200 // ms
+    const EMPILHADO = 260 // px acima do topo onde as peças começam empilhadas — fixo, não escala com a altura da tela (era o bug: numa tela alta de celular, a pilha ficava tão longe que a queda não terminava a tempo)
     const particulas = Array.from({ length: TOTAL }, () => {
       const fita = Math.random() < 0.25
+      const y0 = -20 - Math.random() * EMPILHADO
+      const distancia = H + 40 - y0 // até sair por baixo da tela
+      const vy = (distancia / (DURACAO / 1000)) * (1 + Math.random() * 0.35) // px/s — sempre rápido o bastante pra sair a tempo, com variação
       return {
         x: Math.random() * W,
-        y: -20 - Math.random() * H * 1.4, // pilha "empurrada" acima da tela: cai em cascata, como cortina se abrindo
-        vy: 2.5 + Math.random() * 3.5,
-        vx: (Math.random() - 0.5) * 2.2,
+        y: y0,
+        vy,
+        vx: (Math.random() - 0.5) * 130, // px/s
         rot: Math.random() * Math.PI * 2,
-        vrot: (Math.random() - 0.5) * 0.35,
+        vrot: (Math.random() - 0.5) * 18, // rad/s
         w: fita ? 4 + Math.random() * 2 : 5 + Math.random() * 5,
         h: fita ? 16 + Math.random() * 12 : 8 + Math.random() * 5,
         cor: CORES[Math.floor(Math.random() * CORES.length)],
       }
     })
 
-    let quadro, inicio
-    const DURACAO = 4200
+    let quadro, inicio, ultimoT
     function desenhar(t) {
-      if (!inicio) inicio = t
+      if (!inicio) { inicio = t; ultimoT = t }
+      const dt = Math.min((t - ultimoT) / 1000, 0.05) // trava saltos grandes (aba em segundo plano etc.)
+      ultimoT = t
       ctx.clearRect(0, 0, W, H)
       for (const p of particulas) {
-        p.x += p.vx; p.y += p.vy; p.rot += p.vrot
+        p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vrot * dt
         if (p.y > H + 20) continue
         ctx.save()
         ctx.translate(p.x, p.y)
@@ -315,7 +321,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       )}
       <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
-          <h1 style={{ margin:0, fontSize:'22px', fontWeight:'700' }}>Gestop</h1>
+          <button onClick={() => navigate('/')} style={{ margin:0, fontSize:'22px', fontWeight:'700', background:'none', border:'none', padding:0, color:'white', cursor:'pointer', fontFamily:'inherit' }}>Gestop</button>
           <p style={{ margin:'4px 0 0 0', fontSize:'13px', opacity:0.85 }}>{new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}</p>
           {userName && <p style={{ margin:'2px 0 0 0', fontSize:'12px', opacity:0.7 }}>{userName}</p>}
         </div>

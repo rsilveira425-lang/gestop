@@ -85,8 +85,8 @@ function AppContent() {
   if (page === 'privacidade') return <Privacidade onBack={() => setPage(user ? 'app' : 'landing')} />
 
   if (!user) {
-    if (page === 'cadastro') return <Cadastro onNavigate={setPage} onBack={() => setPage('login')} onSuccess={() => setPage('login')} />
-    if (page === 'recuperar') return <Recuperar onBack={() => setPage('login')} />
+    if (page === 'cadastro') return <Cadastro onNavigate={setPage} />
+    if (page === 'recuperar') return <Recuperar onNavigate={setPage} />
     if (page === 'login') return <Login onNavigate={setPage} />
     return <Landing onNavigate={setPage} />
   }

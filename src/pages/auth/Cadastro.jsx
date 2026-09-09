@@ -37,7 +37,7 @@ export default function Cadastro({ onNavigate }) {
     <div style={styles.screen}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <h1 style={styles.logo}>Gestop</h1>
+          <button onClick={() => onNavigate('landing')} style={styles.logoBtn}>Gestop</button>
           <p style={styles.tagline}>Operação sob controle.</p>
         </div>
         <div style={styles.form}>
@@ -76,6 +76,7 @@ const styles = {
     overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.2)' },
   header: { background:'#2563eb', padding:'32px 24px', textAlign:'center' },
   logo: { margin:0, color:'#fff', fontSize:'32px', fontWeight:700 },
+  logoBtn: { margin:0, color:'#fff', fontSize:'32px', fontWeight:700, background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit' },
   tagline: { margin:'4px 0 0', color:'rgba(255,255,255,0.85)', fontSize:'14px' },
   form: { padding:'24px' },
   title: { margin:'0 0 20px', fontSize:'20px', fontWeight:600, color:'#0f172a' },
