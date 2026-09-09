@@ -1,6 +1,6 @@
 import { signOut } from 'firebase/auth'
 import { auth } from '../../services/firebase'
-import { PRECO_MENSAL, DIAS_TRIAL, LINK_ASSINATURA, EMAIL_CONTATO, linkAssinaturaPara } from '../../config/billing'
+import { PRECO_MENSAL, PRECO_MENSAL_VALOR, DIAS_TRIAL, LINK_ASSINATURA, EMAIL_CONTATO, linkAssinaturaPara } from '../../config/billing'
 
 export default function Paywall({ papel = 'dono', restaurantId = '' }) {
   if (papel !== 'dono') {
@@ -29,7 +29,7 @@ export default function Paywall({ papel = 'dono', restaurantId = '' }) {
         {LINK_ASSINATURA ? (
           <>
             <a href={linkAssinaturaPara(restaurantId)} target="_blank" rel="noreferrer" style={s.btnAssinar}
-              onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout', { value: 49.90, currency: 'BRL' }) }}>
+              onClick={() => { if (window.fbq) window.fbq('track', 'InitiateCheckout', { value: PRECO_MENSAL_VALOR, currency: 'BRL' }) }}>
               Assinar com Mercado Pago →
             </a>
             <p style={s.nota}>Após o pagamento, seu acesso é liberado automaticamente em alguns minutos. Dúvidas: {EMAIL_CONTATO}</p>
