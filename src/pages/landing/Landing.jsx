@@ -226,7 +226,11 @@ export default function Landing({ onNavigate }) {
 .glp-hero-grid{display:grid;gap:48px;align-items:center}
 @media(min-width:920px){.glp-hero-grid{grid-template-columns:1.05fr .95fr;gap:32px}}
 .glp-hero h1{font-size:clamp(32px,5.2vw,52px);font-weight:800}
-.glp-lead{font-size:clamp(17px,2.2vw,20px);color:var(--muted);margin:20px 0 28px;max-width:540px}
+.glp-hero-checks{list-style:none;margin:22px 0 28px;padding:0;display:grid;gap:14px;max-width:540px}
+.glp-hero-checks li{display:flex;gap:12px;align-items:flex-start}
+.glp-hero-checks svg{flex:none;margin-top:2px}
+.glp-hero-checks strong{color:var(--ink)}
+.glp-hero-checks div{color:var(--muted);font-size:16px;line-height:1.45}
 .glp-hero-cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
 .glp-trust{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-top:18px}
 .glp-trust svg{flex:none}
@@ -323,7 +327,11 @@ export default function Landing({ onNavigate }) {
           <div>
             <span className="glp-eyebrow">Operação sob controle</span>
             <h1>Seu restaurante funcionando direito, mesmo quando você não está lá.</h1>
-            <p className="glp-lead">O Gestop transforma a rotina do seu restaurante em checklists simples por turno — com <strong>foto como prova</strong> e um painel pra você acompanhar tudo pelo celular.</p>
+            <ul className="glp-hero-checks">
+              <li><Check /><div><strong>Prova de verdade</strong> — foto e comentário obrigatórios em cada tarefa. Zero "achei que tinham feito".</div></li>
+              <li><Check /><div><strong>Você acompanha de onde estiver</strong> — painel em tempo real no celular, sem precisar estar no salão.</div></li>
+              <li><Check /><div><strong>Equipe engajada sozinha</strong> — ranking e pontos por turno concluído motivam sem você precisar cobrar.</div></li>
+            </ul>
             <div className="glp-hero-cta">
               <button className="glp-btn glp-btn-primary" onClick={ir('cadastro')}>Começar teste grátis de {DIAS_TRIAL} dias →</button>
               <a className="glp-btn glp-btn-ghost" href="#como-funciona">Ver como funciona</a>
