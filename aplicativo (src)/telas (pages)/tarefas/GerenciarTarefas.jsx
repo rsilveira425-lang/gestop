@@ -8,6 +8,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { DEFAULT_TURNOS, DIAS_SEMANA, AVISOS_PADRAO, horariosDeAviso, formatarHorario, rotuloAntecedencia } from '../../ajustes (config)/turnos'
 import { ordenarTarefas, proximaOrdem, calcularBackfill, tarefasDoGrupo, aplicarNovaOrdem, moverTarefa, chaveGrupo } from '../../ajustes (config)/tarefas'
+import { Icon } from '../../componentes (design)'
 
 // Largura a partir da qual cabem colunas lado a lado. Abaixo disso o kanban
 // vira lista, porque coluna estreita no celular erra o alvo do dedo.
@@ -41,7 +42,7 @@ function TarefaArrastavel({ tarefa, children, alcaEstilo }) {
       <button {...attributes} {...listeners} aria-label={`Arrastar ${tarefa.texto}`} style={{
         cursor:'grab', touchAction:'none', border:'none', background:'none',
         color:'#cbd5e1', fontSize:'16px', padding:'12px 4px 12px 12px', lineHeight:1, ...alcaEstilo
-      }}>⠿</button>
+      }}><Icon name="grip" size={16} /></button>
       {children}
     </div>
   )
@@ -226,20 +227,19 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
 
   const s = {
     screen: { minHeight:'100vh', backgroundColor:'#f8fafc' },
-    header: { backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' },
     back: { background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' },
     tabs: { display:'flex', flexWrap:'wrap', gap:'0', backgroundColor:'white', borderBottom:'2px solid #e2e8f0', padding:'0 12px' },
-    tab: (ativo) => ({ padding:'12px 18px', border:'none', background:'none', fontSize:'15px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap', color: ativo ? '#2563eb' : '#64748b', borderBottom: ativo ? '2px solid #2563eb' : '2px solid transparent', marginBottom:'-2px' }),
+    tab: (ativo) => ({ padding:'12px 18px', border:'none', background:'none', fontSize:'15px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap', color: ativo ? 'var(--gs-action)' : '#64748b', borderBottom: ativo ? '2px solid var(--gs-action)' : '2px solid transparent', marginBottom:'-2px' }),
     body: { padding:'20px 24px', maxWidth: kanban ? '1400px' : '700px', margin:'0 auto' },
     turnoCard: { backgroundColor:'white', borderRadius:'12px', marginBottom:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', overflow:'hidden' },
     turnoHeader: { padding:'14px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', fontSize:'14px', fontWeight:'700', color:'#475569' },
     tarefaTexto: { fontSize:'14px', color:'#1e293b', flex:1, padding:'12px 0' },
     btnEdit: { padding:'4px 10px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'6px', color:'#475569' },
-    btnMover: { padding:'4px 10px', backgroundColor:'#eff6ff', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'6px', color:'#2563eb' },
+    btnMover: { padding:'4px 10px', backgroundColor:'#eff6ff', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'6px', color:'var(--gs-action)' },
     btnDel: { padding:'4px 10px', backgroundColor:'#fef2f2', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', color:'#dc2626', marginRight:'12px' },
     addRow: { padding:'12px 20px', display:'flex', gap:'8px', alignItems:'center' },
     addInput: { flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none' },
-    btnConfirm: { padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' },
+    btnConfirm: { padding:'8px 14px', backgroundColor:'var(--gs-action)', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' },
     btnCancel: { padding:'8px 12px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'8px', fontSize:'13px', cursor:'pointer' },
     btnAdd: { width:'100%', padding:'10px', backgroundColor:'#f8fafc', border:'1px dashed #cbd5e1', borderRadius:'0', fontSize:'13px', color:'#64748b', cursor:'pointer', textAlign:'left' },
     editBox: { padding:'12px 20px', backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', display:'flex', gap:'8px', alignItems:'center' },
@@ -371,11 +371,11 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
+      <div className="gs-appbar gs-appbar--row">
         <button style={s.back} onClick={() => navigate('/')}>{String.fromCharCode(8592)}</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>Gerenciar Tarefas</h1>
-          <button onClick={() => setVerSetores(p => !p)} style={{ marginLeft:'auto', padding:'6px 12px', backgroundColor: verSetores ? '#2563eb' : '#f1f5f9', color: verSetores ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Setores</button>
-          <button onClick={() => { setVerTurnos(p => !p); setTurnosEdit(turnos.map(t => ({ ...t, _orig: t.nome, minutoLimite: t.minutoLimite ?? 0, avisos: t.avisos?.length ? t.avisos : AVISOS_PADRAO, _diasExcecao: t.excecoes?.[0]?.dias || [], _horaExcecao: t.excecoes?.[0]?.hora ?? (t.horaLimite ?? 0), _minutoExcecao: t.excecoes?.[0]?.minuto ?? 0 }))) }} style={{ padding:'6px 12px', backgroundColor: verTurnos ? '#2563eb' : '#f1f5f9', color: verTurnos ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Turnos</button>
+          <button onClick={() => setVerSetores(p => !p)} style={{ marginLeft:'auto', padding:'6px 12px', backgroundColor: verSetores ? 'var(--gs-action)' : '#f1f5f9', color: verSetores ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Setores</button>
+          <button onClick={() => { setVerTurnos(p => !p); setTurnosEdit(turnos.map(t => ({ ...t, _orig: t.nome, minutoLimite: t.minutoLimite ?? 0, avisos: t.avisos?.length ? t.avisos : AVISOS_PADRAO, _diasExcecao: t.excecoes?.[0]?.dias || [], _horaExcecao: t.excecoes?.[0]?.hora ?? (t.horaLimite ?? 0), _minutoExcecao: t.excecoes?.[0]?.minuto ?? 0 }))) }} style={{ padding:'6px 12px', backgroundColor: verTurnos ? 'var(--gs-action)' : '#f1f5f9', color: verTurnos ? 'white' : '#475569', border:'none', borderRadius:'8px', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>Turnos</button>
       </div>
 
       {verTurnos && turnosEdit && (
@@ -402,10 +402,10 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
                   <p style={{ margin:'0 0 6px', fontSize:'12px', color:'#64748b', fontWeight:'600' }}>Avisar a equipe</p>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:'6px', alignItems:'center' }}>
                     {(t.avisos || []).map((a, k) => (
-                      <span key={k} style={{ display:'inline-flex', alignItems:'center', gap:'6px', backgroundColor:'#eff6ff', color:'#2563eb', borderRadius:'20px', padding:'5px 10px', fontSize:'12px', fontWeight:'600' }}>
+                      <span key={k} style={{ display:'inline-flex', alignItems:'center', gap:'6px', backgroundColor:'#eff6ff', color:'var(--gs-action)', borderRadius:'20px', padding:'5px 10px', fontSize:'12px', fontWeight:'600' }}>
                         {rotuloAntecedencia(a)}
                         <button onClick={() => mudar({ avisos: t.avisos.filter((_, m) => m !== k) })}
-                          aria-label="Remover aviso" style={{ border:'none', background:'none', color:'#2563eb', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>{String.fromCharCode(215)}</button>
+                          aria-label="Remover aviso" style={{ border:'none', background:'none', color:'var(--gs-action)', cursor:'pointer', fontSize:'13px', padding:0, lineHeight:1 }}>{String.fromCharCode(215)}</button>
                       </span>
                     ))}
                     <select value="" onChange={e => { const v = parseInt(e.target.value, 10); if (!Number.isNaN(v) && !(t.avisos || []).includes(v)) mudar({ avisos: [...(t.avisos || []), v].sort((a, b) => b - a) }) }}
@@ -428,7 +428,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
                       const marcado = (t._diasExcecao || []).includes(d.n)
                       return (
                         <button key={d.n} onClick={() => mudar({ _diasExcecao: marcado ? t._diasExcecao.filter(x => x !== d.n) : [...(t._diasExcecao || []), d.n] })}
-                          style={{ padding:'5px 9px', borderRadius:'6px', border:'1px solid ' + (marcado ? '#2563eb' : '#e2e8f0'), backgroundColor: marcado ? '#2563eb' : 'white', color: marcado ? 'white' : '#64748b', fontSize:'12px', fontWeight:'600', cursor:'pointer' }}>
+                          style={{ padding:'5px 9px', borderRadius:'6px', border:'1px solid ' + (marcado ? 'var(--gs-action)' : '#e2e8f0'), backgroundColor: marcado ? 'var(--gs-action)' : 'white', color: marcado ? 'white' : '#64748b', fontSize:'12px', fontWeight:'600', cursor:'pointer' }}>
                           {d.curto}
                         </button>
                       )
@@ -473,7 +473,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
           })}
           <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
             <button onClick={() => setTurnosEdit(prev => [...prev, { nome:'', horaLimite: 12, minutoLimite: 0, avisos: AVISOS_PADRAO, _diasExcecao: [], _horaExcecao: 12, _minutoExcecao: 0, _orig: null }])} style={{ padding:'8px 14px', backgroundColor:'#f1f5f9', border:'1px dashed #cbd5e1', borderRadius:'8px', fontSize:'13px', color:'#475569', cursor:'pointer' }}>+ Turno</button>
-            <button onClick={salvarTurnos} disabled={saving} style={{ marginLeft:'auto', padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>{saving ? 'Salvando...' : 'Salvar turnos'}</button>
+            <button onClick={salvarTurnos} disabled={saving} style={{ marginLeft:'auto', padding:'8px 14px', backgroundColor:'var(--gs-action)', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>{saving ? 'Salvando...' : 'Salvar turnos'}</button>
           </div>
         </div>
       )}
@@ -489,7 +489,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
           ))}
           <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
             <input value={novoSetor} onChange={e => setNovoSetor(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') adicionarSetor() }} placeholder="Novo setor..." style={{ flex:1, padding:'8px 12px', border:'1px solid #e2e8f0', borderRadius:'8px', fontSize:'16px', outline:'none' }} />
-            <button onClick={adicionarSetor} disabled={saving} style={{ padding:'8px 14px', backgroundColor:'#2563eb', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>+ Adicionar</button>
+            <button onClick={adicionarSetor} disabled={saving} style={{ padding:'8px 14px', backgroundColor:'var(--gs-action)', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>+ Adicionar</button>
           </div>
         </div>
       )}
@@ -550,7 +550,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
 
         <DragOverlay>
           {tarefaArrastada && (
-            <div style={{ backgroundColor:'white', borderRadius:'8px', padding:'12px 16px', boxShadow:'0 8px 24px rgba(0,0,0,0.18)', fontSize:'14px', color:'#1e293b', border:'2px solid #2563eb' }}>
+            <div style={{ backgroundColor:'white', borderRadius:'8px', padding:'12px 16px', boxShadow:'0 8px 24px rgba(0,0,0,0.18)', fontSize:'14px', color:'#1e293b', border:'2px solid var(--gs-action)' }}>
               {tarefaArrastada.texto}
             </div>
           )}

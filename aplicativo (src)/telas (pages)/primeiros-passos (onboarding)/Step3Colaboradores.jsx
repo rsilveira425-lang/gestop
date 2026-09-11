@@ -31,5 +31,5 @@ const s = {
   hint: { margin:'0 0 24px', fontSize:'12px', color:'#94a3b8', textAlign:'center' },
   footer: { display:'flex', gap:'8px', marginTop:'8px' },
   back: { padding:'13px 20px', background:'#f1f5f9', color:'#64748b', border:'none', borderRadius:'8px', fontSize:'14px', cursor:'pointer' },
-  next: { flex:1, padding:'13px', background:'#2563eb', color:'#fff', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:600, cursor:'pointer' },
+  next: { flex:1, padding:'13px', background:'var(--gs-action)', color:'#fff', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:600, cursor:'pointer' },
 }

@@ -69,8 +69,8 @@ const styles = {
   screen: { minHeight:'100vh', background:'#f8fafc', display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'16px' },
   container: { background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'560px', boxShadow:'0 4px 12px rgba(0,0,0,0.08)', overflow:'hidden', marginTop:'24px' },
   topbar: { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'20px 24px 0' },
-  logo: { fontSize:'20px', fontWeight:700, color:'#2563eb' },
+  logo: { fontSize:'20px', fontWeight:700, color:'var(--gs-action)' },
   steps: { fontSize:'13px', color:'#64748b' },
   progress: { height:'4px', background:'#e2e8f0', margin:'16px 0 0' },
-  progressBar: { height:'100%', background:'#2563eb', transition:'width 0.3s ease' },
+  progressBar: { height:'100%', background:'var(--gs-action)', transition:'width 0.3s ease' },
 }

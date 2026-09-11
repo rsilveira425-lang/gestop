@@ -109,7 +109,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
     return (
       <>
       <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '80px' }}>
-        <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="gs-appbar gs-appbar--row">
           <button onClick={() => setDetalhe(null)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>{detalhe.turno}</h1>
@@ -120,10 +120,10 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: '#64748b' }}>Taxa de conclusão</span>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: pct === 100 ? '#16a34a' : '#2563eb' }}>{pct}%</span>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: pct === 100 ? '#16a34a' : 'var(--gs-action)' }}>{pct}%</span>
             </div>
             <div style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: pct + '%', backgroundColor: pct === 100 ? '#16a34a' : '#2563eb', borderRadius: '4px' }} />
+              <div style={{ height: '100%', width: pct + '%', backgroundColor: pct === 100 ? '#16a34a' : 'var(--gs-action)', borderRadius: '4px' }} />
             </div>
             <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: detalhe.concluido ? '#16a34a' : '#f59e0b', fontWeight: '600' }}>
               {detalhe.concluido ? '✅ Turno concluído' : '⚠️ Turno não concluído'}
@@ -160,7 +160,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '80px' }}>
-      <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="gs-appbar gs-appbar--row">
         <button onClick={() => navigate('/gestor')} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700' }}>Histórico</h1>
@@ -170,7 +170,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
 
       <div style={{ padding: '16px 24px 0', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {[['recente', 'Recente'], ['semana', 'Esta semana'], ['mes', 'Este mês'], ['periodo', 'Período']].map(([id, label]) => (
-          <button key={id} onClick={() => selecionarFiltro(id)} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', backgroundColor: filtro === id ? '#2563eb' : '#f1f5f9', color: filtro === id ? 'white' : '#64748b' }}>{label}</button>
+          <button key={id} onClick={() => selecionarFiltro(id)} style={{ padding: '6px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '600', backgroundColor: filtro === id ? 'var(--gs-action)' : '#f1f5f9', color: filtro === id ? 'white' : '#64748b' }}>{label}</button>
         ))}
       </div>
 

@@ -36,7 +36,7 @@ export default function Paywall({ papel = 'dono', restaurantId = '' }) {
           </>
         ) : (
           <p style={s.nota}>
-            Pra assinar, fale com a gente: <a href={`mailto:${EMAIL_CONTATO}`} style={{ color: '#2563eb', fontWeight: 600 }}>{EMAIL_CONTATO}</a>
+            Pra assinar, fale com a gente: <a href={`mailto:${EMAIL_CONTATO}`} style={{ color: 'var(--gs-action)', fontWeight: 600 }}>{EMAIL_CONTATO}</a>
           </p>
         )}
         <button style={s.btnGhost} onClick={() => signOut(auth)}>Sair</button>
@@ -52,7 +52,7 @@ const s = {
   texto: { margin: '0 0 16px', fontSize: '14px', color: '#64748b', lineHeight: 1.6 },
   preco: { margin: '0 0 20px', fontSize: '40px', fontWeight: 800, color: '#0f172a' },
   precoMes: { fontSize: '15px', fontWeight: 500, color: '#64748b' },
-  btnAssinar: { display: 'block', padding: '15px', borderRadius: '12px', background: '#2563eb', color: 'white', fontSize: '16px', fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' },
+  btnAssinar: { display: 'block', padding: '15px', borderRadius: '12px', background: 'var(--gs-action)', color: 'white', fontSize: '16px', fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' },
   nota: { fontSize: '12px', color: '#94a3b8', marginTop: '12px', lineHeight: 1.5 },
   btnGhost: { marginTop: '20px', padding: '10px 20px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', fontSize: '13px', color: '#64748b', cursor: 'pointer' },
 }

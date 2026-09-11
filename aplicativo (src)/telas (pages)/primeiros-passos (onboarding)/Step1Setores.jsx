@@ -91,7 +91,7 @@ const styles = {
   desc: { margin:'0 0 20px', fontSize:'14px', color:'#64748b' },
   addRow: { display:'flex', gap:'8px', marginBottom:'16px' },
   input: { flex:1, padding:'11px', border:'2px solid #e2e8f0', borderRadius:'8px', fontSize:'14px', outline:'none' },
-  addBtn: { padding:'11px 18px', background:'#2563eb', color:'#fff', border:'none', borderRadius:'8px', fontWeight:600, cursor:'pointer', fontSize:'14px' },
+  addBtn: { padding:'11px 18px', background:'var(--gs-action)', color:'#fff', border:'none', borderRadius:'8px', fontWeight:600, cursor:'pointer', fontSize:'14px' },
   empty: { color:'#94a3b8', fontSize:'13px', textAlign:'center', padding:'20px 0' },
   card: { border:'1px solid #e2e8f0', borderRadius:'10px', padding:'14px', marginBottom:'10px' },
   cardTop: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' },
@@ -100,6 +100,6 @@ const styles = {
   turnoLabel: { margin:'0 0 8px', fontSize:'12px', color:'#64748b' },
   turnoRow: { display:'flex', gap:'6px', flexWrap:'wrap' },
   turnoBtn: { padding:'6px 12px', border:'2px solid #e2e8f0', borderRadius:'20px', background:'#fff', fontSize:'12px', cursor:'pointer', color:'#64748b' },
-  turnoBtnOn: { border:'2px solid #2563eb', background:'#eff6ff', color:'#2563eb', fontWeight:600 },
-  next: { width:'100%', padding:'13px', background:'#2563eb', color:'#fff', border:'none', borderRadius:'8px', fontSize:'15px', fontWeight:600, cursor:'pointer', marginTop:'20px' },
+  turnoBtnOn: { border:'2px solid var(--gs-action)', background:'#eff6ff', color:'var(--gs-action)', fontWeight:600 },
+  next: { width:'100%', padding:'13px', background:'var(--gs-action)', color:'#fff', border:'none', borderRadius:'8px', fontSize:'15px', fontWeight:600, cursor:'pointer', marginTop:'20px' },
 }

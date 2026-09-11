@@ -4,6 +4,7 @@ import { db } from '../../conexoes (services)/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
 import { calcularRanking } from '../../ajustes (config)/gamificacao'
+import { Icon } from '../../componentes (design)'
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
@@ -43,15 +44,15 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '80px' }}>
-      <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="gs-appbar gs-appbar--row">
         <button onClick={() => navigate('/gestor')} style={{ background: 'none', border: 'none', color: 'white', fontSize: '20px', cursor: 'pointer' }}>←</button>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>🏆 Gamificação</h1>
+        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '700', display:'flex', alignItems:'center', gap:'9px' }}><Icon name="trophy" size={21} /> Gamificação</h1>
       </div>
 
       <div style={{ padding: '18px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '18px' }}>
-        <button onClick={() => mudarMes(-1)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#2563eb' }}>‹</button>
+        <button onClick={() => mudarMes(-1)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: 'var(--gs-action)' }}>‹</button>
         <p style={{ margin: 0, fontWeight: '700', color: '#1e293b', fontSize: '15px', minWidth: '150px', textAlign: 'center' }}>{MESES[mes]} de {ano}</p>
-        <button onClick={() => mudarMes(1)} disabled={ehMesAtual} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: ehMesAtual ? 'default' : 'pointer', color: ehMesAtual ? '#cbd5e1' : '#2563eb' }}>›</button>
+        <button onClick={() => mudarMes(1)} disabled={ehMesAtual} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: ehMesAtual ? 'default' : 'pointer', color: ehMesAtual ? '#cbd5e1' : 'var(--gs-action)' }}>›</button>
       </div>
       <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>
         1 ponto por turno concluído · +1 se fechado dentro do horário
@@ -74,7 +75,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
                   <p style={{ margin: 0, fontWeight: '700', color: '#1e293b', fontSize: '15px' }}>{p.nome}</p>
                   <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>{p.turnos} turno{p.turnos === 1 ? '' : 's'} concluído{p.turnos === 1 ? '' : 's'} · {p.noPrazo} no prazo</p>
                 </div>
-                <p style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#2563eb', flexShrink: 0 }}>{p.pontos} pts</p>
+                <p style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: 'var(--gs-action)', flexShrink: 0 }}>{p.pontos} pts</p>
               </div>
             ))}
           </div>

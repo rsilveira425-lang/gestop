@@ -9,18 +9,17 @@ const RESPONSAVEL = 'Rodrigo Schinnaider'
 export default function Privacidade({ onBack = () => {} }) {
   const s = {
     page: { minHeight: '100vh', backgroundColor: '#f8fafc', color: '#1e293b' },
-    header: { backgroundColor: '#2563eb', color: 'white', padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '12px' },
     back: { background: 'none', border: 'none', color: 'white', fontSize: '22px', cursor: 'pointer' },
     body: { maxWidth: '760px', margin: '0 auto', padding: '24px 20px 64px', lineHeight: 1.6, fontSize: '15px' },
     h2: { fontSize: '18px', fontWeight: 700, margin: '28px 0 8px', color: '#0f172a' },
     p: { margin: '0 0 12px', color: '#334155' },
     li: { margin: '0 0 6px', color: '#334155' },
     small: { fontSize: '13px', color: '#94a3b8' },
-    a: { color: '#2563eb' },
+    a: { color: 'var(--gs-action)' },
   }
   return (
     <div style={s.page}>
-      <div style={s.header}>
+      <div className="gs-appbar gs-appbar--row">
         <button style={s.back} onClick={onBack}>{String.fromCharCode(8592)}</button>
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>Política de Privacidade</h1>
       </div>

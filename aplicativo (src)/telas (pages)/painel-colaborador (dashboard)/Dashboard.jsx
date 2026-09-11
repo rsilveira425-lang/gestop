@@ -325,7 +325,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           <img src={fotoAmpliada} alt="foto" style={{ maxWidth:'96vw', maxHeight:'96vh', objectFit:'contain', borderRadius:'8px' }} />
         </div>
       )}
-      <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+      <div className="gs-appbar">
         <div>
           <button onClick={() => navigate('/')} style={{ margin:0, fontSize:'22px', fontWeight:'700', background:'none', border:'none', padding:0, color:'white', cursor:'pointer', fontFamily:'inherit' }}>Gestop</button>
           <p style={{ margin:'4px 0 0 0', fontSize:'13px', opacity:0.85 }}>{new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}</p>
@@ -355,7 +355,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         <div style={{ backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', padding:'10px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
           <p style={{ margin:0, fontSize:'13px', color:'#1e40af' }}>Confirme seu e-mail pelo link que enviamos para <strong>{user.email}</strong></p>
           <button disabled={emailReenviado} onClick={async () => { try { await sendEmailVerification(user); setEmailReenviado(true) } catch(e) { alert('Aguarde alguns minutos antes de reenviar.') } }}
-            style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: emailReenviado ? '#cbd5e1' : '#2563eb', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
+            style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: emailReenviado ? '#cbd5e1' : 'var(--gs-action)', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
             {emailReenviado ? 'Enviado ✓' : 'Reenviar'}
           </button>
         </div>
@@ -381,7 +381,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           <div style={{ display:'flex', gap:'8px' }}>
             {(avisoPush.estado === 'convite' || avisoPush.estado === 'ativando') && (
               <button disabled={avisoPush.estado === 'ativando'} onClick={ligarLembretes}
-                style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: avisoPush.estado === 'ativando' ? '#cbd5e1' : '#2563eb', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
+                style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: avisoPush.estado === 'ativando' ? '#cbd5e1' : 'var(--gs-action)', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
                 {avisoPush.estado === 'ativando' ? 'Ativando...' : 'Ativar lembretes'}
               </button>
             )}
@@ -401,7 +401,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
 
       <div style={{ display:'flex', gap:'8px', padding:'16px 24px', backgroundColor:'white', borderBottom:'1px solid #e2e8f0', overflowX:'auto' }}>
         {TURNOS.map(t => (
-          <button key={t} onClick={() => setTurnoAtivo(t)} style={{ padding:'8px 16px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: turnoAtivo===t ? '#2563eb' : '#f1f5f9', color: turnoAtivo===t ? 'white' : '#64748b' }}>{t}</button>
+          <button key={t} onClick={() => setTurnoAtivo(t)} style={{ padding:'8px 16px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: turnoAtivo===t ? 'var(--gs-action)' : '#f1f5f9', color: turnoAtivo===t ? 'white' : '#64748b' }}>{t}</button>
         ))}
       </div>
 
@@ -410,11 +410,11 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           <div style={{ position:'relative', width:'62px', height:'62px', flexShrink:0 }}>
             <svg width="62" height="62" viewBox="0 0 62 62">
               <circle cx="31" cy="31" r="26" fill="none" stroke="#f1f5f9" strokeWidth="7" />
-              <circle cx="31" cy="31" r="26" fill="none" stroke={prog===100 ? '#16a34a' : '#2563eb'} strokeWidth="7" strokeLinecap="round"
+              <circle cx="31" cy="31" r="26" fill="none" stroke={prog===100 ? '#16a34a' : '#1d4ed8'} strokeWidth="7" strokeLinecap="round"
                 strokeDasharray={163.36} strokeDashoffset={163.36 * (1 - prog/100)} transform="rotate(-90 31 31)"
                 style={{ transition:'stroke-dashoffset 0.4s ease, stroke 0.3s' }} />
             </svg>
-            <span style={{ position:'absolute', top:0, left:0, width:'62px', height:'62px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'700', color: prog===100 ? '#16a34a' : '#2563eb' }}>{prog}%</span>
+            <span style={{ position:'absolute', top:0, left:0, width:'62px', height:'62px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'700', color: prog===100 ? '#16a34a' : 'var(--gs-action)' }}>{prog}%</span>
           </div>
           <div>
             <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Progresso do turno</p>
@@ -434,7 +434,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           return (<>
           {su.length > 1 && (
             <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px' }}>
-              <button onClick={() => setSetorAtivo(null)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? '700' : '400', backgroundColor: setorAtivo === null ? '#2563eb' : '#f1f5f9', color: setorAtivo === null ? 'white' : '#475569' }}>Todos</button>
+              <button onClick={() => setSetorAtivo(null)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? '700' : '400', backgroundColor: setorAtivo === null ? 'var(--gs-action)' : '#f1f5f9', color: setorAtivo === null ? 'white' : '#475569' }}>Todos</button>
               {su.map(s => {
                 const ativo = normSetor(setorAtivo) === normSetor(s)
                 const fechado = !!setoresConcluidos[chaveSetor(s)]
@@ -442,7 +442,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
                 const nResp = ts.filter(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao').length
                 return (
                   <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: ativo || fechado ? '700' : '400',
-                    backgroundColor: ativo ? '#2563eb' : fechado ? '#dcfce7' : '#f1f5f9',
+                    backgroundColor: ativo ? 'var(--gs-action)' : fechado ? '#dcfce7' : '#f1f5f9',
                     color: ativo ? 'white' : fechado ? '#16a34a' : '#475569' }}>
                     {s} {fechado ? '✓' : `${nResp}/${ts.length}`}
                   </button>

@@ -172,11 +172,21 @@ select.gs-input { appearance: none; padding-right: 38px;
 
 /* ---------- CABEÇALHO DE TELA ---------- */
 .gs-appbar {
+  position: relative; overflow: hidden;
   background: var(--gs-surface-dark);
   color: var(--gs-text-on-dark);
   padding: var(--gs-space-5) var(--gs-space-6);
   display: flex; align-items: flex-start; justify-content: space-between; gap: var(--gs-space-3);
 }
+/* a mesma luz que cai no hero da landing, vinda do canto superior direito */
+.gs-appbar::after {
+  content: ""; position: absolute; inset: -70% -28% auto auto;
+  width: 340px; height: 300px; pointer-events: none;
+  background: radial-gradient(closest-side, var(--gs-glow), transparent 72%);
+}
+.gs-appbar > * { position: relative; }
+/* telas internas: botão voltar + título na mesma linha */
+.gs-appbar--row { align-items: center; justify-content: flex-start; gap: var(--gs-space-3); }
 .gs-appbar__title {
   margin: 0; font-size: var(--gs-text-xl); font-weight: var(--gs-weight-bold);
   letter-spacing: var(--gs-tracking-tight); color: var(--gs-white);
@@ -254,3 +264,17 @@ button.gs-appbar__title { cursor: pointer; }
 .gs-body { font-size: var(--gs-text-md); line-height: var(--gs-leading-normal); color: var(--gs-text-body); margin: 0; }
 .gs-muted { font-size: var(--gs-text-sm); color: var(--gs-text-muted); margin: 0; }
 .gs-meta { font-size: var(--gs-text-xs); color: var(--gs-text-subtle); margin: 0; }
+
+/* ---------- DADO E MEDIDA ---------- */
+/* Hora, código de acesso, temperatura, contador. Largura fixa por dígito:
+   a coluna para de dançar quando o número muda. */
+.gs-num {
+  font-family: var(--gs-font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* ---------- SUPERFÍCIES DO NAVEGADOR ---------- */
+/* O que não desenhamos também carrega a marca. */
+::selection { background: rgba(29,78,216,.18); color: var(--gs-text); }
+:where(input, textarea) { caret-color: var(--gs-action); }

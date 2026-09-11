@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../../conexoes (services)/firebase'
 import { collection, query, where, getDocs, updateDoc, setDoc, deleteDoc, doc } from 'firebase/firestore'
 import { useAuth } from '../../memoria-global (contexts)/AuthContext'
+import { Icon } from '../../componentes (design)'
 
 export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado }) {
   const { user } = useAuth()
@@ -59,17 +60,17 @@ export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado 
 
   return (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'40px' }}>
-      <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
+      <div className="gs-appbar gs-appbar--row">
         <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
-        <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>👥 Equipe</h1>
+        <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700', display:'flex', alignItems:'center', gap:'9px' }}><Icon name="users" size={21} /> Equipe</h1>
       </div>
 
       <div style={{ margin:'16px 24px', backgroundColor:'#eff6ff', borderRadius:'12px', padding:'16px', border:'1px solid #bfdbfe' }}>
         <p style={{ margin:0, fontSize:'11px', color:'#3b82f6', fontWeight:'700', textTransform:'uppercase', letterSpacing:'1px' }}>Código de acesso</p>
         <p style={{ margin:'4px 0 0 0', fontSize:'32px', fontWeight:'900', color:'#1e40af', letterSpacing:'8px' }}>{codigo || '—'}</p>
         <button onClick={regenerarCodigo} disabled={gerando}
-          style={{ marginTop:'10px', padding:'8px 14px', borderRadius:'8px', border:'1px solid #bfdbfe', backgroundColor:'white', color:'#2563eb', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>
-          {gerando ? 'Gerando...' : '↻ Gerar novo código'}
+          style={{ marginTop:'10px', padding:'8px 14px', borderRadius:'8px', border:'1px solid #bfdbfe', backgroundColor:'white', color:'var(--gs-action)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>
+          {gerando ? 'Gerando...' : <><Icon name="refresh" size={14} /> Gerar novo código</>}
         </button>
       </div>
 
@@ -80,7 +81,7 @@ export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado 
           <div key={m.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'14px 16px', marginBottom:'10px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', opacity: m.ativo === false ? 0.6 : 1 }}>
             <div style={{ minWidth:0 }}>
               <p style={{ margin:0, fontWeight:'600', fontSize:'14px', color:'#1e293b', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                {m.role === 'dono' ? '👑 ' : '👤 '}{m.nome || m.email}{m.id === user.uid ? ' (você)' : ''}
+                <Icon name={m.role === 'dono' ? 'crown' : 'user'} size={14} style={{ display:'inline-block', verticalAlign:'-2px', marginRight:'6px' }} />{m.nome || m.email}{m.id === user.uid ? ' (você)' : ''}
               </p>
               <p style={{ margin:'2px 0 0 0', fontSize:'12px', color:'#94a3b8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                 {m.email} · {m.role === 'dono' ? 'Gestor' : m.ativo === false ? 'Desativado' : 'Funcionário'}

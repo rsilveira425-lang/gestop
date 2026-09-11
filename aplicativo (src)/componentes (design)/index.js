@@ -11,6 +11,7 @@ import './base.css'
 
 export { default as Button } from './Button'
 export { default as Card } from './Card'
+export { default as Icon } from './Icon'
 export { Input, Select, Textarea } from './Field'
 export { default as Badge, Eyebrow } from './Badge'
 export { default as Banner } from './Banner'

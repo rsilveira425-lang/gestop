@@ -6,6 +6,7 @@ import Historico from '../historico/Historico'
 import Gamificacao from '../gamificacao/Gamificacao'
 import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
 import { compararTarefas } from '../../ajustes (config)/tarefas'
+import { Icon } from '../../componentes (design)'
 
 function Kpi({ titulo, valor, sub, alerta }) {
   return (
@@ -94,7 +95,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const status = (cl) => {
     if (!cl) return { emoji: '⬜', label: 'Não iniciado', cor: '#94a3b8' }
     if (cl.concluido) return { emoji: '✅', label: 'Concluído', cor: '#16a34a' }
-    return { emoji: '🔄', label: `${Object.keys(cl.respostas||{}).length} resp.`, cor: '#2563eb' }
+    return { emoji: '🔄', label: `${Object.keys(cl.respostas||{}).length} resp.`, cor: 'var(--gs-action)' }
   }
 
   // ----- Resumo do dia (Painel do Dono) -----
@@ -132,7 +133,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const painel = detalhe ? (
     <>
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc' }}>
-      <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
+      <div className="gs-appbar gs-appbar--row">
         <button onClick={() => setDetalhe(null)} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
         <div>
           <h1 style={{ margin:0, fontSize:'18px', fontWeight:'700' }}>{detalhe.turno}</h1>
@@ -162,9 +163,9 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
     </>
   ) : (
     <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc' }}>
-      <div style={{ backgroundColor:'#2563eb', color:'white', padding:'20px 24px', display:'flex', alignItems:'center', gap:'12px' }}>
+      <div className="gs-appbar gs-appbar--row">
         <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
-        <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700' }}>👑 Painel do Gestor</h1>
+        <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700', display:'flex', alignItems:'center', gap:'9px' }}><Icon name="chart" size={21} /> Painel do Gestor</h1>
         <div style={{ marginLeft:'auto', display:'flex', gap:'8px' }}>
           <button onClick={() => navigate('ranking')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Ranking</button>
           <button onClick={() => navigate('historico')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Histórico</button>
@@ -181,7 +182,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
         <div style={{ display:'flex', gap:'8px', overflowX:'auto' }}>
           {datas.map(d => {
             const label = d===localDate() ? 'Hoje' : new Date(d+'T12:00:00').toLocaleDateString('pt-BR', {day:'numeric', month:'short'})
-            return <button key={d} onClick={() => setData(d)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: data===d?'#2563eb':'#f1f5f9', color: data===d?'white':'#64748b' }}>{label}</button>
+            return <button key={d} onClick={() => setData(d)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: data===d?'var(--gs-action)':'#f1f5f9', color: data===d?'white':'#64748b' }}>{label}</button>
           })}
         </div>
       </div>
@@ -214,7 +215,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
           <div style={{ textAlign:'center', padding:'40px 0', color:'#94a3b8' }}><p style={{ fontSize:'32px' }}>📋</p><p>Nenhum registro nessa data.</p></div>
         ) : Object.entries(porFuncionario).map(([nome, turnos]) => (
           <div key={nome} style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', marginBottom:'12px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)' }}>
-            <p style={{ margin:'0 0 12px 0', fontWeight:'700', fontSize:'15px', color:'#1e293b' }}>👤 {nome}</p>
+            <p style={{ margin:'0 0 12px 0', fontWeight:'700', fontSize:'15px', color:'#1e293b' }}><Icon name="user" size={14} style={{ display:'inline-block', verticalAlign:'-2px', marginRight:'6px' }} />{nome}</p>
             {TURNOS.map(turno => {
               const cl = turnos[turno]; const st = status(cl)
               return (
