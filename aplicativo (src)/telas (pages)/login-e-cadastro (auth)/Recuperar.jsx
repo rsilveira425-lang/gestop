@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../../conexoes (services)/firebase'
+import { Screen, Card, Button, Input, Banner } from '../../componentes (design)'
 
+/**
+ * Mesma casca do Login e do Cadastro. O sucesso vira <Banner>, que já
+ * tem role="status" — o leitor de tela anuncia sem precisar de foco.
+ */
 export default function Recuperar({ onNavigate }) {
   const [email, setEmail] = useState('')
   const [msg, setMsg] = useState('')
@@ -23,51 +28,41 @@ export default function Recuperar({ onNavigate }) {
   }
 
   return (
-    <div style={styles.screen}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <button onClick={() => onNavigate('landing')} style={styles.logoBtn}>Gestop</button>
-          <p style={styles.tagline}>Operação sob controle.</p>
+    <Screen variant="centered" className="gs-screen--dark">
+      <Card variant="raised" pad="none" style={{ width: '100%', maxWidth: '380px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--gs-gradient-band)', padding: 'var(--gs-space-8) var(--gs-space-6)', textAlign: 'center' }}>
+          <button onClick={() => onNavigate('landing')} className="gs-appbar__title" style={{ fontSize: 'var(--gs-text-3xl)', fontWeight: 'var(--gs-weight-black)' }}>
+            Gestop
+          </button>
+          <p className="gs-appbar__sub">Operação sob controle.</p>
         </div>
-        <div style={styles.form}>
-          <h2 style={styles.title}>Recuperar senha</h2>
-          <p style={styles.desc}>Digite seu e-mail e enviaremos um link para redefinir sua senha.</p>
-          <form onSubmit={handleRecuperar}>
-            <input style={styles.input} type="email" placeholder="Seu e-mail"
-              value={email} onChange={e => setEmail(e.target.value)} required />
-            {erro && <p style={styles.erro}>{erro}</p>}
-            {msg && <p style={styles.sucesso}>{msg}</p>}
-            <button style={styles.btn} type="submit" disabled={loading}>
-              {loading ? 'Enviando...' : 'Enviar link'}
-            </button>
+
+        <div style={{ padding: 'var(--gs-space-6)' }}>
+          <h2 className="gs-h4" style={{ marginBottom: 'var(--gs-space-2)' }}>Recuperar senha</h2>
+          <p className="gs-muted" style={{ marginBottom: 'var(--gs-space-5)' }}>
+            Digite seu e-mail e enviaremos um link para redefinir sua senha.
+          </p>
+
+          {msg && (
+            <div style={{ marginBottom: 'var(--gs-space-4)' }}>
+              <Banner tone="success">{msg}</Banner>
+            </div>
+          )}
+
+          <form onSubmit={handleRecuperar} noValidate>
+            <Input
+              label="E-mail" type="email" autoComplete="email" placeholder="voce@restaurante.com.br"
+              value={email} onChange={e => setEmail(e.target.value)} required
+              error={erro}
+            />
+            <Button type="submit" block loading={loading} loadingText="Enviando...">Enviar link</Button>
           </form>
-          <div style={styles.links}>
-            <button style={styles.link} onClick={() => onNavigate('login')}>Voltar ao login</button>
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--gs-space-4)' }}>
+            <button className="gs-linkbtn" onClick={() => onNavigate('login')}>Voltar ao login</button>
           </div>
         </div>
-      </div>
-    </div>
+      </Card>
+    </Screen>
   )
-}
-
-const styles = {
-  screen: { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
-    background:'linear-gradient(135deg, #1e3a8a, #2563eb)', padding:'24px' },
-  card: { background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'380px',
-    overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.2)' },
-  header: { background:'#2563eb', padding:'32px 24px', textAlign:'center' },
-  logo: { margin:0, color:'#fff', fontSize:'32px', fontWeight:700 },
-  logoBtn: { margin:0, color:'#fff', fontSize:'32px', fontWeight:700, background:'none', border:'none', padding:0, cursor:'pointer', fontFamily:'inherit' },
-  tagline: { margin:'4px 0 0', color:'rgba(255,255,255,0.85)', fontSize:'14px' },
-  form: { padding:'24px' },
-  title: { margin:'0 0 8px', fontSize:'20px', fontWeight:600, color:'#0f172a' },
-  desc: { margin:'0 0 16px', fontSize:'13px', color:'#64748b' },
-  input: { width:'100%', padding:'12px', border:'2px solid #e2e8f0', borderRadius:'8px',
-    fontSize:'15px', marginBottom:'12px', outline:'none', boxSizing:'border-box' },
-  erro: { color:'#dc2626', fontSize:'13px', margin:'-4px 0 8px' },
-  sucesso: { color:'#16a34a', fontSize:'13px', margin:'-4px 0 8px' },
-  btn: { width:'100%', padding:'13px', background:'#2563eb', color:'#fff', border:'none',
-    borderRadius:'8px', fontSize:'15px', fontWeight:600, cursor:'pointer' },
-  links: { display:'flex', justifyContent:'center', marginTop:'16px' },
-  link: { background:'none', border:'none', color:'#2563eb', fontSize:'13px', cursor:'pointer', padding:0 },
 }

@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { getDoc, doc } from 'firebase/firestore'
 import { db } from '../../conexoes (services)/firebase'
+import { Screen, Card, Button, Input } from '../../componentes (design)'
 
+/**
+ * Bifurcação depois do cadastro: entrar num restaurante que já existe
+ * (funcionário, com código) ou criar o seu (dono).
+ * Mesmos componentes e tokens do resto do fluxo de entrada.
+ */
 export default function EntrarRestaurante({ onCriarRestaurante, onEntrou }) {
   const [codigo, setCodigo] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -19,48 +25,65 @@ export default function EntrarRestaurante({ onCriarRestaurante, onEntrou }) {
       } else {
         setErro('Código não encontrado. Confirme com o dono do restaurante.')
       }
-    } catch(e) {
+    } catch {
       setErro('Erro ao buscar. Tente novamente.')
     }
     setCarregando(false)
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <Screen variant="centered">
       <div style={{ width: '100%', maxWidth: '400px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '40px' }}>🍔</div>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '8px 0 0 0' }}>Gestop</h1>
-          <p style={{ color: '#64748b', marginTop: '8px' }}>Como deseja continuar?</p>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--gs-space-8)' }}>
+          <h1 className="gs-h2">Gestop</h1>
+          <p className="gs-muted" style={{ marginTop: 'var(--gs-space-2)' }}>Como deseja continuar?</p>
         </div>
 
-        <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: '0 0 4px 0' }}>👷 Sou funcionário</h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 16px 0' }}>Digite o código do restaurante:</p>
-          <input
+        <Card style={{ marginBottom: 'var(--gs-space-4)' }}>
+          <h2 className="gs-h4">Sou funcionário</h2>
+          <p className="gs-muted" style={{ margin: 'var(--gs-space-1) 0 var(--gs-space-4)' }}>
+            Digite o código do restaurante:
+          </p>
+          <Input
+            label="Código de acesso"
             value={codigo}
             onChange={e => setCodigo(e.target.value.toUpperCase())}
+            onKeyDown={e => e.key === 'Enter' && entrar()}
             placeholder="Ex: ABC123"
             maxLength={8}
-            onKeyDown={e => e.key === 'Enter' && entrar()}
-            style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '24px', textAlign: 'center', letterSpacing: '6px', fontWeight: '700', boxSizing: 'border-box' }}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            error={erro}
+            style={{
+              fontSize: 'var(--gs-text-2xl)',
+              textAlign: 'center',
+              letterSpacing: '.32em',
+              fontWeight: 'var(--gs-weight-bold)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
           />
-          {erro && <p style={{ color: '#dc2626', fontSize: '13px', margin: '8px 0 0 0' }}>{erro}</p>}
-          <button onClick={entrar} disabled={carregando || codigo.trim().length < 4}
-            style={{ width: '100%', padding: '13px', marginTop: '12px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', opacity: codigo.trim().length < 4 ? 0.5 : 1 }}>
-            {carregando ? 'Buscando...' : 'Entrar no restaurante'}
-          </button>
-        </div>
+          <Button
+            block
+            onClick={entrar}
+            loading={carregando}
+            loadingText="Buscando..."
+            disabled={codigo.trim().length < 4}
+          >
+            Entrar no restaurante
+          </Button>
+        </Card>
 
-        <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: '0 0 4px 0' }}>🏠 Sou dono/gestor</h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 16px 0' }}>Cadastrar meu restaurante</p>
-          <button onClick={onCriarRestaurante}
-            style={{ width: '100%', padding: '13px', backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '15px', fontWeight: '700', cursor: 'pointer' }}>
-            Criar meu restaurante →
-          </button>
-        </div>
+        <Card>
+          <h2 className="gs-h4">Sou dono ou gestor</h2>
+          <p className="gs-muted" style={{ margin: 'var(--gs-space-1) 0 var(--gs-space-4)' }}>
+            Cadastrar meu restaurante
+          </p>
+          <Button variant="secondary" block onClick={onCriarRestaurante}>
+            Criar meu restaurante
+          </Button>
+        </Card>
       </div>
-    </div>
+    </Screen>
   )
 }
