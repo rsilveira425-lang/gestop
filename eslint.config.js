@@ -25,7 +25,7 @@ export default defineConfig([
   },
   {
     // Service worker tem os próprios globais (self, caches, clients)
-    files: ['public/sw.js'],
+    files: ['arquivos-publicos (public)/sw.js'],
     languageOptions: { globals: { ...globals.serviceworker } },
   },
 ])

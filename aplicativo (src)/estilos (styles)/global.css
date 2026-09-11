@@ -1,0 +1,48 @@
+/* Base global do Gestop.
+   Os tokens e as classes dos componentes vêm do design system. */
+@import '../componentes (design)/tokens.css';
+@import '../componentes (design)/base.css';
+
+:root {
+  /* Ponte com o código antigo: as telas ainda não migradas usam var(--primary)
+     e companhia. Apontando pros tokens novos, elas herdam a marca navy sem
+     precisar ser reescritas. Apague daqui conforme cada tela for migrada. */
+  --primary: var(--gs-action);
+  --primary-dark: var(--gs-action-hover);
+  --primary-light: var(--gs-action-soft);
+  --bg: var(--gs-bg);
+  --card: var(--gs-surface);
+  --text: var(--gs-text);
+  --muted: var(--gs-text-muted);
+  --border: var(--gs-border);
+  --success: var(--gs-success);
+  --danger: var(--gs-danger);
+  --warning: var(--gs-warning);
+  --shadow: var(--gs-shadow-xs);
+  --shadow-md: var(--gs-shadow-sm);
+  --radius: var(--gs-radius-md);
+  --radius-sm: var(--gs-radius-sm);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+html, body {
+  margin: 0; padding: 0;
+  font-family: var(--gs-font);
+  font-size: var(--gs-text-md);
+  line-height: var(--gs-leading-normal);
+  background: var(--gs-bg);
+  color: var(--gs-text);
+  -webkit-font-smoothing: antialiased;
+}
+body { min-height: 100vh; }
+#root { min-height: 100vh; }
+
+button { cursor: pointer; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+a { color: var(--gs-link); text-decoration: none; }
+
+h1, h2, h3, h4 { letter-spacing: var(--gs-tracking-tight); line-height: var(--gs-leading-tight); }
+
+/* evita zoom automatico no iOS ao focar em inputs */
+input, textarea, select { font-size: 16px !important; }

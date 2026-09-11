@@ -3,8 +3,8 @@
 // Chamado por um agendador de fora (GitHub Actions) a cada poucos minutos.
 // Ele não decide nada: só pergunta "que aviso deveria sair agora?" e envia.
 import admin from 'firebase-admin'
-import { avisosDevidos, chaveLembrete, textoDoAviso, deveAvisar, JANELA_PADRAO } from '../src/config/lembretes.js'
-import { diasRestantesTrial } from '../src/config/billing.js'
+import { avisosDevidos, chaveLembrete, textoDoAviso, deveAvisar, JANELA_PADRAO } from '../aplicativo (src)/ajustes (config)/lembretes.js'
+import { diasRestantesTrial } from '../aplicativo (src)/ajustes (config)/billing.js'
 
 const FUSO = 'America/Sao_Paulo'
 

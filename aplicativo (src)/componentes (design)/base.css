@@ -1,0 +1,256 @@
+/* ============================================================
+   GESTOP — CLASSES BASE DOS COMPONENTES
+   Só consome vars de tokens.css. Zero hex solto aqui.
+   Estas classes existem pra dar o que inline style não dá:
+   :hover, :focus-visible, :disabled, ::placeholder e media query.
+   ============================================================ */
+
+/* ---------- BOTÃO ---------- */
+.gs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gs-space-2);
+  font-family: inherit;
+  font-weight: var(--gs-weight-bold);
+  border: 1px solid transparent;
+  border-radius: var(--gs-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color var(--gs-duration-base) var(--gs-ease),
+              border-color var(--gs-duration-base) var(--gs-ease),
+              transform var(--gs-duration-fast) var(--gs-ease),
+              box-shadow var(--gs-duration-base) var(--gs-ease);
+}
+.gs-btn:focus-visible { outline: none; box-shadow: var(--gs-focus-ring); }
+.gs-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* tamanhos — todos respeitam o alvo de toque mínimo */
+.gs-btn--sm { font-size: var(--gs-text-xs); padding: 8px 12px; border-radius: var(--gs-radius-sm); min-height: 32px; }
+.gs-btn--md { font-size: var(--gs-text-md); padding: 12px 18px; min-height: var(--gs-tap-target); }
+.gs-btn--lg { font-size: var(--gs-text-lg); padding: 14px 24px; min-height: 52px; }
+.gs-btn--block { width: 100%; }
+
+/* variantes */
+.gs-btn--primary { background: var(--gs-action); color: var(--gs-action-text); box-shadow: var(--gs-shadow-action); }
+.gs-btn--primary:hover:not(:disabled) { background: var(--gs-action-hover); transform: translateY(-1px); }
+.gs-btn--primary:active:not(:disabled) { background: var(--gs-action-active); transform: none; }
+
+.gs-btn--secondary { background: var(--gs-surface); color: var(--gs-action); border-color: var(--gs-border); }
+.gs-btn--secondary:hover:not(:disabled) { background: var(--gs-action-soft); border-color: var(--gs-blue-200); }
+
+.gs-btn--ghost { background: transparent; color: var(--gs-text-body); }
+.gs-btn--ghost:hover:not(:disabled) { background: var(--gs-surface-sunken); }
+
+.gs-btn--danger { background: var(--gs-danger); color: var(--gs-white); }
+.gs-btn--danger:hover:not(:disabled) { background: var(--gs-red-800); }
+
+/* sobre fundo navy: header do app, hero, CTA final */
+.gs-btn--light { background: var(--gs-white); color: var(--gs-action); }
+.gs-btn--light:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--gs-shadow-md); }
+
+.gs-btn--on-dark { background: rgba(255,255,255,.16); color: var(--gs-white); }
+.gs-btn--on-dark:hover:not(:disabled) { background: rgba(255,255,255,.26); }
+
+/* ---------- LINK-BOTÃO ---------- */
+.gs-linkbtn {
+  background: none; border: 0; padding: 0;
+  font-family: inherit; font-size: var(--gs-text-sm); font-weight: var(--gs-weight-medium);
+  color: var(--gs-link); cursor: pointer; text-decoration: none;
+  border-radius: var(--gs-radius-xs);
+}
+.gs-linkbtn:hover { text-decoration: underline; }
+.gs-linkbtn:focus-visible { outline: none; box-shadow: var(--gs-focus-ring); }
+
+/* ---------- CAMPO DE FORMULÁRIO ---------- */
+.gs-field { display: block; margin-bottom: var(--gs-space-4); }
+.gs-field__label {
+  display: block; margin-bottom: var(--gs-space-2);
+  font-size: var(--gs-text-sm); font-weight: var(--gs-weight-medium); color: var(--gs-text-body);
+}
+.gs-field__hint { margin: var(--gs-space-2) 0 0; font-size: var(--gs-text-xs); color: var(--gs-text-muted); }
+.gs-field__error { margin: var(--gs-space-2) 0 0; font-size: var(--gs-text-xs); color: var(--gs-danger); font-weight: var(--gs-weight-medium); }
+
+.gs-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--gs-text-md);
+  color: var(--gs-text);
+  background: var(--gs-surface);
+  border: 1.5px solid var(--gs-border);
+  border-radius: var(--gs-radius-md);
+  padding: 12px 14px;
+  min-height: var(--gs-tap-target);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color var(--gs-duration-base) var(--gs-ease),
+              box-shadow var(--gs-duration-base) var(--gs-ease);
+}
+.gs-input::placeholder { color: var(--gs-text-subtle); }
+.gs-input:hover:not(:disabled) { border-color: var(--gs-border-strong); }
+.gs-input:focus { border-color: var(--gs-action); box-shadow: var(--gs-focus-ring); }
+.gs-input:disabled { background: var(--gs-surface-sunken); color: var(--gs-text-subtle); cursor: not-allowed; }
+.gs-input--invalid { border-color: var(--gs-danger); }
+.gs-input--invalid:focus { box-shadow: 0 0 0 3px rgba(220,38,38,.22); }
+textarea.gs-input { min-height: 88px; resize: vertical; line-height: var(--gs-leading-normal); }
+select.gs-input { appearance: none; padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; }
+
+/* ---------- CARD ---------- */
+.gs-card {
+  background: var(--gs-surface);
+  border-radius: var(--gs-radius-md);
+  box-shadow: var(--gs-shadow-xs);
+}
+.gs-card--flat { box-shadow: none; border: 1px solid var(--gs-border); }
+.gs-card--raised { box-shadow: var(--gs-shadow-md); border-radius: var(--gs-radius-lg); }
+.gs-card--brand { background: var(--gs-surface-brand); border: 1px solid var(--gs-info-border); box-shadow: none; }
+.gs-card--pad-sm { padding: var(--gs-space-3) var(--gs-space-4); }
+.gs-card--pad-md { padding: var(--gs-space-4); }
+.gs-card--pad-lg { padding: var(--gs-space-6); }
+.gs-card--interactive { cursor: pointer; transition: box-shadow var(--gs-duration-base) var(--gs-ease), transform var(--gs-duration-fast) var(--gs-ease); }
+.gs-card--interactive:hover { box-shadow: var(--gs-shadow-sm); transform: translateY(-1px); }
+.gs-card--muted { opacity: .6; }
+
+/* ---------- BADGE ---------- */
+.gs-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--gs-text-xs); font-weight: var(--gs-weight-bold);
+  padding: 3px 9px; border-radius: var(--gs-radius-pill);
+  border: 1px solid transparent; white-space: nowrap;
+}
+.gs-badge--neutral { background: var(--gs-surface-sunken); color: var(--gs-text-muted); }
+.gs-badge--brand   { background: var(--gs-info-bg);    color: var(--gs-info-text);    border-color: var(--gs-info-border); }
+.gs-badge--success { background: var(--gs-success-bg); color: var(--gs-success-text); border-color: var(--gs-success-border); }
+.gs-badge--warning { background: var(--gs-warning-bg); color: var(--gs-warning-text); border-color: var(--gs-warning-border); }
+.gs-badge--danger  { background: var(--gs-danger-bg);  color: var(--gs-danger-text);  border-color: var(--gs-danger-border); }
+.gs-badge--solid   { background: var(--gs-action); color: var(--gs-white); border-color: transparent; }
+
+/* rótulo caixa-alta — "CÓDIGO DE ACESSO", "FOTO ENVIADA" */
+.gs-eyebrow {
+  display: inline-block; font-size: var(--gs-text-2xs); font-weight: var(--gs-weight-bold);
+  letter-spacing: var(--gs-tracking-wider); text-transform: uppercase; color: var(--gs-text-muted);
+}
+
+/* ---------- FAIXA DE AVISO (topo de tela) ---------- */
+.gs-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--gs-space-3); flex-wrap: wrap;
+  padding: 10px var(--gs-space-6);
+  font-size: var(--gs-text-sm);
+  border-bottom: 1px solid transparent;
+}
+.gs-banner p { margin: 0; }
+.gs-banner--info    { background: var(--gs-info-bg);    color: var(--gs-info-text);    border-bottom-color: var(--gs-info-border); }
+.gs-banner--success { background: var(--gs-success-bg); color: var(--gs-success-text); border-bottom-color: var(--gs-success-border); }
+.gs-banner--warning { background: var(--gs-warning-bg); color: var(--gs-warning-text); border-bottom-color: var(--gs-warning-border); }
+.gs-banner--danger  { background: var(--gs-danger-bg);  color: var(--gs-danger-text);  border-bottom-color: var(--gs-danger-border); }
+.gs-banner__actions { display: flex; gap: var(--gs-space-2); flex-shrink: 0; }
+
+/* ---------- ABAS EM PÍLULA (seletor de turno) ---------- */
+.gs-pills {
+  display: flex; gap: var(--gs-space-2);
+  padding: var(--gs-space-4) var(--gs-space-6);
+  background: var(--gs-surface);
+  border-bottom: 1px solid var(--gs-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gs-pills::-webkit-scrollbar { display: none; }
+.gs-pill {
+  font-family: inherit; font-size: var(--gs-text-sm); font-weight: var(--gs-weight-medium);
+  padding: 9px 16px; border: 0; border-radius: var(--gs-radius-pill);
+  background: var(--gs-surface-sunken); color: var(--gs-text-muted);
+  cursor: pointer; white-space: nowrap;
+  transition: background-color var(--gs-duration-base) var(--gs-ease), color var(--gs-duration-base) var(--gs-ease);
+}
+.gs-pill:hover:not([aria-selected='true']) { background: var(--gs-border); color: var(--gs-text-body); }
+.gs-pill:focus-visible { outline: none; box-shadow: var(--gs-focus-ring); }
+.gs-pill[aria-selected='true'] { background: var(--gs-action); color: var(--gs-white); }
+
+/* ---------- CABEÇALHO DE TELA ---------- */
+.gs-appbar {
+  background: var(--gs-surface-dark);
+  color: var(--gs-text-on-dark);
+  padding: var(--gs-space-5) var(--gs-space-6);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--gs-space-3);
+}
+.gs-appbar__title {
+  margin: 0; font-size: var(--gs-text-xl); font-weight: var(--gs-weight-bold);
+  letter-spacing: var(--gs-tracking-tight); color: var(--gs-white);
+  background: none; border: 0; padding: 0; font-family: inherit; text-align: left;
+}
+button.gs-appbar__title { cursor: pointer; }
+.gs-appbar__sub { margin: var(--gs-space-1) 0 0; font-size: var(--gs-text-sm); color: var(--gs-text-on-dark-muted); }
+.gs-appbar__actions { display: flex; gap: var(--gs-space-2); flex-wrap: wrap; justify-content: flex-end; }
+.gs-appbar__back {
+  background: none; border: 0; color: var(--gs-white); font-size: var(--gs-text-2xl);
+  line-height: 1; cursor: pointer; padding: 0 var(--gs-space-1) 0 0; font-family: inherit;
+}
+
+/* ---------- MODAL ---------- */
+.gs-overlay {
+  position: fixed; inset: 0;
+  background: rgba(5,11,36,.72);
+  backdrop-filter: blur(3px);
+  z-index: var(--gs-z-overlay);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--gs-space-6);
+  animation: gs-fade var(--gs-duration-slow) var(--gs-ease);
+}
+.gs-modal {
+  background: var(--gs-surface);
+  border-radius: var(--gs-radius-lg);
+  box-shadow: var(--gs-shadow-lg);
+  width: 100%; max-width: 440px;
+  max-height: 86vh; overflow-y: auto;
+  z-index: var(--gs-z-modal);
+  animation: gs-rise var(--gs-duration-slow) var(--gs-ease);
+}
+.gs-modal__head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--gs-space-3);
+  padding: var(--gs-space-5) var(--gs-space-6) 0;
+}
+.gs-modal__title { margin: 0; font-size: var(--gs-text-lg); font-weight: var(--gs-weight-bold); color: var(--gs-text); letter-spacing: var(--gs-tracking-tight); }
+.gs-modal__close {
+  background: none; border: 0; cursor: pointer; font-size: var(--gs-text-xl);
+  color: var(--gs-text-subtle); line-height: 1; padding: 0; font-family: inherit;
+}
+.gs-modal__close:hover { color: var(--gs-text-body); }
+.gs-modal__body { padding: var(--gs-space-4) var(--gs-space-6) var(--gs-space-6); }
+.gs-modal__foot { display: flex; gap: var(--gs-space-2); justify-content: flex-end; padding: 0 var(--gs-space-6) var(--gs-space-6); flex-wrap: wrap; }
+
+@keyframes gs-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes gs-rise { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+
+/* ---------- PROGRESSO ---------- */
+.gs-bar { height: 7px; border-radius: var(--gs-radius-pill); background: var(--gs-surface-sunken); overflow: hidden; }
+.gs-bar__fill { height: 100%; border-radius: inherit; background: var(--gs-action); transition: width var(--gs-duration-slow) var(--gs-ease); }
+.gs-bar__fill--success { background: var(--gs-success); }
+
+.gs-ring { position: relative; flex-shrink: 0; display: inline-grid; place-items: center; }
+.gs-ring__value { position: absolute; inset: 0; display: grid; place-items: center; font-weight: var(--gs-weight-bold); }
+.gs-ring circle { transition: stroke-dashoffset var(--gs-duration-slow) var(--gs-ease), stroke var(--gs-duration-base) var(--gs-ease); }
+
+/* ---------- ESTADO VAZIO ---------- */
+.gs-empty { text-align: center; padding: var(--gs-space-12) var(--gs-space-6); color: var(--gs-text-muted); }
+.gs-empty__icon { font-size: 40px; margin: 0 0 var(--gs-space-3); }
+.gs-empty__title { margin: 0 0 var(--gs-space-2); font-size: var(--gs-text-lg); font-weight: var(--gs-weight-bold); color: var(--gs-text); }
+.gs-empty__text { margin: 0 auto; font-size: var(--gs-text-sm); max-width: 320px; line-height: var(--gs-leading-normal); }
+
+/* ---------- TELA ---------- */
+.gs-screen { min-height: 100vh; background: var(--gs-bg); color: var(--gs-text); }
+.gs-screen--centered { display: flex; align-items: center; justify-content: center; padding: var(--gs-space-6); }
+.gs-screen--dark { background: var(--gs-gradient-hero); }
+.gs-screen__body { padding: var(--gs-space-5) var(--gs-space-6); }
+
+/* ---------- TIPOGRAFIA UTILITÁRIA ---------- */
+.gs-h1 { font-size: var(--gs-text-5xl); font-weight: var(--gs-weight-black); line-height: var(--gs-leading-tight); letter-spacing: var(--gs-tracking-tight); margin: 0; }
+.gs-h2 { font-size: var(--gs-text-4xl); font-weight: var(--gs-weight-black); line-height: var(--gs-leading-tight); letter-spacing: var(--gs-tracking-tight); margin: 0; }
+.gs-h3 { font-size: var(--gs-text-xl); font-weight: var(--gs-weight-bold); line-height: var(--gs-leading-snug); letter-spacing: var(--gs-tracking-tight); margin: 0; }
+.gs-h4 { font-size: var(--gs-text-lg); font-weight: var(--gs-weight-bold); line-height: var(--gs-leading-snug); margin: 0; }
+.gs-body { font-size: var(--gs-text-md); line-height: var(--gs-leading-normal); color: var(--gs-text-body); margin: 0; }
+.gs-muted { font-size: var(--gs-text-sm); color: var(--gs-text-muted); margin: 0; }
+.gs-meta { font-size: var(--gs-text-xs); color: var(--gs-text-subtle); margin: 0; }

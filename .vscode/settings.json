@@ -1,0 +1,24 @@
+{
+  // ---------------------------------------------------------------
+  // Some do explorer o que é gerado automaticamente e você nunca edita.
+  // Nada é apagado — só deixa de aparecer na lista. Para ver de novo,
+  // troque "true" por "false" na linha correspondente.
+  // ---------------------------------------------------------------
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "node_modules": true,
+    "dist": true
+  },
+
+  // ---------------------------------------------------------------
+  // Agrupa os arquivos de configuração numa linha só, embaixo de
+  // "package.json". Clique na setinha pra expandir quando precisar.
+  // São nomes obrigatórios: as ferramentas procuram por eles.
+  // ---------------------------------------------------------------
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, vite.config.js, eslint.config.js, vercel.json, firebase.json, .firebaserc, firestore.rules, .env, .env.example, .gitignore, index.html"
+  }
+}

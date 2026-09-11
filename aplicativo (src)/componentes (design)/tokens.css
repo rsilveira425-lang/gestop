@@ -1,0 +1,202 @@
+/* ============================================================
+   GESTOP — DESIGN TOKENS
+   Fonte única de verdade pra cor, tipografia, espaço e elevação.
+   Nunca escreva um hex direto num componente: use uma var daqui.
+
+   Camadas:
+   1. PRIMITIVAS  (--gs-navy-700)   -> a paleta crua, sem significado
+   2. SEMÂNTICAS  (--gs-action)     -> o papel que a cor cumpre na tela
+   Componentes só consomem a camada 2. Trocar a marca = mexer aqui.
+   ============================================================ */
+
+:root {
+  /* ---------- 1. PRIMITIVAS ---------- */
+
+  /* Marca: do navy profundo (superfícies escuras) ao azul claro (realce) */
+  --gs-navy-950: #050b24;  /* fundo do hero e do header do app */
+  --gs-navy-900: #0a1440;
+  --gs-navy-800: #0d1b52;
+  --gs-navy-700: #0f1f4d;
+  --gs-blue-900: #1e3a8a;
+  --gs-blue-800: #1e40af;
+  --gs-blue-700: #1d4ed8;  /* ação primária */
+  --gs-blue-600: #2563eb;  /* hover claro, links */
+  --gs-blue-500: #3b82f6;
+  --gs-blue-400: #60a5fa;  /* realce sobre navy */
+  --gs-blue-300: #93c5fd;
+  --gs-blue-200: #bfdbfe;
+  --gs-blue-100: #dbeafe;
+  --gs-blue-50:  #eef4ff;
+
+  /* Neutros */
+  --gs-white:      #ffffff;
+  --gs-slate-50:   #f8fafc;
+  --gs-slate-100:  #f1f5f9;
+  --gs-slate-200:  #e2e8f0;
+  --gs-slate-300:  #cbd5e1;
+  --gs-slate-400:  #94a3b8;
+  --gs-slate-500:  #64748b;
+  --gs-slate-600:  #475569;
+  --gs-slate-700:  #334155;
+  --gs-slate-800:  #1e293b;
+  --gs-slate-900:  #0f172a;
+
+  /* Estados */
+  --gs-green-700: #166534;
+  --gs-green-600: #16a34a;
+  --gs-green-300: #86efac;
+  --gs-green-50:  #f0fdf4;
+
+  --gs-amber-800: #92400e;
+  --gs-amber-600: #d97706;
+  --gs-amber-500: #f59e0b;
+  --gs-amber-300: #fde68a;
+  --gs-amber-50:  #fffbeb;
+
+  --gs-red-800: #991b1b;
+  --gs-red-600: #dc2626;
+  --gs-red-200: #fecaca;
+  --gs-red-50:  #fef2f2;
+
+  /* Acento da marca — reservado pra celebração "The Black". Não use em UI comum. */
+  --gs-orange-600: #ea580c;
+  --gs-orange-500: #f97316;
+
+  /* ---------- 2. SEMÂNTICAS ---------- */
+
+  /* Superfícies */
+  --gs-bg:            var(--gs-slate-50);   /* fundo das telas */
+  --gs-surface:       var(--gs-white);      /* cards, modais */
+  --gs-surface-sunken: var(--gs-slate-100);  /* trilhos, inputs off, abas inativas */
+  --gs-surface-brand: var(--gs-blue-50);    /* destaque suave azul */
+  --gs-surface-dark:  var(--gs-navy-950);   /* header do app, hero, rodapé */
+
+  /* Texto */
+  --gs-text:          var(--gs-slate-900);  /* títulos e conteúdo */
+  --gs-text-body:     var(--gs-slate-800);
+  --gs-text-muted:    var(--gs-slate-500);  /* apoio, metadados */
+  --gs-text-subtle:   var(--gs-slate-400);  /* placeholder, timestamp */
+  --gs-text-on-dark:        rgba(255,255,255,.96);
+  --gs-text-on-dark-muted:  rgba(255,255,255,.72);
+
+  /* Traço */
+  --gs-border:        var(--gs-slate-200);
+  --gs-border-strong: var(--gs-slate-300);
+  --gs-border-on-dark: rgba(255,255,255,.12);
+
+  /* Ação */
+  --gs-action:        var(--gs-blue-700);
+  --gs-action-hover:  var(--gs-blue-800);
+  --gs-action-active: var(--gs-navy-700);
+  --gs-action-soft:   var(--gs-blue-50);
+  --gs-action-text:   var(--gs-white);
+  --gs-link:          var(--gs-blue-600);
+
+  /* Estados semânticos: cada um tem fundo / traço / texto / sólido */
+  --gs-success:        var(--gs-green-600);
+  --gs-success-bg:     var(--gs-green-50);
+  --gs-success-border: var(--gs-green-300);
+  --gs-success-text:   var(--gs-green-700);
+
+  --gs-warning:        var(--gs-amber-500);
+  --gs-warning-bg:     var(--gs-amber-50);
+  --gs-warning-border: var(--gs-amber-300);
+  --gs-warning-text:   var(--gs-amber-800);
+
+  --gs-danger:         var(--gs-red-600);
+  --gs-danger-bg:      var(--gs-red-50);
+  --gs-danger-border:  var(--gs-red-200);
+  --gs-danger-text:    var(--gs-red-800);
+
+  --gs-info:           var(--gs-blue-600);
+  --gs-info-bg:        var(--gs-blue-50);
+  --gs-info-border:    var(--gs-blue-200);
+  --gs-info-text:      var(--gs-blue-800);
+
+  /* Gradientes da marca */
+  --gs-gradient-hero: radial-gradient(1100px 480px at 82% -12%, rgba(96,165,250,.28) 0%, transparent 62%),
+                      linear-gradient(180deg, var(--gs-navy-950), var(--gs-navy-900) 55%, var(--gs-navy-800));
+  --gs-gradient-band: linear-gradient(100deg, var(--gs-navy-950), var(--gs-navy-700) 55%, var(--gs-blue-700));
+  --gs-gradient-cta:  linear-gradient(135deg, var(--gs-navy-950), var(--gs-blue-400));
+
+  /* ---------- TIPOGRAFIA ---------- */
+  --gs-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, sans-serif;
+
+  --gs-text-2xs: 11px;  /* rótulo caixa-alta */
+  --gs-text-xs:  12px;  /* metadado, badge */
+  --gs-text-sm:  13px;  /* apoio, legenda */
+  --gs-text-md:  15px;  /* CORPO PADRÃO */
+  --gs-text-lg:  17px;
+  --gs-text-xl:  20px;  /* título de tela */
+  --gs-text-2xl: 24px;
+  --gs-text-3xl: 30px;
+  --gs-text-4xl: clamp(26px, 4vw, 40px);   /* título de seção (landing) */
+  --gs-text-5xl: clamp(32px, 5.2vw, 52px); /* H1 do hero */
+
+  --gs-weight-normal:   400;
+  --gs-weight-medium:   600;
+  --gs-weight-bold:     700;
+  --gs-weight-black:    800;
+
+  --gs-leading-tight:  1.12;  /* títulos */
+  --gs-leading-snug:   1.35;
+  --gs-leading-normal: 1.55;  /* corpo */
+
+  --gs-tracking-tight: -.02em; /* títulos */
+  --gs-tracking-wide:  .04em;  /* eyebrow */
+  --gs-tracking-wider: .08em;  /* rótulo caixa-alta */
+
+  /* ---------- ESPAÇO (base 4px) ---------- */
+  --gs-space-1:  4px;
+  --gs-space-2:  8px;
+  --gs-space-3:  12px;
+  --gs-space-4:  16px;
+  --gs-space-5:  20px;
+  --gs-space-6:  24px;   /* padding padrão de tela */
+  --gs-space-8:  32px;
+  --gs-space-10: 40px;
+  --gs-space-12: 48px;
+  --gs-space-16: 64px;
+  --gs-space-20: 84px;   /* respiro entre seções da landing */
+
+  /* ---------- RAIO ---------- */
+  --gs-radius-xs:   6px;
+  --gs-radius-sm:   8px;   /* controles pequenos, badges */
+  --gs-radius-md:   12px;  /* PADRÃO: botões, inputs, cards */
+  --gs-radius-lg:   16px;  /* cards de destaque */
+  --gs-radius-xl:   24px;  /* blocos da landing */
+  --gs-radius-pill: 999px;
+
+  /* ---------- ELEVAÇÃO ---------- */
+  --gs-shadow-xs: 0 1px 3px rgba(15,23,42,.08);
+  --gs-shadow-sm: 0 4px 12px rgba(15,23,42,.10);
+  --gs-shadow-md: 0 10px 30px -12px rgba(15,23,42,.18);
+  --gs-shadow-lg: 0 30px 60px -20px rgba(15,23,42,.30);
+  --gs-shadow-action: 0 8px 20px -6px rgba(29,78,216,.45);
+  --gs-focus-ring: 0 0 0 3px rgba(29,78,216,.28);
+
+  /* ---------- CAMADAS ---------- */
+  --gs-z-sticky:    60;
+  --gs-z-overlay:   1000;
+  --gs-z-modal:     1100;
+  --gs-z-celebrate: 2000;
+  --gs-z-toast:     3000;
+
+  /* ---------- MOVIMENTO ---------- */
+  --gs-ease: cubic-bezier(.4, 0, .2, 1);
+  --gs-duration-fast: 120ms;
+  --gs-duration-base: 180ms;
+  --gs-duration-slow: 300ms;
+
+  /* ---------- LAYOUT ---------- */
+  --gs-container: 1140px;
+  --gs-tap-target: 44px;  /* mínimo tocável — a equipe usa isso de pé, com pressa */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --gs-duration-fast: 0ms;
+    --gs-duration-base: 0ms;
+    --gs-duration-slow: 0ms;
+  }
+}

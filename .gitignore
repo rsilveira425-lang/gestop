@@ -24,3 +24,13 @@ dist-ssr
 *.sw?
 
 .env
+
+# Configuração do VSCode deste projeto (explorer organizado) — vale a pena versionar
+!.vscode/settings.json
+
+# Symlink de skill do Claude Code — aponta pra caminho absoluto desta máquina,
+# não faz sentido versionar (quebraria em qualquer outro lugar).
+.claude/
+
+# Material de apoio local, não código
+Mapa-do-Gestop.pdf
