@@ -1,524 +1,1142 @@
+// Importa a configuração de preço do app oficial (não uma cópia) — assim o preço
+// nunca fica desatualizado aqui, só o design/copy desta página é livre pra mudar.
+import { useCallback, useEffect, useState } from 'react'
 import { PRECO_MENSAL, PRECO_FUNDADOR, VAGAS_FUNDADOR, DIAS_TRIAL } from '../../ajustes (config)/billing'
 
-const HERO_SVG = `<svg class="float-svg" width="460" height="520" viewBox="0 0 460 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tela do app Gestop com checklist de abertura">
-        <!-- floating dashboard card behind -->
-        <g transform="translate(250,34)">
-          <rect x="0" y="0" width="190" height="150" rx="16" fill="#ffffff" stroke="#e2e8f0"/>
-          <text x="16" y="28" font-family="sans-serif" font-size="12" font-weight="700" fill="#0f172a">Painel de hoje</text>
-          <rect x="16" y="42" width="158" height="8" rx="4" fill="#eef2f7"/>
-          <rect x="16" y="42" width="120" height="8" rx="4" fill="#16a34a"/>
-          <text x="16" y="72" font-family="sans-serif" font-size="11" fill="#64748b">Abertura</text>
-          <text x="158" y="72" font-family="sans-serif" font-size="11" font-weight="700" fill="#16a34a" text-anchor="end">100%</text>
-          <text x="16" y="96" font-family="sans-serif" font-size="11" fill="#64748b">Pico</text>
-          <text x="158" y="96" font-family="sans-serif" font-size="11" font-weight="700" fill="#f59e0b" text-anchor="end">67%</text>
-          <text x="16" y="120" font-family="sans-serif" font-size="11" fill="#64748b">Fechamento</text>
-          <text x="158" y="120" font-family="sans-serif" font-size="11" font-weight="700" fill="#94a3b8" text-anchor="end">—</text>
-          <line x1="16" y1="132" x2="174" y2="132" stroke="#eef2f7"/>
-          <text x="16" y="146" font-family="sans-serif" font-size="10" fill="#94a3b8">Atualizado agora · tempo real</text>
-        </g>
+/* ============================================================
+   ÍCONES — desenhados à mão, não emoji.
+   Um só sistema: grade 24, traço 1.75, pontas redondas, currentColor.
+   Trocar o tamanho é só passar size={n}.
+   ============================================================ */
 
-        <!-- PHONE -->
-        <g transform="translate(8,28)">
-          <rect x="0" y="0" width="250" height="492" rx="38" fill="#0f172a"/>
-          <rect x="8" y="8" width="234" height="476" rx="31" fill="#f5f5f7"/>
-          <!-- notch -->
-          <rect x="95" y="16" width="60" height="14" rx="7" fill="#0f172a"/>
-          <!-- app header -->
-          <g>
-            <path d="M8 39 h234 v44 h-234 z" fill="#1a1a1a"/>
-            <text x="22" y="58" font-family="sans-serif" font-size="13" font-weight="700" fill="#fff">🍔 Checklist da Casa</text>
-            <text x="22" y="74" font-family="sans-serif" font-size="10" fill="#cbd5e1">Abertura · Cozinha · 08:12</text>
-          </g>
-          <!-- tabs -->
-          <g font-family="sans-serif" font-size="10" font-weight="700">
-            <rect x="22" y="94" width="62" height="24" rx="12" fill="#1a1a1a"/>
-            <text x="53" y="110" fill="#fff" text-anchor="middle">Abertura</text>
-            <rect x="90" y="94" width="44" height="24" rx="12" fill="#e8e8ed"/>
-            <text x="112" y="110" fill="#475569" text-anchor="middle">Pico</text>
-            <rect x="140" y="94" width="80" height="24" rx="12" fill="#e8e8ed"/>
-            <text x="180" y="110" fill="#475569" text-anchor="middle">Fechamento</text>
-          </g>
-          <!-- progress -->
-          <g>
-            <rect x="22" y="128" width="206" height="40" rx="12" fill="#fff" stroke="#e8e8ed"/>
-            <text x="34" y="144" font-family="sans-serif" font-size="10" fill="#64748b">Progresso</text>
-            <text x="216" y="144" font-family="sans-serif" font-size="10" font-weight="700" fill="#16a34a" text-anchor="end">8/12</text>
-            <rect x="34" y="150" width="182" height="7" rx="4" fill="#eef2f7"/>
-            <rect x="34" y="150" width="121" height="7" rx="4" fill="#16a34a"/>
-          </g>
-          <!-- checklist items -->
-          <g font-family="sans-serif">
-            <!-- item 1 done -->
-            <rect x="22" y="178" width="206" height="34" rx="10" fill="#fff" stroke="#e8e8ed"/>
-            <circle cx="40" cy="195" r="9" fill="#16a34a"/>
-            <path d="M36 195 l3 3 l5 -6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="56" y="199" font-size="10.5" fill="#0f172a">Ligar fritadeiras e chapa</text>
-            <!-- item 2 done with photo -->
-            <rect x="22" y="218" width="206" height="44" rx="10" fill="#fff" stroke="#e8e8ed"/>
-            <circle cx="40" cy="240" r="9" fill="#16a34a"/>
-            <path d="M36 240 l3 3 l5 -6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="56" y="236" font-size="10.5" fill="#0f172a">Conferir temperatura geladeira</text>
-            <rect x="56" y="244" width="26" height="12" rx="3" fill="#dbeafe"/>
-            <text x="69" y="253" font-size="8" fill="#2563eb" text-anchor="middle">📷 foto</text>
-            <!-- item 3 done -->
-            <rect x="22" y="268" width="206" height="34" rx="10" fill="#fff" stroke="#e8e8ed"/>
-            <circle cx="40" cy="285" r="9" fill="#16a34a"/>
-            <path d="M36 285 l3 3 l5 -6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="56" y="289" font-size="10.5" fill="#0f172a">Higienizar bancadas</text>
-            <!-- item 4 pending -->
-            <rect x="22" y="308" width="206" height="34" rx="10" fill="#fff" stroke="#e8e8ed"/>
-            <circle cx="40" cy="325" r="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.6"/>
-            <text x="56" y="329" font-size="10.5" fill="#475569">Repor estoque de pães</text>
-            <!-- item 5 pending -->
-            <rect x="22" y="348" width="206" height="34" rx="10" fill="#fff" stroke="#e8e8ed"/>
-            <circle cx="40" cy="365" r="9" fill="#fff" stroke="#cbd5e1" stroke-width="1.6"/>
-            <text x="56" y="369" font-size="10.5" fill="#475569">Testar máquina de cartão</text>
-          </g>
-          <!-- bottom bar (rounded bottom corners to match phone) -->
-          <path d="M8 430 H242 V453 A31 31 0 0 1 211 484 H39 A31 31 0 0 1 8 453 Z" fill="#fff"/>
-          <line x1="8" y1="430" x2="242" y2="430" stroke="#e8e8ed"/>
-          <g font-family="sans-serif" font-size="9" text-anchor="middle">
-            <text x="55" y="455" font-size="15">📋</text><text x="55" y="470" fill="#2563eb" font-weight="700">Turno</text>
-            <text x="125" y="455" font-size="15">📊</text><text x="125" y="470" fill="#94a3b8">Painel</text>
-            <text x="195" y="455" font-size="15">👥</text><text x="195" y="470" fill="#94a3b8">Equipe</text>
-          </g>
-        </g>
-      </svg>`
-const FOTO_SVG = `<svg width="240" height="430" viewBox="0 0 240 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Item do checklist com foto enviada como prova">
-          <rect x="0" y="0" width="240" height="430" rx="34" fill="#0f172a"/>
-          <rect x="7" y="7" width="226" height="416" rx="28" fill="#f5f5f7"/>
-          <rect x="92" y="14" width="56" height="12" rx="6" fill="#0f172a"/>
-          <path d="M7 34 h226 v40 h-226 z" fill="#1a1a1a"/>
-          <text x="20" y="54" font-family="sans-serif" font-size="12" font-weight="700" fill="#fff">Detalhe da tarefa</text>
-          <text x="20" y="69" font-family="sans-serif" font-size="9.5" fill="#cbd5e1">Conferir temperatura · Cozinha</text>
-          <!-- task card -->
-          <rect x="20" y="88" width="200" height="40" rx="10" fill="#fff" stroke="#e8e8ed"/>
-          <circle cx="38" cy="108" r="9" fill="#16a34a"/>
-          <path d="M34 108 l3 3 l5 -6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="54" y="105" font-family="sans-serif" font-size="10" fill="#0f172a">Geladeira a 4°C</text>
-          <text x="54" y="118" font-family="sans-serif" font-size="8.5" fill="#16a34a">Concluído por Marcos · 08:07</text>
-          <!-- photo proof -->
-          <text x="20" y="150" font-family="sans-serif" font-size="9" font-weight="700" fill="#64748b">FOTO ENVIADA</text>
-          <rect x="20" y="158" width="200" height="150" rx="12" fill="url(#gp)"/>
-          <defs><linearGradient id="gp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c7d2fe"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient></defs>
-          <rect x="60" y="200" width="120" height="58" rx="6" fill="#cbd5e1"/>
-          <circle cx="88" cy="220" r="9" fill="#94a3b8"/>
-          <path d="M64 258 l30 -28 l22 18 l20 -16 l24 24 z" fill="#94a3b8"/>
-          <text x="120" y="332" font-family="sans-serif" font-size="9" fill="#64748b" text-anchor="middle">📍 Registrado no local · 08:07</text>
-          <!-- comment -->
-          <rect x="20" y="346" width="200" height="50" rx="10" fill="#eff4ff"/>
-          <text x="32" y="366" font-family="sans-serif" font-size="9" font-weight="700" fill="#2563eb">💬 Comentário</text>
-          <text x="32" y="383" font-family="sans-serif" font-size="9" fill="#475569">"Tudo certo, sem variação hoje."</text>
-        </svg>`
-const DASH_SVG = `<svg width="420" height="320" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Painel do gestor mostrando turnos e equipe">
-          <rect x="0" y="0" width="420" height="320" rx="16" fill="#fff" stroke="#e2e8f0"/>
-          <!-- topbar -->
-          <path d="M0 16 a16 16 0 0 1 16 -16 h388 a16 16 0 0 1 16 16 v22 h-420 z" fill="#1a1a1a"/>
-          <circle cx="18" cy="19" r="4" fill="#ff5f57"/><circle cx="34" cy="19" r="4" fill="#febc2e"/><circle cx="50" cy="19" r="4" fill="#28c840"/>
-          <text x="210" y="23" font-family="sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">gestop.app · Painel do gestor</text>
-          <!-- title -->
-          <text x="22" y="62" font-family="sans-serif" font-size="14" font-weight="800" fill="#0f172a">Hoje, terça · 24 jun</text>
-          <text x="398" y="62" font-family="sans-serif" font-size="10" fill="#16a34a" text-anchor="end" font-weight="700">● Ao vivo</text>
-          <!-- 3 turno cards -->
-          <g font-family="sans-serif">
-            <rect x="22" y="76" width="120" height="78" rx="12" fill="#f0fdf4" stroke="#bbf7d0"/>
-            <text x="36" y="98" font-size="10" font-weight="700" fill="#0f172a">Abertura</text>
-            <text x="36" y="128" font-size="26" font-weight="800" fill="#16a34a">100%</text>
-            <text x="36" y="144" font-size="9" fill="#64748b">12/12 · 08:14</text>
+function Icone({ size = 24, children, ...resto }) {
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true" focusable="false" {...resto}
+    >
+      {children}
+    </svg>
+  )
+}
 
-            <rect x="150" y="76" width="120" height="78" rx="12" fill="#fffbeb" stroke="#fde68a"/>
-            <text x="164" y="98" font-size="10" font-weight="700" fill="#0f172a">Pico</text>
-            <text x="164" y="128" font-size="26" font-weight="800" fill="#f59e0b">67%</text>
-            <text x="164" y="144" font-size="9" fill="#64748b">6/9 · em andamento</text>
+const IcCheck = (p) => <Icone {...p}><path d="M4 12.5 9 17.5 20 6.5" /></Icone>
+const IcX = (p) => <Icone {...p}><path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" /></Icone>
 
-            <rect x="278" y="76" width="120" height="78" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
-            <text x="292" y="98" font-size="10" font-weight="700" fill="#0f172a">Fechamento</text>
-            <text x="292" y="128" font-size="26" font-weight="800" fill="#94a3b8">—</text>
-            <text x="292" y="144" font-size="9" fill="#64748b">abre às 22:00</text>
-          </g>
-          <!-- activity list -->
-          <text x="22" y="182" font-family="sans-serif" font-size="11" font-weight="700" fill="#0f172a">Atividade recente</text>
-          <g font-family="sans-serif" font-size="9.5">
-            <rect x="22" y="192" width="376" height="30" rx="8" fill="#f8fafc"/>
-            <circle cx="40" cy="207" r="8" fill="#16a34a"/><path d="M36.5 207 l2.5 2.5 l4.5 -5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            <text x="56" y="210" fill="#0f172a">Marcos concluiu "Conferir temperatura"</text>
-            <text x="392" y="210" fill="#94a3b8" text-anchor="end">08:07 📷</text>
 
-            <rect x="22" y="226" width="376" height="30" rx="8" fill="#f8fafc"/>
-            <circle cx="40" cy="241" r="8" fill="#16a34a"/><path d="M36.5 241 l2.5 2.5 l4.5 -5" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            <text x="56" y="244" fill="#0f172a">Júlia concluiu "Higienizar bancadas"</text>
-            <text x="392" y="244" fill="#94a3b8" text-anchor="end">08:02</text>
 
-            <rect x="22" y="260" width="376" height="30" rx="8" fill="#fff7ed"/>
-            <circle cx="40" cy="275" r="8" fill="#f59e0b"/><text x="40" y="278" font-size="10" fill="#fff" text-anchor="middle">!</text>
-            <text x="56" y="278" fill="#0f172a">Pendente: "Repor estoque de pães"</text>
-            <text x="392" y="278" fill="#f59e0b" text-anchor="end" font-weight="700">atrasada</text>
-          </g>
-        </svg>`
-const RANKING_SVG = `<svg width="420" height="320" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ranking mensal da equipe com pontos por turno concluído">
-          <rect x="0" y="0" width="420" height="320" rx="16" fill="#fff" stroke="#e2e8f0"/>
-          <path d="M0 16 a16 16 0 0 1 16 -16 h388 a16 16 0 0 1 16 16 v22 h-420 z" fill="#1a1a1a"/>
-          <circle cx="18" cy="19" r="4" fill="#ff5f57"/><circle cx="34" cy="19" r="4" fill="#febc2e"/><circle cx="50" cy="19" r="4" fill="#28c840"/>
-          <text x="210" y="23" font-family="sans-serif" font-size="10" fill="#cbd5e1" text-anchor="middle">gestop.app · Ranking</text>
-          <text x="22" y="62" font-family="sans-serif" font-size="14" font-weight="800" fill="#0f172a">🏆 Setembro · Ranking do mês</text>
-          <text x="398" y="62" font-family="sans-serif" font-size="9.5" fill="#2563eb" text-anchor="end" font-weight="700">1pt/turno · +1 no prazo</text>
 
-          <rect x="22" y="76" width="376" height="56" rx="12" fill="#eff4ff" stroke="#93c5fd"/>
-          <text x="41" y="112" font-family="sans-serif" font-size="22" text-anchor="middle">🥇</text>
-          <text x="64" y="103" font-family="sans-serif" font-size="13" font-weight="700" fill="#0f172a">Marina Alves</text>
-          <text x="64" y="119" font-family="sans-serif" font-size="10" fill="#64748b">8 turnos concluídos · 6 no prazo</text>
-          <text x="382" y="110" font-family="sans-serif" font-size="20" font-weight="800" fill="#2563eb" text-anchor="end">32 pts</text>
 
-          <rect x="22" y="140" width="376" height="52" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
-          <text x="41" y="173" font-family="sans-serif" font-size="19" text-anchor="middle">🥈</text>
-          <text x="64" y="165" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#0f172a">Diego Rocha</text>
-          <text x="64" y="180" font-family="sans-serif" font-size="9.5" fill="#64748b">7 turnos concluídos · 4 no prazo</text>
-          <text x="382" y="170" font-family="sans-serif" font-size="17" font-weight="800" fill="#475569" text-anchor="end">25 pts</text>
 
-          <rect x="22" y="200" width="376" height="52" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
-          <text x="41" y="233" font-family="sans-serif" font-size="19" text-anchor="middle">🥉</text>
-          <text x="64" y="225" font-family="sans-serif" font-size="12.5" font-weight="700" fill="#0f172a">Paula Nunes</text>
-          <text x="64" y="240" font-family="sans-serif" font-size="9.5" fill="#64748b">6 turnos concluídos · 3 no prazo</text>
-          <text x="382" y="230" font-family="sans-serif" font-size="17" font-weight="800" fill="#475569" text-anchor="end">21 pts</text>
 
-          <text x="210" y="285" font-family="sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Fecha todo mês · o mês seguinte começa do zero pra todo mundo</text>
-        </svg>`
-
-const Check = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+const IcTrofeu = (p) => (
+  <Icone {...p}>
+    <path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z" />
+    <path d="M7.5 5.5H5A2.5 2.5 0 0 0 7.5 10M16.5 5.5H19a2.5 2.5 0 0 1-2.5 4.5" />
+    <path d="M12 13.5V17M8.5 20h7M9.8 20l.6-3h3.2l.6 3" />
+  </Icone>
 )
-const CmpCheck = () => (
-  <svg className="glp-cmp-ic" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+
+
+const IcFesta = (p) => (
+  <Icone {...p}>
+    <path d="M12 3v2.5M19.5 5.5 17.8 7.2M21 13h-2.5M4.5 13H7M6.2 5.5 7.9 7.2" />
+    <path d="M13.2 10.8 4 20l11.5-4.2a1 1 0 0 0 .4-1.6l-1.1-1.1a1 1 0 0 0-1.6.4z" />
+  </Icone>
 )
-const CmpCross = () => (
-  <svg className="glp-cmp-ic" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#b4b4bd" strokeWidth="2.6" strokeLinecap="round"/></svg>
+
+const IcAntes = (p) => <Icone {...p}><path d="M15 5.5 8.5 12l6.5 6.5" /></Icone>
+const IcDepois = (p) => <Icone {...p}><path d="M9 5.5 15.5 12 9 18.5" /></Icone>
+const IcCadeado = (p) => (
+  <Icone {...p}>
+    <rect x="4.5" y="10.5" width="15" height="9.5" rx="2" />
+    <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7" />
+  </Icone>
 )
+
+// Marca: um turno fechado — o arco do dia com a marca de concluído dentro.
+function Marca({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+      <rect width="32" height="32" rx="9" fill="var(--gs-action)" />
+      <path d="M9 16.6 13.7 21 23 10.8" stroke="var(--gs-action-text)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/* ============================================================
+   ARTE — geometria, não ilustração. Tudo desenhado com os tokens.
+   ============================================================ */
+
+// ============================================================
+// HERO: o app por dentro, em leque.
+// Tres iPhones desenhados em CSS. O da frente em evidencia, os dois
+// de tras recuados e apagados pra dar profundidade sem competir.
+// As telas sao DOM de verdade, nao imagem: sem asset pra manter,
+// nitido em qualquer densidade e o texto continua sendo texto.
+// ============================================================
+
+const TELAS = [
+  { id: 'checklist', nome: 'Checklist' },
+  { id: 'painel', nome: 'Painel' },
+  { id: 'ranking', nome: 'Ranking' },
+]
+
+// A prova por foto vive aqui dentro: toda tarefa fechada carrega a sua.
+function MiniFoto() {
+  return (
+    <span className="gl-tl-mini" aria-hidden="true">
+      <svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMid slice">
+        <rect width="24" height="24" fill="var(--gs-slate-200)" />
+        <rect y="15" width="24" height="9" fill="var(--gs-slate-300)" />
+        <rect x="3" y="7" width="9" height="8" rx="1" fill="var(--gs-slate-400)" />
+        <circle cx="17" cy="10" r="3.4" fill="var(--gs-slate-100)" />
+      </svg>
+    </span>
+  )
+}
+
+const TAREFAS = [
+  { t: 'Guardar insumos', ok: true },
+  { t: 'Limpar bancada', ok: true },
+  { t: 'Descartar óleo', ok: true },
+  { t: 'Fechar gás', ok: true },
+  { t: 'Higienizar chapa', ok: false, agora: true },
+  { t: 'Varrer o salão', ok: false },
+]
+
+function TelaChecklist() {
+  const feitas = TAREFAS.filter((x) => x.ok).length
+  return (
+    <div className="gl-tl">
+      <div className="gl-tl-topo">
+        <div>
+          <span className="gl-tl-setor">Cozinha</span>
+          <b className="gl-tl-titulo">Fechamento</b>
+        </div>
+        <span className="gl-tl-cont gl-num">{feitas}/{TAREFAS.length}</span>
+      </div>
+      <div className="gl-tl-prog"><div style={{ width: (feitas / TAREFAS.length) * 100 + '%' }} /></div>
+      <ul className="gl-tl-lista">
+        {TAREFAS.map((x) => (
+          <li key={x.t} className={x.ok ? 'ok' : x.agora ? 'agora' : ''}>
+            <span className="gl-tl-marca">{x.ok ? <IcCheck size={11} /> : null}</span>
+            <span className="gl-tl-nome">{x.t}</span>
+            {x.ok ? <MiniFoto /> : null}
+          </li>
+        ))}
+      </ul>
+      <div className="gl-tl-rodape">
+        <button type="button" className="gl-tl-acao" tabIndex={-1}>Fechar turno</button>
+        <span className="gl-tl-falta">Toda tarefa fecha com foto</span>
+      </div>
+    </div>
+  )
+}
+
+function TelaPainel() {
+  const turnos = [
+    { n: 'Abertura', pct: 100, cor: 'var(--gs-success)', rot: '100%' },
+    { n: 'Pico', pct: 67, cor: 'var(--gs-warning)', rot: '67%' },
+    { n: 'Fechamento', pct: 56, cor: 'var(--gs-action)', rot: '5/9' },
+  ]
+  const reg = [
+    { h: '22:41', o: 'Higienizou chapa' },
+    { h: '22:18', o: 'Fechou gás' },
+    { h: '21:55', o: 'Descartou óleo' },
+  ]
+  return (
+    <div className="gl-tl">
+      <div className="gl-tl-topo">
+        <div>
+          <span className="gl-tl-setor">Quinta, 12/03</span>
+          <b className="gl-tl-titulo">Painel de hoje</b>
+        </div>
+        <span className="gl-tl-vivo"><i /> ao vivo</span>
+      </div>
+      <div className="gl-tl-turnos">
+        {turnos.map((t) => (
+          <div key={t.n} className="gl-tl-turno">
+            <span>{t.n}</span>
+            <div className="gl-tl-barra"><div style={{ width: t.pct + '%', background: t.cor }} /></div>
+            <b className="gl-num">{t.rot}</b>
+          </div>
+        ))}
+      </div>
+      <span className="gl-tl-rot">Últimos registros</span>
+      <ul className="gl-tl-reg">
+        {reg.map((r) => (
+          <li key={r.h}>
+            <span className="gl-tl-hora gl-num">{r.h}</span>
+            <span className="gl-tl-reg-o">{r.o}</span>
+            <MiniFoto />
+          </li>
+        ))}
+      </ul>
+      <div className="gl-tl-rodape">
+        <span className="gl-tl-falta">Atualiza sozinho, sem você pedir</span>
+      </div>
+    </div>
+  )
+}
+
+function TelaRanking() {
+  const gente = [
+    { n: 'Marina R.', p: 248, pct: 100 },
+    { n: 'Diego L.', p: 214, pct: 86 },
+    { n: 'Paula S.', p: 197, pct: 79 },
+    { n: 'Caio M.', p: 160, pct: 64 },
+  ]
+  return (
+    <div className="gl-tl">
+      <div className="gl-tl-topo">
+        <div>
+          <span className="gl-tl-setor">Equipe · 4 pessoas</span>
+          <b className="gl-tl-titulo">Ranking de março</b>
+        </div>
+        <IcTrofeu size={17} style={{ color: 'var(--gs-amber-600)' }} />
+      </div>
+      <div className="gl-tl-ponto">
+        <IcFesta size={15} />
+        <div><b>Turno no horário</b><span>Marina ganhou +12</span></div>
+      </div>
+      <ul className="gl-tl-rank">
+        {gente.map((g, i) => (
+          <li key={g.n} className={i === 0 ? 'lider' : ''}>
+            <span className="gl-tl-pos gl-num">{i + 1}</span>
+            <span className="gl-tl-rank-n">{g.n}</span>
+            <div className="gl-tl-barra"><div style={{ width: g.pct + '%' }} /></div>
+            <b className="gl-num">{g.p}</b>
+          </li>
+        ))}
+      </ul>
+      <div className="gl-tl-rodape">
+        <span className="gl-tl-falta">Reinicia todo dia 1º</span>
+      </div>
+    </div>
+  )
+}
+
+const CONTEUDO = { checklist: <TelaChecklist />, painel: <TelaPainel />, ranking: <TelaRanking /> }
+const INTERVALO = 3400
+
+// Moldura sozinha, sem conteudo: so pra dar altura ao palco, ja que os
+// tres aparelhos sao absolutos. Assim o leque acompanha qualquer largura.
+function MolduraVazia() {
+  return <div className="gl-fone gl-fone-medida" aria-hidden="true"><div className="gl-fone-tela" /></div>
+}
+
+function Esqueleto() {
+  return (
+    <div className="gl-esq" aria-hidden="true">
+      <div className="gl-esq-cab"><i /><i /></div>
+      <div className="gl-esq-bloco" />
+      <div className="gl-esq-linhas">
+        {Array.from({ length: 6 }, (_, i) => <i key={i} />)}
+      </div>
+      <div className="gl-esq-acao" />
+    </div>
+  )
+}
+
+function Fone({ tela, pos, ativo, aoClicar }) {
+  // Sempre <div>, nunca alternando com <button>: trocar o tipo do elemento
+  // faz o React remontar a subarvore inteira, e elemento recem-criado nao
+  // tem valor anterior — a transicao de opacidade nao chegava a rodar.
+  // Um <button> aqui tambem aninharia o "Fechar turno" dentro dele.
+  // Os de tras sao alvo de clique so pro mouse: ficam fora da arvore de
+  // acessibilidade porque as abas embaixo ja dao o mesmo caminho, com nome.
+  return (
+    <div
+      className="gl-fone"
+      data-pos={pos}
+      aria-hidden={!ativo}
+      onClick={pos === 0 ? undefined : aoClicar}
+    >
+      <div className="gl-fone-tela">
+        <div className="gl-fone-ilha" />
+        <div className="gl-fone-status">
+          <span className="gl-num">22:41</span>
+          <span className="gl-fone-sinal"><i /><i /><i /></span>
+        </div>
+        {/* As duas camadas existem sempre e dissolvem entre si. Trocar o
+            conteudo de uma vez era o que dava o solavanco: a tela virava
+            bloco cinza no mesmo instante, ainda na frente. */}
+        <div className="gl-fone-camada gl-fone-real">{tela}</div>
+        <div className="gl-fone-camada gl-fone-esq"><Esqueleto /></div>
+      </div>
+    </div>
+  )
+}
+
+function CarrosselApp() {
+  const [ativo, setAtivo] = useState(0)
+  const [interagindo, setInteragindo] = useState(false)
+
+  const vai = useCallback((i) => setAtivo(((i % TELAS.length) + TELAS.length) % TELAS.length), [])
+
+  useEffect(() => {
+    // Sem botao de pausa: quem segura o criterio de movimento e o hover, o
+    // foco do teclado e o prefers-reduced-motion, que desliga o giro de vez.
+    const menos = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (menos || interagindo) return
+    // 'ativo' na lista de dependencias reinicia o relogio a cada troca, entao
+    // um clique da a tela escolhida o intervalo inteiro antes de virar.
+    const t = setInterval(() => {
+      if (!document.hidden) setAtivo((a) => (a + 1) % TELAS.length)
+    }, INTERVALO)
+    return () => clearInterval(t)
+  }, [ativo, interagindo])
+
+  // 0 = frente, 1 = recuado a direita, -1 = recuado a esquerda
+  const posicao = (i) => {
+    const d = (i - ativo + TELAS.length) % TELAS.length
+    return d === 0 ? 0 : d === 1 ? 1 : -1
+  }
+
+  const teclado = (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); vai(ativo + 1) }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); vai(ativo - 1) }
+  }
+
+  return (
+    <div className="gl-carrossel">
+      <div
+        className="gl-palco"
+        role="group"
+        aria-roledescription="carrossel"
+        aria-label="Telas do app Gestop"
+        tabIndex={0}
+        onKeyDown={teclado}
+        onMouseEnter={() => setInteragindo(true)}
+        onMouseLeave={() => setInteragindo(false)}
+        onFocus={() => setInteragindo(true)}
+        onBlur={() => setInteragindo(false)}
+      >
+        <MolduraVazia />
+        {TELAS.map((t, i) => {
+          const pos = posicao(i)
+          return (
+            <Fone
+              key={t.id}
+              tela={CONTEUDO[t.id]}
+              pos={pos}
+              ativo={i === ativo}
+              aoClicar={() => vai(ativo + pos)}
+            />
+          )
+        })}
+      </div>
+
+      <div className="gl-carr-ctrl">
+        {TELAS.map((t, i) => (
+          <button
+            key={t.id}
+            type="button"
+            className={'gl-carr-aba' + (i === ativo ? ' on' : '')}
+            aria-current={i === ativo ? 'true' : undefined}
+            onClick={() => vai(i)}
+          >
+            {t.nome}
+          </button>
+        ))}
+      </div>
+      {/* Enquanto gira sozinho, o anuncio fica desligado: avisar a cada 3s
+          interromperia o leitor de tela sem parar. Com o ponteiro em cima ou
+          o foco dentro, o giro para e o anuncio liga (APG, carrossel com
+          rotacao automatica). */}
+      <p className="sr-only" aria-live={interagindo ? 'polite' : 'off'}>
+        Tela {ativo + 1} de {TELAS.length}: {TELAS[ativo].nome}
+      </p>
+    </div>
+  )
+}
+
+// ============================================================
+// RECURSOS EM ARCO
+// Nove recursos em cards dispostos num arco: o do meio em foco, os
+// vizinhos recuados e mais baixos. Nao gira sozinho — o telefone do
+// hero ja e o momento animado da pagina, e dois carrosseis girando
+// ao mesmo tempo transformariam a landing num slideshow.
+// A sobreposicao entre cards cai sempre no padding, nunca no texto.
+// ============================================================
+
+const RECURSOS = [
+  { id: 'checklists', tag: 'Rotina', titulo: 'Checklists por turno', desc: 'Abertura, pico e fechamento. Cada setor sabe o que fazer e quando.' },
+  { id: 'foto', tag: 'Prova', titulo: 'Foto como prova', desc: 'A equipe registra com foto. Você confere sem precisar estar no salão.' },
+  { id: 'alertas', tag: 'Rotina', titulo: 'Alertas de turno', desc: 'Turno não fechado no horário? O painel avisa antes de virar reclamação.' },
+  { id: 'painel', tag: 'Gestão', titulo: 'Painel do gestor', desc: 'Cada turno em tempo real, do celular ou do computador, onde você estiver.' },
+  { id: 'equipe', tag: 'Gestão', titulo: 'Gestão de equipe', desc: 'Funcionários entram com um código. Saiu da equipe, desativa na hora.' },
+  { id: 'historico', tag: 'Gestão', titulo: 'Histórico completo', desc: 'Filtre por semana, mês ou período livre. Respostas, fotos e comentários.' },
+  { id: 'ponto', tag: 'Equipe', titulo: 'Ponto por turno', desc: 'Fechou o turno, somou ponto. Fechou no horário, ganha bônus.' },
+  { id: 'ranking', tag: 'Equipe', titulo: 'Ranking mensal', desc: 'Todo mês reinicia do zero. Você sabe quem se dedicou e premia quem merece.' },
+  { id: 'festa', tag: 'Equipe', titulo: 'Comemoração na hora', desc: 'Confete e parabéns assim que o turno fecha, direto no celular.' },
+]
+
+function CarrosselRecursos() {
+  const [ativo, setAtivo] = useState(0)
+  const total = RECURSOS.length
+
+  const vai = useCallback((i) => setAtivo(((i % total) + total) % total), [total])
+
+  // Distancia circular: -4..4. Fora de |2| o card sai de cena.
+  const desvio = (i) => {
+    let d = i - ativo
+    if (d > total / 2) d -= total
+    if (d < -total / 2) d += total
+    return d
+  }
+
+  const teclado = (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); vai(ativo + 1) }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); vai(ativo - 1) }
+  }
+
+  return (
+    <div
+      className="gl-cc"
+      role="group"
+      aria-roledescription="carrossel"
+      aria-label="Recursos do Gestop"
+      onKeyDown={teclado}
+    >
+      <div className="gl-cc-arco">
+        {RECURSOS.map((r, i) => {
+          const d = desvio(i)
+          const fora = Math.abs(d) > 2
+          return (
+            <button
+              key={r.id}
+              type="button"
+              className="gl-cc-card"
+              data-off={fora ? 'fora' : d}
+              aria-hidden={fora}
+              tabIndex={fora ? -1 : 0}
+              aria-current={d === 0 ? 'true' : undefined}
+              onClick={() => vai(i)}
+            >
+              <span className="gl-cc-tag">{r.tag}</span>
+              <span className="gl-cc-titulo">{r.titulo}</span>
+              <span className="gl-cc-desc">{r.desc}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="gl-cc-conta">
+        <b className="gl-num">{String(ativo + 1).padStart(2, '0')}</b>
+        <span className="gl-num">de {String(total).padStart(2, '0')}</span>
+      </p>
+
+      <div className="gl-cc-ctrl">
+        <button type="button" className="gl-cc-seta" aria-label="Recurso anterior" onClick={() => vai(ativo - 1)}>
+          <IcAntes size={18} />
+        </button>
+        <div className="gl-cc-pontos">
+          {RECURSOS.map((r, i) => (
+            <button
+              key={r.id}
+              type="button"
+              className={'gl-cc-ponto' + (i === ativo ? ' on' : '')}
+              aria-label={r.titulo}
+              aria-current={i === ativo ? 'true' : undefined}
+              onClick={() => vai(i)}
+            />
+          ))}
+        </div>
+        <button type="button" className="gl-cc-seta" aria-label="Próximo recurso" onClick={() => vai(ativo + 1)}>
+          <IcDepois size={18} />
+        </button>
+      </div>
+      <p className="sr-only" aria-live="polite">
+        Recurso {ativo + 1} de {total}: {RECURSOS[ativo].titulo}
+      </p>
+    </div>
+  )
+}
 
 export default function Landing({ onNavigate }) {
   const ir = (r) => () => onNavigate(r)
+
   return (
-    <div className="glp-page">
+    <div className="gl">
       <style>{`
-.glp-page{--blue:#1d4ed8;--blue-dark:#0f1f4d;--blue-soft:#eef4ff;--brand-bright:#60a5fa;--ink:#0f172a;--dark:#050b24;--muted:#64748b;--line:#e2e8f0;--bg:#ffffff;--bg-soft:#f8fafc;--green:#16a34a;--radius:16px;--shadow:0 10px 30px -12px rgba(15,23,42,.18);--shadow-lg:0 30px 60px -20px rgba(15,23,42,.30);--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
-.glp-page *{box-sizing:border-box}
-.glp-page svg{display:block;max-width:100%}
-.glp-page a{color:inherit;text-decoration:none}
-.glp-wrap{width:100%;max-width:1140px;margin:0 auto;padding:0 20px}
-.glp-btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:16px;border-radius:12px;padding:14px 22px;cursor:pointer;border:0;transition:.18s;white-space:nowrap;font-family:inherit}
-.glp-btn-primary{background:var(--blue);color:#fff;box-shadow:0 8px 20px -6px rgba(37,99,235,.55)}
-.glp-btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px)}
-.glp-btn-ghost{background:transparent;color:var(--ink);padding:10px 16px}
-.glp-btn-light{background:#fff;color:var(--blue)}
-.glp-btn-light:hover{transform:translateY(-1px)}
-.glp-eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);background:var(--blue-soft);padding:6px 12px;border-radius:99px;margin-bottom:16px}
-.glp-page h1,.glp-page h2,.glp-page h3{line-height:1.12;letter-spacing:-.02em;margin:0}
-.glp-section-title{font-size:clamp(26px,4vw,40px);font-weight:800;text-align:center;margin-bottom:12px}
-.glp-section-sub{text-align:center;color:var(--muted);font-size:18px;max-width:620px;margin:0 auto 48px}
-.glp-section{padding:84px 0}
-.glp-nav{position:sticky;top:0;z-index:60;background:rgba(5,11,36,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.08)}
-.glp-nav .glp-logo{color:#fff}
-.glp-nav .glp-btn-ghost{color:#fff}
-.glp-nav-row{display:flex;align-items:center;justify-content:space-between;height:64px}
-.glp-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px;letter-spacing:-.02em}
-.glp-dot{width:30px;height:30px;border-radius:9px;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:17px}
-.glp-nav-links{display:flex;align-items:center;gap:10px}
-.glp-nav-links a.glp-link{display:none;color:rgba(255,255,255,.72);font-weight:600;padding:8px 12px}
-@media(min-width:860px){.glp-nav-links a.glp-link{display:inline}}
-.glp-hero{background:radial-gradient(1100px 480px at 82% -12%,rgba(96,165,250,.28) 0%,transparent 62%),linear-gradient(180deg,var(--dark),#0a1440 55%,#0d1b52);padding:64px 0 72px}
-.glp-hero h1{color:#fff}
-.glp-hero .glp-eyebrow{color:#bfdbfe;background:rgba(255,255,255,.1)}
-.glp-hero .glp-btn-ghost{color:#fff}
-.glp-hero-grid{display:grid;gap:48px;align-items:center}
-@media(min-width:920px){.glp-hero-grid{grid-template-columns:1.05fr .95fr;gap:32px}}
-.glp-hero h1{font-size:clamp(32px,5.2vw,52px);font-weight:800}
-.glp-hero-checks{list-style:none;margin:22px 0 28px;padding:0;display:grid;gap:14px;max-width:540px}
-.glp-hero-checks li{display:flex;gap:12px;align-items:flex-start}
-.glp-hero-checks svg{flex:none;margin-top:2px}
-.glp-hero-checks strong{color:#fff}
-.glp-hero-checks div{color:rgba(255,255,255,.72);font-size:16px;line-height:1.45}
-.glp-hero-cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
-.glp-trust{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.72);font-size:14px;margin-top:18px}
-.glp-trust svg{flex:none}
-.glp-hero-art{display:flex;justify-content:center;position:relative}
-.glp-badges{display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center;align-items:center;margin-top:18px;padding:22px 0 0;color:rgba(255,255,255,.6);font-weight:600;font-size:14px;border-top:1px solid rgba(255,255,255,.1)}
-.glp-badges span{display:inline-flex;align-items:center;gap:7px}
-.glp-stats{background:linear-gradient(100deg,var(--dark),var(--blue-dark) 55%,var(--blue));color:#fff;padding:42px 0}
-.glp-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px;text-align:center}
-@media(min-width:760px){.glp-stats-grid{grid-template-columns:repeat(4,1fr)}}
-.glp-stat b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em}
-.glp-stat span{opacity:.85;font-size:14px}
-.glp-problem{background:var(--bg-soft)}
-.glp-prob-grid{display:grid;gap:18px}
-@media(min-width:760px){.glp-prob-grid{grid-template-columns:repeat(3,1fr)}}
-.glp-prob-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px}
-.glp-prob-card .glp-ic{font-size:24px}
-.glp-prob-card h3{font-size:18px;margin:12px 0 6px;font-weight:700}
-.glp-prob-card p{color:var(--muted);font-size:15px;margin:0}
-.glp-steps-grid{display:grid;gap:24px}
-@media(min-width:820px){.glp-steps-grid{grid-template-columns:repeat(3,1fr)}}
-.glp-step{text-align:center;padding:8px}
-.glp-num{width:48px;height:48px;border-radius:14px;background:var(--blue-soft);color:var(--blue);font-weight:800;font-size:20px;display:grid;place-items:center;margin:0 auto 16px}
-.glp-step h3{font-size:19px;font-weight:700;margin-bottom:8px}
-.glp-step p{color:var(--muted);font-size:15px;margin:0}
-.glp-split{display:grid;gap:40px;align-items:center}
-@media(min-width:920px){.glp-split{grid-template-columns:1fr 1fr}}
-.glp-split.glp-rev .glp-art{order:-1}
-.glp-feat-list{display:grid;gap:18px}
-.glp-feat{display:flex;gap:14px;align-items:flex-start}
-.glp-fic{flex:none;width:42px;height:42px;border-radius:11px;background:var(--blue-soft);display:grid;place-items:center;font-size:20px}
-.glp-feat h3{font-size:17px;font-weight:700;margin-bottom:2px}
-.glp-feat p{color:var(--muted);font-size:15px;margin:0}
-.glp-art-card{background:linear-gradient(160deg,#eef4ff,#f8fafc);border:1px solid var(--line);border-radius:24px;padding:28px;display:flex;justify-content:center;box-shadow:var(--shadow)}
-.glp-pricing{background:var(--bg-soft)}
-.glp-price-card{max-width:440px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-lg);overflow:hidden}
-.glp-price-top{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;padding:30px 30px 26px;text-align:center}
-.glp-tag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.7;font-weight:700}
-.glp-val{font-size:48px;font-weight:800;margin-top:8px}
-.glp-val small{font-size:17px;font-weight:600;opacity:.8}
-.glp-price-was{font-size:13px;opacity:.85;margin:8px 0 0}
-.glp-price-was s{opacity:.75}
-.glp-price-body{padding:28px 30px 32px}
-.glp-price-body ul{list-style:none;display:grid;gap:14px;margin:0 0 24px;padding:0}
-.glp-price-body li{display:flex;gap:10px;align-items:flex-start;font-size:16px}
-.glp-price-body li svg{flex:none;margin-top:3px}
-.glp-price-card .glp-btn{width:100%;justify-content:center}
-.glp-price-note{text-align:center;color:var(--muted);font-size:13px;margin-top:14px}
-.glp-compare{display:grid;gap:18px;max-width:900px;margin:0 auto}
-@media(min-width:780px){.glp-compare{grid-template-columns:1fr 1fr}}
-.glp-cmp-card{border:1px solid var(--line);border-radius:18px;padding:26px 24px;background:#fff}
-.glp-cmp-card.glp-them{background:var(--bg-soft)}
-.glp-cmp-card.glp-us{border:2px solid var(--blue);box-shadow:var(--shadow)}
-.glp-cmp-card h3{font-size:18px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.glp-tagline{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:4px 10px;border-radius:99px}
-.glp-cmp-card.glp-them .glp-tagline{background:#f1f1f4;color:var(--muted)}
-.glp-cmp-card.glp-us .glp-tagline{background:var(--blue-soft);color:var(--blue)}
-.glp-cmp-card ul{list-style:none;display:grid;gap:13px;margin:0;padding:0}
-.glp-cmp-card li{display:flex;gap:10px;font-size:15px;line-height:1.4}
-.glp-cmp-card.glp-them li{color:var(--muted)}
-.glp-cmp-card.glp-us li{color:var(--ink);font-weight:500}
-.glp-cmp-ic{flex:none;width:20px;height:20px;margin-top:1px}
-.glp-faq-list{max-width:760px;margin:0 auto;display:grid;gap:12px}
-.glp-page details{background:var(--bg-soft);border:1px solid var(--line);border-radius:14px;padding:0 20px}
-.glp-page summary{cursor:pointer;list-style:none;padding:18px 0;font-weight:700;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:16px}
-.glp-page summary::-webkit-details-marker{display:none}
-.glp-chev{flex:none;transition:.2s;color:var(--blue)}
-.glp-page details[open] summary .glp-chev{transform:rotate(45deg)}
-.glp-page details p{color:var(--muted);padding:0 0 20px;font-size:15px;margin:0}
-.glp-final{background:linear-gradient(135deg,var(--dark),var(--brand-bright));color:#fff;text-align:center;border-radius:28px;padding:60px 28px;margin:40px 0}
-.glp-final h2{font-size:clamp(26px,4vw,38px);font-weight:800;margin-bottom:12px}
-.glp-final p{opacity:.92;font-size:18px;max-width:540px;margin:0 auto 26px}
-.glp-footer{border-top:1px solid var(--line);padding:36px 0;color:var(--muted);font-size:14px}
-.glp-foot-row{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center}
-.glp-page .float-svg{filter:drop-shadow(0 30px 50px rgba(15,23,42,.25))}
-.glp-link-btn{background:none;border:0;color:var(--blue);font-weight:600;cursor:pointer;font-family:inherit;font-size:14px;padding:8px 0 0}
+/* ============================================================
+   LANDING DO GESTOP
+   Sem paleta própria: tudo vem dos tokens do design system
+   (aplicativo (src)/componentes (design)/tokens.css).
+   Se precisar de uma cor nova, ela nasce lá — nunca aqui.
+   ============================================================ */
+
+.gl{
+  /* Saida exponencial pro carrossel: o movimento desacelera ate parar.
+     Fica no escopo da landing — nao e decisao de marca pro design system. */
+  --gl-ease-saida:cubic-bezier(.22,1,.36,1);
+  font-family:var(--gs-font);
+  color:var(--gs-text);
+  background:var(--gs-surface);
+  line-height:var(--gs-leading-normal);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+.gl *{box-sizing:border-box}
+.gl h1,.gl h2,.gl h3{margin:0;line-height:var(--gs-leading-tight);letter-spacing:var(--gs-tracking-tight);text-wrap:balance}
+.gl p{margin:0}
+.gl a{color:inherit;text-decoration:none}
+
+/* --- Superfícies do browser: as partes que a gente não desenha, mas continuam nossas --- */
+.gl ::selection{background:var(--gs-blue-200);color:var(--gs-navy-950)}
+.gl .gl-escuro ::selection{background:var(--gs-blue-400);color:var(--gs-navy-950)}
+.gl{scrollbar-color:var(--gs-slate-300) transparent;caret-color:var(--gs-action)}
+.gl a:not(.gl-btn){text-underline-offset:3px;text-decoration-thickness:1px}
+.gl :focus-visible{outline:none;box-shadow:var(--gs-focus-ring);border-radius:var(--gs-radius-sm)}
+.gl .gl-escuro :focus-visible{box-shadow:0 0 0 3px var(--gs-blue-400)}
+.gl .gl-num{font-variant-numeric:tabular-nums;letter-spacing:0}
+
+/* --- Estrutura --- */
+.gl-wrap{width:100%;max-width:var(--gs-container);margin:0 auto;padding:0 var(--gs-space-6)}
+.gl-sec{padding:var(--gs-space-20) 0}
+.gl-escuro{background:var(--gs-surface-dark);color:var(--gs-text-on-dark)}
+.gl-claro{background:var(--gs-bg)}
+
+/* Título de seção: alinhado à esquerda, não centralizado — a página inteira
+   centralizada é o que faz tudo parecer o mesmo template. */
+.gl-titulo{font-size:var(--gs-text-4xl);font-weight:var(--gs-weight-black);max-width:19ch}
+.gl-sub{color:var(--gs-text-muted);font-size:var(--gs-text-lg);max-width:52ch;text-wrap:pretty;margin-top:var(--gs-space-4)}
+.gl-escuro .gl-sub{color:var(--gs-text-on-dark-muted)}
+.gl-cab{margin-bottom:var(--gs-space-12)}
+
+/* --- Botões --- */
+.gl-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--gs-space-2);
+  min-height:var(--gs-tap-target);
+  font-family:inherit;font-weight:var(--gs-weight-bold);font-size:var(--gs-text-lg);
+  border:0;border-radius:var(--gs-radius-md);padding:var(--gs-space-3) var(--gs-space-6);
+  cursor:pointer;white-space:nowrap;
+  transition:background var(--gs-duration-base) var(--gs-ease),
+             transform var(--gs-duration-fast) var(--gs-ease),
+             box-shadow var(--gs-duration-base) var(--gs-ease);
+}
+.gl-btn svg{flex:none}
+.gl-btn-1{background:var(--gs-action);color:var(--gs-action-text);box-shadow:var(--gs-shadow-sm)}
+.gl-escuro .gl-btn-1{box-shadow:none}
+.gl-btn-1:hover{background:var(--gs-action-hover);transform:translateY(-1px)}
+.gl-btn-1:active{background:var(--gs-action-active);transform:translateY(0)}
+.gl-btn-2{background:transparent;color:var(--gs-text);box-shadow:inset 0 0 0 1px var(--gs-border-strong)}
+.gl-btn-2:hover{background:var(--gs-surface-sunken)}
+.gl-escuro .gl-btn-2{color:var(--gs-text-on-dark);box-shadow:inset 0 0 0 1px var(--gs-border-on-dark)}
+.gl-escuro .gl-btn-2:hover{background:rgba(255,255,255,.08)}
+.gl-btn-claro{background:var(--gs-white);color:var(--gs-action)}
+.gl-btn-claro:hover{background:var(--gs-blue-50);transform:translateY(-1px)}
+.gl-btn-bloco{width:100%}
+
+/* --- Nav --- */
+.gl-nav{position:sticky;top:0;z-index:var(--gs-z-sticky);background:var(--gs-navy-950);border-bottom:1px solid var(--gs-border-on-dark)}
+.gl-nav-row{display:flex;align-items:center;justify-content:space-between;gap:var(--gs-space-4);height:68px}
+.gl-logo{display:flex;align-items:center;gap:var(--gs-space-3);font-weight:var(--gs-weight-black);font-size:var(--gs-text-xl);letter-spacing:var(--gs-tracking-tight);color:var(--gs-text-on-dark)}
+.gl-nav-links{display:flex;align-items:center;gap:var(--gs-space-1)}
+.gl-nav-links a{display:none;color:var(--gs-text-on-dark-muted);font-weight:var(--gs-weight-medium);font-size:var(--gs-text-md);padding:var(--gs-space-2) var(--gs-space-3);border-radius:var(--gs-radius-sm);transition:color var(--gs-duration-base) var(--gs-ease)}
+.gl-nav-links a:hover{color:var(--gs-text-on-dark)}
+.gl-nav-entrar{display:inline-flex;align-items:center;background:none;border:0;font-family:inherit;font-size:var(--gs-text-md);font-weight:var(--gs-weight-medium);color:var(--gs-text-on-dark-muted);cursor:pointer;padding:var(--gs-space-2) var(--gs-space-3);border-radius:var(--gs-radius-sm)}
+.gl-nav-entrar:hover{color:var(--gs-text-on-dark)}
+.gl-nav .gl-btn{font-size:var(--gs-text-md);padding:var(--gs-space-2) var(--gs-space-5);min-height:40px}
+@media(min-width:880px){.gl-nav-links a{display:inline-flex;align-items:center}}
+
+/* --- Hero --- */
+/* Mesmos tokens de navy do --gs-gradient-hero, sem o halo radial: aquele brilho
+   flutuante é decoração reflexa, e a cor sólida embaixo garante o contraste
+   do texto mesmo se o degradê não pintar. */
+.gl-hero{background-color:var(--gs-navy-950);background-image:linear-gradient(180deg,var(--gs-navy-950),var(--gs-navy-900) 58%,var(--gs-navy-800));padding:var(--gs-space-16) 0 var(--gs-space-20)}
+.gl-hero-grid{display:grid;gap:var(--gs-space-12);align-items:center}
+@media(min-width:960px){.gl-hero-grid{grid-template-columns:1.02fr .98fr;gap:var(--gs-space-10)}}
+.gl-hero h1{font-size:var(--gs-text-5xl);font-weight:var(--gs-weight-black);color:var(--gs-text-on-dark);max-width:15ch}
+.gl-hero-checks{list-style:none;margin:var(--gs-space-8) 0 var(--gs-space-8);padding:0;display:grid;gap:var(--gs-space-4);max-width:52ch}
+.gl-hero-checks li{display:flex;gap:var(--gs-space-3);align-items:flex-start;color:var(--gs-text-on-dark-muted);font-size:var(--gs-text-lg)}
+.gl-hero-checks strong{color:var(--gs-text-on-dark);font-weight:var(--gs-weight-bold)}
+.gl-hero-checks svg{flex:none;margin-top:5px;color:var(--gs-blue-400)}
+.gl-hero-cta{display:flex;flex-wrap:wrap;gap:var(--gs-space-3)}
+.gl-trust{display:flex;align-items:flex-start;gap:var(--gs-space-2);color:var(--gs-text-on-dark-muted);font-size:var(--gs-text-md);margin-top:var(--gs-space-6)}
+.gl-trust svg{flex:none;margin-top:3px;color:var(--gs-green-300)}
+.gl-hero-art{display:flex;justify-content:center}
+
+/* --- Hero: os tres iPhones em leque --- */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+.gl-carrossel{display:grid;justify-items:center;gap:var(--gs-space-6);width:100%}
+
+/* O palco: largura total, e os aparelhos se posicionam dentro dele.
+   --pw e a largura de cada aparelho em % do palco. */
+.gl-palco{--pw:56%;position:relative;width:100%;max-width:440px;border-radius:var(--gs-radius-lg)}
+.gl-palco:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gs-blue-400)}
+@media(max-width:719px){.gl-palco{--pw:72%}}
+
+.gl-fone{
+  position:absolute;top:0;left:50%;width:var(--pw);margin-left:calc(var(--pw) / -2);
+  background:var(--gs-navy-950);border:0;border-radius:13%/6.2%;padding:2.6%;
+  font:inherit;color:inherit;text-align:inherit;
+  box-shadow:var(--gs-shadow-lg);
+  transform-origin:center center;
+  transition:transform 680ms var(--gl-ease-saida),opacity 680ms var(--gl-ease-saida),filter 680ms var(--gl-ease-saida);
+}
+/* a moldura de medida fica no fluxo, invisivel, so pra dar altura ao palco */
+.gl-fone-medida{position:relative;left:auto;margin-left:auto;margin-inline:auto;visibility:hidden;box-shadow:none}
+
+.gl-fone[data-pos="0"]{z-index:3;opacity:1;transform:translateX(0) scale(1);filter:none}
+.gl-fone[data-pos="1"]{z-index:2;opacity:.5;transform:translateX(46%) scale(.84);filter:grayscale(.55)}
+.gl-fone[data-pos="-1"]{z-index:2;opacity:.5;transform:translateX(-46%) scale(.84);filter:grayscale(.55)}
+/* clicar no aparelho da direita avanca, no da esquerda volta */
+.gl-fone[data-pos="1"],.gl-fone[data-pos="-1"]{cursor:pointer}
+.gl-fone[data-pos="1"]:hover,.gl-fone[data-pos="-1"]:hover{opacity:.72;filter:grayscale(.25)}
+@media(max-width:719px){
+  /* no celular o leque nao cabe: so o da frente, e o que sumiu nao clica */
+  .gl-fone[data-pos="1"],.gl-fone[data-pos="-1"]{opacity:0;pointer-events:none}
+}
+@media(prefers-reduced-motion:reduce){.gl-fone{transition:none}}
+
+.gl-fone-tela{
+  position:relative;overflow:hidden;
+  border-radius:11%/5.4%;background:var(--gs-bg);
+  aspect-ratio:390/844;color:var(--gs-text);
+}
+.gl-fone-camada{
+  position:absolute;inset:0;padding:38px 6% 5%;
+  transition:opacity 680ms var(--gs-ease);
+}
+/* visibility entra com atraso igual a duracao: durante o dissolver a camada
+   continua pintada, e so some de vez quando a troca termina. Assim ela nao
+   recebe clique nem aparece pra leitor de tela fora de hora. */
+.gl-fone[data-pos="0"] .gl-fone-real,
+.gl-fone:not([data-pos="0"]) .gl-fone-esq{
+  opacity:1;visibility:visible;
+  transition:opacity 680ms var(--gs-ease),visibility 0s;
+}
+.gl-fone:not([data-pos="0"]) .gl-fone-real,
+.gl-fone[data-pos="0"] .gl-fone-esq{
+  opacity:0;visibility:hidden;
+  transition:opacity 680ms var(--gs-ease),visibility 0s 680ms;
+}
+@media(prefers-reduced-motion:reduce){
+  .gl-fone-camada{transition:none}
+  .gl-fone[data-pos="0"] .gl-fone-real,.gl-fone:not([data-pos="0"]) .gl-fone-esq{transition:none}
+  .gl-fone:not([data-pos="0"]) .gl-fone-real,.gl-fone[data-pos="0"] .gl-fone-esq{transition:none}
+}
+.gl-fone-ilha{position:absolute;z-index:3;top:9px;left:50%;transform:translateX(-50%);width:27%;height:17px;border-radius:var(--gs-radius-pill);background:var(--gs-navy-950)}
+.gl-fone-status{position:absolute;z-index:2;top:0;left:0;right:0;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 7%;font-size:11px;font-weight:var(--gs-weight-bold);color:var(--gs-text)}
+.gl-fone-sinal{display:inline-flex;align-items:flex-end;gap:2px}
+.gl-fone-sinal i{width:3px;border-radius:1px;background:var(--gs-text)}
+.gl-fone-sinal i:nth-child(1){height:4px}
+.gl-fone-sinal i:nth-child(2){height:7px}
+.gl-fone-sinal i:nth-child(3){height:10px}
+
+/* --- Conteudo das telas --- */
+.gl-tl{display:flex;flex-direction:column;gap:8px;height:100%}
+.gl-tl-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.gl-tl-setor{display:block;font-size:11px;font-weight:var(--gs-weight-bold);color:var(--gs-action);line-height:1.2}
+.gl-tl-titulo{display:block;font-size:15px;font-weight:var(--gs-weight-black);letter-spacing:var(--gs-tracking-tight);line-height:1.2;margin-top:1px}
+.gl-tl-cont{font-size:12px;font-weight:var(--gs-weight-bold);color:var(--gs-text-muted);white-space:nowrap}
+.gl-tl-vivo{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--gs-text-muted);white-space:nowrap}
+.gl-tl-vivo i{width:5px;height:5px;border-radius:50%;background:var(--gs-success)}
+.gl-tl-rot{font-size:11px;font-weight:var(--gs-weight-bold);color:var(--gs-text-muted);margin-top:2px}
+.gl-tl-hora{font-size:11px;color:var(--gs-text-muted);white-space:nowrap}
+.gl-tl-barra{height:5px;border-radius:var(--gs-radius-pill);background:var(--gs-surface-sunken);overflow:hidden}
+.gl-tl-barra div{height:100%;border-radius:inherit;background:var(--gs-action)}
+.gl-tl-mini{flex:none;display:block;width:18px;height:18px;border-radius:4px;overflow:hidden}
+.gl-tl-mini svg{width:100%;height:100%;display:block}
+.gl-tl-rodape{margin-top:auto;padding-top:8px;display:grid;gap:5px;justify-items:center}
+.gl-tl-acao{width:100%;font-family:inherit;font-size:12px;font-weight:var(--gs-weight-bold);color:var(--gs-action-text);background:var(--gs-action);border:0;border-radius:9px;padding:9px;pointer-events:none}
+.gl-tl-falta{font-size:12px;color:var(--gs-text-muted);text-align:center;line-height:1.3}
+
+.gl-esq{display:flex;flex-direction:column;gap:9px;height:100%}
+.gl-esq i,.gl-esq-bloco,.gl-esq-acao{display:block;background:var(--gs-slate-200);border-radius:5px}
+.gl-esq-cab{display:flex;justify-content:space-between;gap:10px}
+.gl-esq-cab i:first-child{width:52%;height:13px}
+.gl-esq-cab i:last-child{width:20%;height:13px}
+.gl-esq-bloco{height:62px;border-radius:9px}
+.gl-esq-linhas{display:grid;gap:6px}
+.gl-esq-linhas i{height:26px;border-radius:8px}
+.gl-esq-linhas i:nth-child(even){background:var(--gs-slate-100)}
+.gl-esq-acao{margin-top:auto;height:32px;border-radius:9px;background:var(--gs-slate-300)}
+
+.gl-tl-prog{height:5px;border-radius:var(--gs-radius-pill);background:var(--gs-surface-sunken);overflow:hidden}
+.gl-tl-prog div{height:100%;border-radius:inherit;background:var(--gs-success)}
+.gl-tl-lista{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.gl-tl-lista li{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.3;color:var(--gs-text-body);background:var(--gs-surface);border-radius:8px;padding:7px 8px}
+.gl-tl-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gl-tl-lista li.ok{color:var(--gs-text-muted)}
+.gl-tl-lista li.agora{background:var(--gs-surface-brand);color:var(--gs-text);font-weight:var(--gs-weight-medium)}
+.gl-tl-marca{flex:none;display:grid;place-items:center;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--gs-border-strong);color:var(--gs-action-text)}
+.gl-tl-lista li.ok .gl-tl-marca{background:var(--gs-success);border-color:var(--gs-success)}
+.gl-tl-lista li.agora .gl-tl-marca{border-color:var(--gs-action)}
+
+.gl-tl-turnos{display:grid;gap:8px;background:var(--gs-surface);border-radius:9px;padding:9px}
+.gl-tl-turno{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:7px;font-size:11px;color:var(--gs-text-muted)}
+.gl-tl-turno b{font-size:11px;color:var(--gs-text)}
+.gl-tl-reg{list-style:none;margin:0;padding:0;display:grid}
+.gl-tl-reg li{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--gs-border);font-size:12px}
+.gl-tl-reg li:first-child{border-top:0}
+.gl-tl-reg-o{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:var(--gs-weight-medium)}
+
+.gl-tl-ponto{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;background:var(--gs-success-bg);color:var(--gs-success-text);border-radius:9px;padding:9px}
+.gl-tl-ponto b{display:block;font-size:12px;font-weight:var(--gs-weight-bold)}
+.gl-tl-ponto span{display:block;font-size:12px;opacity:.85}
+.gl-tl-rank{list-style:none;margin:0;padding:0;display:grid}
+.gl-tl-rank li{display:grid;grid-template-columns:auto minmax(0,1fr) 38px auto;align-items:center;gap:7px;padding:8px 0;border-top:1px solid var(--gs-border);font-size:12px}
+.gl-tl-rank li:first-child{border-top:0}
+.gl-tl-pos{font-size:11px;color:var(--gs-text-muted);width:11px}
+.gl-tl-rank-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:var(--gs-weight-medium)}
+.gl-tl-rank li.lider .gl-tl-pos{color:var(--gs-amber-600);font-weight:var(--gs-weight-black)}
+.gl-tl-rank li:not(.lider) .gl-tl-barra div{background:var(--gs-blue-300)}
+.gl-tl-rank b{font-size:12px}
+
+/* --- Controles: as abas nomeiam o que a tela mostra --- */
+.gl-carr-ctrl{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px}
+.gl-carr-aba{
+  font-family:inherit;font-size:var(--gs-text-sm);font-weight:var(--gs-weight-medium);
+  color:var(--gs-text-on-dark-muted);background:transparent;border:0;cursor:pointer;
+  padding:7px 12px;border-radius:var(--gs-radius-pill);
+  transition:color var(--gs-duration-base) var(--gs-ease),background var(--gs-duration-base) var(--gs-ease);
+}
+.gl-carr-aba:hover{color:var(--gs-text-on-dark)}
+.gl-carr-aba.on{color:var(--gs-navy-950);background:var(--gs-white);font-weight:var(--gs-weight-bold)}
+
+/* O momento autoral da pagina: o leque assentando. Vai no palco, nunca no
+   aparelho — la o transform ja e usado pra posicionar cada um. */
+@media(prefers-reduced-motion:no-preference){
+  .gl-carrossel{animation:gl-sobe 720ms var(--gs-ease) both}
+}
+@keyframes gl-sobe{from{transform:translateY(16px)}to{transform:none}}
+
+/* --- A régua do dia (substitui a barra de métricas) --- */
+.gl-dia{background-color:var(--gs-navy-900);background-image:linear-gradient(100deg,var(--gs-navy-950),var(--gs-navy-800) 55%,var(--gs-blue-900));color:var(--gs-text-on-dark);padding:var(--gs-space-10) 0}
+.gl-dia-grid{display:grid;gap:var(--gs-space-6)}
+@media(min-width:760px){.gl-dia-grid{grid-template-columns:repeat(3,1fr);gap:var(--gs-space-10)}}
+.gl-dia-item{position:relative;padding-top:var(--gs-space-6)}
+.gl-dia-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gs-border-on-dark)}
+.gl-dia-item::after{content:'';position:absolute;top:-3px;left:0;width:8px;height:8px;border-radius:50%;background:var(--gs-blue-400)}
+.gl-dia-hora{display:block;font-size:var(--gs-text-sm);font-weight:var(--gs-weight-bold);letter-spacing:var(--gs-tracking-wider);text-transform:uppercase;color:var(--gs-blue-300)}
+.gl-dia-nome{display:block;font-size:var(--gs-text-2xl);font-weight:var(--gs-weight-black);letter-spacing:var(--gs-tracking-tight);margin-top:var(--gs-space-1)}
+.gl-dia-desc{color:var(--gs-text-on-dark-muted);font-size:var(--gs-text-md);margin-top:var(--gs-space-2)!important;max-width:34ch}
+
+/* --- Problema: lista com régua, não grade de cards iguais --- */
+.gl-prob{display:grid;gap:var(--gs-space-10)}
+@media(min-width:900px){.gl-prob{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:var(--gs-space-16);align-items:start}}
+.gl-prob-lista{display:grid}
+.gl-prob-item{display:grid;grid-template-columns:auto 1fr;gap:var(--gs-space-5);padding:var(--gs-space-6) 0;border-top:1px solid var(--gs-border)}
+.gl-prob-item:last-child{border-bottom:1px solid var(--gs-border)}
+.gl-prob-marca{display:grid;place-items:center;width:34px;height:34px;border-radius:var(--gs-radius-sm);background:var(--gs-danger-bg);color:var(--gs-danger)}
+.gl-prob-item h3{font-size:var(--gs-text-lg);font-weight:var(--gs-weight-bold)}
+.gl-prob-item p{color:var(--gs-text-muted);font-size:var(--gs-text-md);margin-top:var(--gs-space-1)!important;max-width:52ch}
+
+/* --- 3 passos: uma progressão ligada, não três blocos soltos --- */
+.gl-passos{display:grid;gap:var(--gs-space-8);counter-reset:passo}
+@media(min-width:820px){.gl-passos{grid-template-columns:repeat(3,1fr);gap:var(--gs-space-8)}}
+.gl-passo{position:relative;padding-top:var(--gs-space-8)}
+.gl-passo::before{
+  counter-increment:passo;content:counter(passo);
+  position:absolute;top:0;left:0;
+  display:grid;place-items:center;width:34px;height:34px;
+  border-radius:var(--gs-radius-pill);background:var(--gs-action);color:var(--gs-action-text);
+  font-size:var(--gs-text-sm);font-weight:var(--gs-weight-black);font-variant-numeric:tabular-nums;
+}
+.gl-passo::after{content:'';position:absolute;top:16px;left:44px;right:calc(var(--gs-space-8) * -1);height:1px;background:var(--gs-border-strong)}
+.gl-passo:last-child::after{display:none}
+@media(max-width:819px){.gl-passo::after{display:none}}
+.gl-passo h3{font-size:var(--gs-text-xl);font-weight:var(--gs-weight-bold);margin-bottom:var(--gs-space-2)}
+.gl-passo p{color:var(--gs-text-muted);font-size:var(--gs-text-md);max-width:40ch}
+
+/* --- Recursos em arco --- */
+.gl-cc{display:grid;justify-items:center;gap:var(--gs-space-6)}
+/* x/y de cada posicao do arco. A sobreposicao entre cards e sempre
+   menor que o padding (16px), entao nunca cai em cima do texto. */
+.gl-cc-arco{
+  --cc-x1:190px; --cc-y1:24px;
+  --cc-x2:370px; --cc-y2:78px;
+  --cc-topo:84px;
+  position:relative;width:100%;height:248px;
+}
+@media(max-width:1039px){.gl-cc-arco{--cc-x1:172px;height:244px}}
+@media(max-width:639px){.gl-cc-arco{--cc-topo:90px;height:190px}}
+
+.gl-cc-card{
+  position:absolute;top:var(--cc-topo);left:50%;
+  width:200px;height:170px;overflow:hidden;
+  display:flex;flex-direction:column;align-items:flex-start;gap:var(--gs-space-2);
+  text-align:left;font-family:inherit;cursor:pointer;
+  padding:var(--gs-space-4);
+  background:var(--gs-navy-800);
+  border:1px solid var(--gs-border-on-dark);
+  border-radius:var(--gs-radius-md);
+  transition:transform 680ms var(--gl-ease-saida),opacity 680ms var(--gl-ease-saida),border-color var(--gs-duration-base) var(--gs-ease);
+}
+@media(prefers-reduced-motion:reduce){.gl-cc-card{transition:none}}
+
+.gl-cc-card[data-off="0"]{transform:translate(-50%,-50%) scale(1);opacity:1;z-index:5;border-color:var(--gs-blue-400)}
+.gl-cc-card[data-off="1"]{transform:translate(calc(-50% + var(--cc-x1)),calc(-50% + var(--cc-y1))) scale(.92);opacity:.62;z-index:4}
+.gl-cc-card[data-off="-1"]{transform:translate(calc(-50% - var(--cc-x1)),calc(-50% + var(--cc-y1))) scale(.92);opacity:.62;z-index:4}
+.gl-cc-card[data-off="2"]{transform:translate(calc(-50% + var(--cc-x2)),calc(-50% + var(--cc-y2))) scale(.84);opacity:.32;z-index:3}
+.gl-cc-card[data-off="-2"]{transform:translate(calc(-50% - var(--cc-x2)),calc(-50% + var(--cc-y2))) scale(.84);opacity:.32;z-index:3}
+.gl-cc-card[data-off="fora"]{transform:translate(-50%,-50%) scale(.7);opacity:0;z-index:1;pointer-events:none}
+.gl-cc-card:not([data-off="0"]):hover{opacity:.85;border-color:var(--gs-blue-400)}
+/* abaixo de 1040px o arco encolhe pra 3 cards; no celular, so o do meio */
+@media(max-width:1039px){
+  .gl-cc-card[data-off="2"],.gl-cc-card[data-off="-2"]{opacity:0;pointer-events:none}
+}
+@media(max-width:639px){
+  .gl-cc-card[data-off="1"],.gl-cc-card[data-off="-1"]{opacity:0;pointer-events:none}
+  .gl-cc-card{width:min(260px,78vw)}
+}
+
+.gl-cc-tag{
+  font-size:var(--gs-text-2xs);font-weight:var(--gs-weight-bold);
+  text-transform:uppercase;letter-spacing:var(--gs-tracking-wider);
+  color:var(--gs-blue-300);background:rgba(255,255,255,.08);
+  padding:3px 9px;border-radius:var(--gs-radius-pill);
+}
+.gl-cc-titulo{font-size:var(--gs-text-lg);font-weight:var(--gs-weight-bold);color:var(--gs-text-on-dark);letter-spacing:var(--gs-tracking-tight);line-height:1.2}
+.gl-cc-desc{font-size:var(--gs-text-sm);color:var(--gs-text-on-dark-muted);line-height:var(--gs-leading-snug)}
+
+.gl-cc-conta{display:flex;align-items:baseline;gap:var(--gs-space-2)}
+.gl-cc-conta b{font-size:var(--gs-text-3xl);font-weight:var(--gs-weight-black);color:var(--gs-text-on-dark);letter-spacing:var(--gs-tracking-tight)}
+.gl-cc-conta span{font-size:var(--gs-text-sm);color:var(--gs-text-on-dark-muted)}
+
+.gl-cc-ctrl{display:flex;align-items:center;gap:var(--gs-space-4)}
+.gl-cc-seta{
+  display:grid;place-items:center;width:40px;height:40px;
+  color:var(--gs-text-on-dark-muted);background:transparent;
+  border:1px solid var(--gs-border-on-dark);border-radius:var(--gs-radius-pill);cursor:pointer;
+  transition:color var(--gs-duration-base) var(--gs-ease),background var(--gs-duration-base) var(--gs-ease);
+}
+.gl-cc-seta:hover{color:var(--gs-text-on-dark);background:rgba(255,255,255,.08)}
+.gl-cc-pontos{display:flex;align-items:center;gap:6px}
+.gl-cc-ponto{
+  width:7px;height:7px;padding:0;border:0;border-radius:var(--gs-radius-pill);
+  background:rgba(255,255,255,.24);cursor:pointer;
+  transition:width var(--gs-duration-base) var(--gs-ease),background var(--gs-duration-base) var(--gs-ease);
+}
+.gl-cc-ponto:hover{background:rgba(255,255,255,.45)}
+.gl-cc-ponto.on{width:22px;background:var(--gs-white)}
+
+/* --- Comparação --- */
+.gl-cmp{display:grid;gap:var(--gs-space-6)}
+@media(min-width:820px){.gl-cmp{grid-template-columns:1fr 1fr;align-items:start}}
+.gl-cmp-col{border-radius:var(--gs-radius-lg);padding:var(--gs-space-8)}
+.gl-cmp-eles{background:var(--gs-surface-sunken)}
+.gl-cmp-nos{background:var(--gs-surface);box-shadow:var(--gs-shadow-md)}
+.gl-cmp-col h3{font-size:var(--gs-text-md);font-weight:var(--gs-weight-bold);text-transform:uppercase;letter-spacing:var(--gs-tracking-wide);margin-bottom:var(--gs-space-5)}
+.gl-cmp-eles h3{color:var(--gs-text-body)}
+.gl-cmp-nos h3{color:var(--gs-action)}
+.gl-cmp-col ul{list-style:none;display:grid;gap:var(--gs-space-4);margin:0;padding:0}
+.gl-cmp-col li{display:grid;grid-template-columns:auto 1fr;gap:var(--gs-space-3);font-size:var(--gs-text-md);line-height:var(--gs-leading-snug);max-width:46ch}
+.gl-cmp-col li svg{margin-top:2px}
+.gl-cmp-eles li{color:var(--gs-text-body)}
+.gl-cmp-eles li svg{color:var(--gs-text-subtle)}
+.gl-cmp-nos li{color:var(--gs-text-body)}
+.gl-cmp-nos li svg{color:var(--gs-success)}
+
+/* --- Preço --- */
+.gl-preco-par{display:grid;gap:var(--gs-space-10);align-items:center}
+@media(min-width:960px){.gl-preco-par{grid-template-columns:.9fr 1.1fr;gap:var(--gs-space-16)}}
+.gl-preco{max-width:460px;width:100%;background:var(--gs-surface);border-radius:var(--gs-radius-lg);box-shadow:var(--gs-shadow-lg);overflow:hidden}
+.gl-preco-topo{background-color:var(--gs-navy-900);background-image:linear-gradient(100deg,var(--gs-navy-950),var(--gs-navy-800) 55%,var(--gs-blue-900));color:var(--gs-text-on-dark);padding:var(--gs-space-8) var(--gs-space-8) var(--gs-space-6);text-align:center}
+.gl-preco-vagas{font-size:var(--gs-text-sm);font-weight:var(--gs-weight-bold);color:var(--gs-blue-300)}
+.gl-preco-val{font-size:var(--gs-text-5xl);font-weight:var(--gs-weight-black);letter-spacing:var(--gs-tracking-tight);margin-top:var(--gs-space-2);display:block}
+.gl-preco-val small{font-size:var(--gs-text-lg);font-weight:var(--gs-weight-medium);color:var(--gs-text-on-dark-muted);letter-spacing:0}
+.gl-preco-de{font-size:var(--gs-text-sm);color:var(--gs-text-on-dark-muted);margin-top:var(--gs-space-2)!important}
+.gl-preco-corpo{padding:var(--gs-space-8)}
+.gl-preco-corpo ul{list-style:none;display:grid;gap:var(--gs-space-4);margin:0 0 var(--gs-space-8);padding:0}
+.gl-preco-corpo li{display:grid;grid-template-columns:auto 1fr;gap:var(--gs-space-3);font-size:var(--gs-text-md);align-items:start;max-width:46ch}
+.gl-preco-corpo li svg{color:var(--gs-success);margin-top:2px}
+.gl-preco-nota{text-align:center;color:var(--gs-text-muted);font-size:var(--gs-text-sm);max-width:46ch;margin-left:auto;margin-right:auto;margin-top:var(--gs-space-4)!important;line-height:var(--gs-leading-snug)}
+
+/* --- FAQ --- */
+.gl-faq{max-width:66ch;display:grid;gap:var(--gs-space-2)}
+.gl-faq details{border-top:1px solid var(--gs-border)}
+.gl-faq details:last-child{border-bottom:1px solid var(--gs-border)}
+.gl-faq summary{
+  cursor:pointer;list-style:none;padding:var(--gs-space-5) 0;
+  font-weight:var(--gs-weight-bold);font-size:var(--gs-text-lg);
+  display:flex;justify-content:space-between;align-items:center;gap:var(--gs-space-4);
+}
+.gl-faq summary::-webkit-details-marker{display:none}
+.gl-faq summary:hover{color:var(--gs-action)}
+.gl-faq-mais{flex:none;color:var(--gs-action);transition:transform var(--gs-duration-base) var(--gs-ease)}
+.gl-faq details[open] .gl-faq-mais{transform:rotate(45deg)}
+.gl-faq p{color:var(--gs-text-muted);font-size:var(--gs-text-md);padding-bottom:var(--gs-space-5);max-width:64ch}
+
+/* --- CTA final --- */
+.gl-final{background-color:var(--gs-navy-900);background-image:linear-gradient(100deg,var(--gs-navy-950),var(--gs-navy-800) 55%,var(--gs-blue-900));color:var(--gs-text-on-dark);border-radius:var(--gs-radius-lg);padding:var(--gs-space-16) var(--gs-space-8);text-align:center;margin-bottom:var(--gs-space-20)}
+.gl-final h2{font-size:var(--gs-text-4xl);font-weight:var(--gs-weight-black);max-width:20ch;margin:0 auto}
+.gl-final p{font-size:var(--gs-text-lg);color:var(--gs-text-on-dark-muted);max-width:48ch;margin:var(--gs-space-4) auto var(--gs-space-8)!important}
+
+/* --- Rodapé --- */
+.gl-rodape{border-top:1px solid var(--gs-border);padding:var(--gs-space-10) 0;color:var(--gs-text-muted);font-size:var(--gs-text-sm)}
+.gl-rodape-row{display:flex;flex-wrap:wrap;gap:var(--gs-space-4);justify-content:space-between;align-items:center}
+.gl-rodape .gl-logo{color:var(--gs-text);font-size:var(--gs-text-lg)}
+.gl-link-btn{background:none;border:0;font-family:inherit;font-size:var(--gs-text-sm);color:var(--gs-link);font-weight:var(--gs-weight-medium);cursor:pointer;padding:var(--gs-space-2);border-radius:var(--gs-radius-sm)}
+.gl-link-btn:hover{text-decoration:underline;text-underline-offset:3px}
 `}</style>
 
-      <header className="glp-nav">
-        <div className="glp-wrap glp-nav-row">
-          <div className="glp-logo"><span className="glp-dot">{'✓'}</span> Gestop</div>
-          <nav className="glp-nav-links">
-            <a className="glp-link" href="#como-funciona">Como funciona</a>
-            <a className="glp-link" href="#recursos">Recursos</a>
-            <a className="glp-link" href="#diferenciais">Por que Gestop</a>
-            <a className="glp-link" href="#preco">Preço</a>
-            <button className="glp-btn glp-btn-ghost" onClick={ir('login')}>Entrar</button>
-            <button className="glp-btn glp-btn-primary" onClick={ir('cadastro')}>Teste grátis</button>
+      <header className="gl-nav gl-escuro">
+        <div className="gl-wrap gl-nav-row">
+          <div className="gl-logo"><Marca size={30} /> Gestop</div>
+          <nav className="gl-nav-links">
+            <a href="#como-funciona">Como funciona</a>
+            <a href="#recursos">Recursos</a>
+            <a href="#diferenciais">Por que Gestop</a>
+            <a href="#preco">Preço</a>
+            <button className="gl-nav-entrar" onClick={ir('login')}>Entrar</button>
+            <button className="gl-btn gl-btn-1" onClick={ir('cadastro')}>Teste grátis</button>
           </nav>
         </div>
       </header>
 
-      <section className="glp-hero">
-        <div className="glp-wrap glp-hero-grid">
-          <div>
-            <span className="glp-eyebrow">Operação sob controle</span>
-            <h1>Seu restaurante funcionando direito, mesmo quando você não está lá.</h1>
-            <ul className="glp-hero-checks">
-              <li><Check /><div><strong>Prova de verdade</strong> — foto e comentário obrigatórios em cada tarefa. Zero "achei que tinham feito".</div></li>
-              <li><Check /><div><strong>Você acompanha de onde estiver</strong> — painel em tempo real no celular, sem precisar estar no salão.</div></li>
-              <li><Check /><div><strong>Equipe engajada sozinha</strong> — ranking e pontos por turno concluído motivam sem você precisar cobrar.</div></li>
-            </ul>
-            <div className="glp-hero-cta">
-              <button className="glp-btn glp-btn-primary" onClick={ir('cadastro')}>Começar teste grátis de {DIAS_TRIAL} dias →</button>
-              <a className="glp-btn glp-btn-ghost" href="#como-funciona">Ver como funciona</a>
-            </div>
-            <div className="glp-trust">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Sem cartão · Sem demo nem vendedor · Pronto sozinho em 5 minutos
-            </div>
-          </div>
-          <div className="glp-hero-art" dangerouslySetInnerHTML={{ __html: HERO_SVG }} />
-        </div>
-        <div className="glp-wrap">
-          <div className="glp-badges">
-            <span>Feito para:</span>
-            <span>{'🍔'} Hamburguerias</span>
-            <span>{'🍕'} Pizzarias</span>
-            <span>{'🍻'} Bares</span>
-            <span>{'🍽️'} Restaurantes</span>
-            <span>{'☕'} Cafeterias</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="glp-stats" style={{ padding: '42px 0' }}>
-        <div className="glp-wrap glp-stats-grid">
-          <div className="glp-stat"><b>5 min</b><span>pra configurar tudo</span></div>
-          <div className="glp-stat"><b>3 turnos</b><span>abertura, pico e fechamento</span></div>
-          <div className="glp-stat"><b>100%</b><span>no celular da equipe</span></div>
-          <div className="glp-stat"><b>{PRECO_MENSAL}</b><span>por mês, plano único</span></div>
-        </div>
-      </section>
-
-      <section className="glp-section glp-problem">
-        <div className="glp-wrap">
-          <h2 className="glp-section-title">Cansado de cobrar tarefa no grito?</h2>
-          <p className="glp-section-sub">Quando a rotina depende da memória de cada um, sempre falta alguma coisa — e quem sente é o cliente.</p>
-          <div className="glp-prob-grid">
-            <div className="glp-prob-card"><div className="glp-ic">{'😵‍💫'}</div><h3>"Achei que tinham feito"</h3><p>Ninguém sabe ao certo o que foi concluído no turno. A culpa fica no ar e o problema se repete.</p></div>
-            <div className="glp-prob-card"><div className="glp-ic">{'📵'}</div><h3>Você preso dentro do salão</h3><p>Sem um painel, a única forma de saber se está tudo certo é estar lá fisicamente, todo dia.</p></div>
-            <div className="glp-prob-card"><div className="glp-ic">{'🔁'}</div><h3>Padrão que não se mantém</h3><p>O treinamento some quando você vira as costas. Sem registro, não há cobrança nem melhoria.</p></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="glp-section" id="como-funciona">
-        <div className="glp-wrap">
-          <h2 className="glp-section-title">Funcionando em 3 passos</h2>
-          <p className="glp-section-sub">Do cadastro ao primeiro turno acompanhado em tempo real — sem instalar nada.</p>
-          <div className="glp-steps-grid">
-            <div className="glp-step"><div className="glp-num">1</div><h3>Cadastre seu restaurante</h3><p>Crie a conta, defina setores e tarefas em menos de 5 minutos.</p></div>
-            <div className="glp-step"><div className="glp-num">2</div><h3>Convide a equipe</h3><p>Compartilhe o código de acesso. Cada funcionário usa no próprio celular.</p></div>
-            <div className="glp-step"><div className="glp-num">3</div><h3>Acompanhe de onde estiver</h3><p>O painel mostra em tempo real o que foi feito em cada turno.</p></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="glp-section" id="recursos" style={{ background: 'var(--bg-soft)' }}>
-        <div className="glp-wrap glp-split">
-          <div>
-            <span className="glp-eyebrow">A rotina, organizada</span>
-            <h2 style={{ fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 800, marginBottom: '20px' }}>Cada turno com tarefas claras — e prova de que foi feito.</h2>
-            <div className="glp-feat-list">
-              <div className="glp-feat"><div className="glp-fic">{'✅'}</div><div><h3>Checklists por turno</h3><p>Abertura, pico e fechamento. Cada setor sabe exatamente o que fazer e quando.</p></div></div>
-              <div className="glp-feat"><div className="glp-fic">{'📸'}</div><div><h3>Foto como prova</h3><p>A equipe registra com foto. Você confere de onde estiver, sem precisar estar no salão.</p></div></div>
-              <div className="glp-feat"><div className="glp-fic">{'🔔'}</div><div><h3>Alertas de turno</h3><p>Turno não concluído no horário? O painel avisa antes de virar problema com cliente.</p></div></div>
-            </div>
-          </div>
-          <div className="glp-art"><div className="glp-art-card" dangerouslySetInnerHTML={{ __html: FOTO_SVG }} /></div>
-        </div>
-      </section>
-
-      <section className="glp-section">
-        <div className="glp-wrap glp-split glp-rev">
-          <div>
-            <span className="glp-eyebrow">Visão de gestor</span>
-            <h2 style={{ fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 800, marginBottom: '20px' }}>Quem fez, o que fez e a que horas — num painel só.</h2>
-            <div className="glp-feat-list">
-              <div className="glp-feat"><div className="glp-fic">{'📊'}</div><div><h3>Painel do gestor</h3><p>Acompanhe cada turno em tempo real, do celular ou do computador, esteja onde estiver.</p></div></div>
-              <div className="glp-feat"><div className="glp-fic">{'👥'}</div><div><h3>Gestão de equipe</h3><p>Funcionários entram com um código. Saiu da equipe? Desativa na hora, sem dor de cabeça.</p></div></div>
-              <div className="glp-feat"><div className="glp-fic">{'🕒'}</div><div><h3>Histórico completo</h3><p>Filtre por semana, mês ou um período livre. Auditoria rápida: respostas, fotos e comentários de qualquer dia.</p></div></div>
-            </div>
-          </div>
-          <div className="glp-art"><div className="glp-art-card" dangerouslySetInnerHTML={{ __html: DASH_SVG }} /></div>
-        </div>
-      </section>
-
-      <section className="glp-section" style={{ background: 'var(--bg-soft)' }}>
-        <div className="glp-wrap glp-split">
-          <div>
-            <span className="glp-eyebrow">Motivação sem precisar cobrar</span>
-            <h2 style={{ fontSize: 'clamp(24px,3.5vw,34px)', fontWeight: 800, marginBottom: '20px' }}>Sua equipe se engaja sozinha — com ranking e ponto por turno.</h2>
-            <div className="glp-feat-list">
-              <div className="glp-feat"><div className="glp-fic">{'🏆'}</div><div><h3>Ponto por turno concluído</h3><p>Fechou o turno, somou ponto. Fechou dentro do horário? Ganha bônus — sem depender de você cobrar.</p></div></div>
-              <div className="glp-feat"><div className="glp-fic">{'📈'}</div><div><h3>Ranking mensal</h3><p>Todo mês reinicia do zero. Você sempre sabe quem mais se dedicou, pra premiar quem merece.</p></div></div>
-              <div className="glp-feat"><div className="glp-fic">{'🎉'}</div><div><h3>Comemoração na hora</h3><p>Confete e mensagem de parabéns assim que o turno fecha — reforço positivo no momento certo, direto no celular.</p></div></div>
-            </div>
-          </div>
-          <div className="glp-art"><div className="glp-art-card" dangerouslySetInnerHTML={{ __html: RANKING_SVG }} /></div>
-        </div>
-      </section>
-
-      <section className="glp-section" id="diferenciais">
-        <div className="glp-wrap">
-          <h2 className="glp-section-title">Por que o Gestop é diferente</h2>
-          <p className="glp-section-sub">A maioria dos sistemas de checklist é feita pra grandes redes — e cobra (e complica) como tal. O Gestop é pro dono que quer resolver hoje, sozinho.</p>
-          <div className="glp-compare">
-            <div className="glp-cmp-card glp-them">
-              <h3><span className="glp-tagline">A maioria dos sistemas</span></h3>
-              <ul>
-                <li><CmpCross /> Preço sob consulta — só depois de agendar uma demo com vendedor</li>
-                <li><CmpCross /> Cobrança que cresce por unidade e por usuário</li>
-                <li><CmpCross /> Pensados pra redes e franquias com muitas lojas</li>
-                <li><CmpCross /> Implantação, treinamento e integração com PDV</li>
+      <main>
+        <section className="gl-hero gl-escuro">
+          <div className="gl-wrap gl-hero-grid">
+            <div>
+              <h1>Seu restaurante funcionando direito, mesmo quando você não está lá.</h1>
+              <ul className="gl-hero-checks">
+                <li>
+                  <IcCheck size={20} />
+                  <div><strong>Prova, não promessa.</strong> Cada tarefa fecha com foto, horário e nome de quem fez. Acabou o “achei que tinham feito”.</div>
+                </li>
+                <li>
+                  <IcCheck size={20} />
+                  <div><strong>O salão no seu bolso.</strong> O painel mostra o turno acontecendo, em tempo real, de onde você estiver.</div>
+                </li>
+                <li>
+                  <IcCheck size={20} />
+                  <div><strong>Equipe que se cobra sozinha.</strong> Ponto por turno fechado e ranking mensal, sem você no pé.</div>
+                </li>
               </ul>
+              <div className="gl-hero-cta">
+                <button className="gl-btn gl-btn-1" onClick={ir('cadastro')}>
+                  Começar teste grátis de {DIAS_TRIAL} dias
+                </button>
+                <a className="gl-btn gl-btn-2" href="#como-funciona">Ver como funciona</a>
+              </div>
+              <p className="gl-trust">
+                <IcCheck size={17} />
+                Sem cartão · Sem demo nem vendedor · Pronto sozinho em 5 minutos
+              </p>
             </div>
-            <div className="glp-cmp-card glp-us">
-              <h3><span className="glp-tagline">Gestop</span></h3>
-              <ul>
-                <li><CmpCheck /> {PRECO_MENSAL}/mês fixo, preço público — sem demo, sem vendedor</li>
-                <li><CmpCheck /> Checklists e funcionários ilimitados, sem cobrança extra</li>
-                <li><CmpCheck /> Feito pra sua casa, do seu jeito — de 1 a poucas unidades</li>
-                <li><CmpCheck /> Você mesmo começa em 5 minutos, sem instalar nada</li>
-              </ul>
+            <div className="gl-hero-art"><CarrosselApp /></div>
+          </div>
+        </section>
+
+        {/* A régua do dia: a estrutura real do produto, não uma barra de métricas. */}
+        <section className="gl-dia gl-escuro" aria-label="Os três turnos do dia">
+          <div className="gl-wrap gl-dia-grid">
+            <div className="gl-dia-item">
+              <span className="gl-dia-hora">Abertura</span>
+              <span className="gl-dia-nome">Começa certo</span>
+              <p className="gl-dia-desc">A casa abre com a lista do dia já na mão de cada setor.</p>
+            </div>
+            <div className="gl-dia-item">
+              <span className="gl-dia-hora">Pico</span>
+              <span className="gl-dia-nome">Aguenta o movimento</span>
+              <p className="gl-dia-desc">No aperto, ninguém para pra pensar no que falta — já está na tela.</p>
+            </div>
+            <div className="gl-dia-item">
+              <span className="gl-dia-hora">Fechamento</span>
+              <span className="gl-dia-nome">Fecha com prova</span>
+              <p className="gl-dia-desc">O turno só fecha com foto. Amanhã você abre sabendo como ficou.</p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="glp-section glp-pricing" id="preco">
-        <div className="glp-wrap">
-          <h2 className="glp-section-title">Preço simples, sem pegadinha</h2>
-          <p className="glp-section-sub">Um plano só, tudo incluído. Preço público na tela — sem demo, sem vendedor, sem surpresa na fatura.</p>
-          <div className="glp-price-card">
-            <div className="glp-price-top">
-              <div className="glp-tag">Oferta de fundador · {VAGAS_FUNDADOR} primeiras contas</div>
-              <div className="glp-val">{PRECO_FUNDADOR}<small>/mês, vitalício</small></div>
-              <p className="glp-price-was">De <s>{PRECO_MENSAL}/mês</s> — esse valor fica travado pra sempre nessa conta</p>
+        <section className="gl-sec gl-claro">
+          <div className="gl-wrap gl-prob">
+            <div>
+              <h2 className="gl-titulo">Cansado de cobrar tarefa no grito?</h2>
+              <p className="gl-sub">
+                Quando a rotina depende da memória de cada um, sempre falta alguma coisa.
+                E quem paga a conta é o cliente que não volta.
+              </p>
             </div>
-            <div className="glp-price-body">
-              <ul>
-                <li><Check /> Checklists e funcionários ilimitados</li>
-                <li><Check /> Fotos, alertas e histórico completo</li>
-                <li><Check /> Ranking pra motivar a equipe</li>
-                <li><Check /> Painel do gestor em tempo real</li>
-                <li><Check /> Suporte direto com a gente</li>
-              </ul>
-              <button className="glp-btn glp-btn-primary" onClick={ir('cadastro')}>Testar grátis por {DIAS_TRIAL} dias</button>
-              <p className="glp-price-note">Sem cartão de crédito · Depois do teste, as {VAGAS_FUNDADOR} primeiras contas pagam {PRECO_FUNDADOR}/mês pra sempre — as próximas pagam {PRECO_MENSAL}/mês · Cancele quando quiser</p>
+            <div className="gl-prob-lista">
+              <div className="gl-prob-item">
+                <span className="gl-prob-marca"><IcX size={18} /></span>
+                <div>
+                  <h3>“Achei que tinham feito”</h3>
+                  <p>Ninguém sabe ao certo o que foi concluído no turno. A culpa fica no ar e o problema se repete na semana seguinte.</p>
+                </div>
+              </div>
+              <div className="gl-prob-item">
+                <span className="gl-prob-marca"><IcX size={18} /></span>
+                <div>
+                  <h3>Você preso dentro do salão</h3>
+                  <p>Sem painel, a única forma de saber se está tudo certo é estar lá. Todo dia, o dia inteiro.</p>
+                </div>
+              </div>
+              <div className="gl-prob-item">
+                <span className="gl-prob-marca"><IcX size={18} /></span>
+                <div>
+                  <h3>Padrão que não se sustenta</h3>
+                  <p>O treinamento some assim que você vira as costas. Sem registro, não há como cobrar nem como melhorar.</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="glp-section">
-        <div className="glp-wrap">
-          <h2 className="glp-section-title">Perguntas frequentes</h2>
-          <p className="glp-section-sub">As dúvidas mais comuns de quem está começando.</p>
-          <div className="glp-faq-list">
-            <details open><summary>Preciso instalar algum aplicativo? <span className="glp-chev">+</span></summary><p>Não. O Gestop funciona direto no navegador do celular e do computador. A equipe acessa pelo link, sem baixar nada da loja de apps.</p></details>
-            <details><summary>Funciona pra qualquer tipo de restaurante? <span className="glp-chev">+</span></summary><p>Sim. Hamburguerias, pizzarias, bares, cafeterias, restaurantes — você cria os setores e tarefas do seu jeito, então se adapta a qualquer operação.</p></details>
-            <details><summary>Meus funcionários precisam de e-mail e senha? <span className="glp-chev">+</span></summary><p>Não precisam criar conta. Eles entram com um código de acesso que você compartilha. Saiu da equipe? Você desativa na hora.</p></details>
-            <details><summary>Como funciona o teste grátis? <span className="glp-chev">+</span></summary><p>São {DIAS_TRIAL} dias com tudo liberado, sem pedir cartão de crédito. Se gostar, é só assinar. Se não, é só não fazer nada — não cobramos.</p></details>
-            <details><summary>Tem fidelidade ou multa pra cancelar? <span className="glp-chev">+</span></summary><p>Nenhuma. O plano é mensal e você cancela quando quiser, sem multa e sem burocracia.</p></details>
+        <section className="gl-sec" id="como-funciona">
+          <div className="gl-wrap">
+            <div className="gl-cab">
+              <h2 className="gl-titulo">Funcionando em 3 passos</h2>
+              <p className="gl-sub">Do cadastro ao primeiro turno acompanhado em tempo real, sem instalar nada.</p>
+            </div>
+            <div className="gl-passos">
+              <div className="gl-passo">
+                <h3>Cadastre seu restaurante</h3>
+                <p>Crie a conta, defina setores e tarefas em menos de 5 minutos.</p>
+              </div>
+              <div className="gl-passo">
+                <h3>Convide a equipe</h3>
+                <p>Compartilhe o código de acesso. Cada pessoa usa no próprio celular.</p>
+              </div>
+              <div className="gl-passo">
+                <h3>Acompanhe de onde estiver</h3>
+                <p>O painel mostra, em tempo real, o que foi feito em cada turno.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="gl-sec gl-escuro" id="recursos">
+          <div className="gl-wrap">
+            <div className="gl-cab">
+              <h2 className="gl-titulo">Tudo que o turno precisa, num app só</h2>
+              <p className="gl-sub">
+                Da lista de abertura ao ranking do mês. Tudo incluído no mesmo plano,
+                sem módulo extra nem cobrança por usuário.
+              </p>
+            </div>
+            <CarrosselRecursos />
+          </div>
+        </section>
+
+        <section className="gl-sec" id="diferenciais">
+          <div className="gl-wrap">
+            <div className="gl-cab">
+              <h2 className="gl-titulo">Por que o Gestop é diferente</h2>
+              <p className="gl-sub">
+                A maioria dos sistemas de checklist é feita pra grandes redes, e cobra (e complica) como tal.
+                O Gestop é pro dono que quer resolver hoje, sozinho.
+              </p>
+            </div>
+            <div className="gl-cmp">
+              <div className="gl-cmp-col gl-cmp-eles">
+                <h3>A maioria dos sistemas</h3>
+                <ul>
+                  <li><IcX size={19} /><span>Preço sob consulta — só depois de agendar uma demo com vendedor</span></li>
+                  <li><IcX size={19} /><span>Cobrança que cresce por unidade e por usuário</span></li>
+                  <li><IcX size={19} /><span>Pensados pra redes e franquias com muitas lojas</span></li>
+                  <li><IcX size={19} /><span>Implantação, treinamento e integração com PDV</span></li>
+                </ul>
+              </div>
+              <div className="gl-cmp-col gl-cmp-nos">
+                <h3>Gestop</h3>
+                <ul>
+                  <li><IcCheck size={19} /><span>{PRECO_MENSAL}/mês fixo, preço público, sem demo e sem vendedor</span></li>
+                  <li><IcCheck size={19} /><span>Checklists e funcionários ilimitados, sem cobrança extra</span></li>
+                  <li><IcCheck size={19} /><span>Feito pra sua casa, do seu jeito, de 1 a poucas unidades</span></li>
+                  <li><IcCheck size={19} /><span>Você mesmo começa em 5 minutos, sem instalar nada</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="gl-sec gl-claro" id="preco">
+          <div className="gl-wrap">
+            <div className="gl-preco-par">
+              <div>
+                <h2 className="gl-titulo">Preço simples, sem pegadinha</h2>
+                <p className="gl-sub">Um plano só, tudo incluído. Preço público na tela: sem demo, sem vendedor, sem surpresa na fatura.</p>
+              </div>
+              <div className="gl-preco">
+              <div className="gl-preco-topo">
+                <span className="gl-preco-vagas">Oferta de fundador · {VAGAS_FUNDADOR} primeiras contas</span>
+                <span className="gl-preco-val gl-num">{PRECO_FUNDADOR}<small>/mês, vitalício</small></span>
+                <p className="gl-preco-de">De <s>{PRECO_MENSAL}/mês</s>. Esse valor fica travado pra sempre nessa conta</p>
+              </div>
+              <div className="gl-preco-corpo">
+                <ul>
+                  <li><IcCheck size={19} /><span>Checklists e funcionários ilimitados</span></li>
+                  <li><IcCheck size={19} /><span>Fotos, alertas e histórico completo</span></li>
+                  <li><IcCheck size={19} /><span>Ranking pra motivar a equipe</span></li>
+                  <li><IcCheck size={19} /><span>Painel do gestor em tempo real</span></li>
+                  <li><IcCheck size={19} /><span>Suporte direto com a gente</span></li>
+                </ul>
+                <button className="gl-btn gl-btn-1 gl-btn-bloco" onClick={ir('cadastro')}>
+                  Testar grátis por {DIAS_TRIAL} dias
+                </button>
+                <p className="gl-preco-nota">
+                  <IcCadeado size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> Sem cartão de crédito ·
+                  Depois do teste, as {VAGAS_FUNDADOR} primeiras contas pagam {PRECO_FUNDADOR}/mês pra sempre.
+                  As próximas pagam {PRECO_MENSAL}/mês · Cancele quando quiser
+                </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="gl-sec">
+          <div className="gl-wrap">
+            <div className="gl-cab">
+              <h2 className="gl-titulo">Perguntas frequentes</h2>
+              <p className="gl-sub">As dúvidas mais comuns de quem está começando.</p>
+            </div>
+            <div className="gl-faq">
+              <details open>
+                <summary>Preciso instalar algum aplicativo? <span className="gl-faq-mais"><IcMais /></span></summary>
+                <p>Não. O Gestop funciona direto no navegador do celular e do computador. A equipe acessa pelo link, sem baixar nada da loja de apps.</p>
+              </details>
+              <details>
+                <summary>Funciona pra qualquer tipo de restaurante? <span className="gl-faq-mais"><IcMais /></span></summary>
+                <p>Sim. Hamburguerias, pizzarias, bares, cafeterias, restaurantes. Você cria os setores e tarefas do seu jeito, então se adapta a qualquer operação.</p>
+              </details>
+              <details>
+                <summary>Meus funcionários precisam de e-mail e senha? <span className="gl-faq-mais"><IcMais /></span></summary>
+                <p>Não precisam criar conta. Eles entram com um código de acesso que você compartilha. Saiu da equipe? Você desativa na hora.</p>
+              </details>
+              <details>
+                <summary>Como funciona o teste grátis? <span className="gl-faq-mais"><IcMais /></span></summary>
+                <p>São {DIAS_TRIAL} dias com tudo liberado, sem pedir cartão de crédito. Se gostar, é só assinar. Se não, é só não fazer nada. Não cobramos.</p>
+              </details>
+              <details>
+                <summary>Tem fidelidade ou multa pra cancelar? <span className="gl-faq-mais"><IcMais /></span></summary>
+                <p>Nenhuma. O plano é mensal e você cancela quando quiser, sem multa e sem burocracia.</p>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <div className="gl-wrap">
+          <div className="gl-final gl-escuro">
+            <h2>Pare de cobrar checklist no grito.</h2>
+            <p>Em 5 minutos seu restaurante tem rotina organizada, e você tem paz pra cuidar do que importa.</p>
+            <button className="gl-btn gl-btn-claro" onClick={ir('cadastro')}>Criar minha conta grátis</button>
           </div>
         </div>
-      </section>
+      </main>
 
-      <div className="glp-wrap">
-        <div className="glp-final">
-          <h2>Pare de cobrar checklist no grito.</h2>
-          <p>Em 5 minutos seu restaurante tem rotina organizada e você tem paz pra cuidar do que importa.</p>
-          <button className="glp-btn glp-btn-light" onClick={ir('cadastro')}>Criar minha conta grátis →</button>
-        </div>
-      </div>
-
-      <footer className="glp-footer">
-        <div className="glp-wrap glp-foot-row">
-          <div className="glp-logo" style={{ fontSize: '17px' }}><span className="glp-dot" style={{ width: '26px', height: '26px', fontSize: '14px' }}>{'✓'}</span> Gestop</div>
+      <footer className="gl-rodape">
+        <div className="gl-wrap gl-rodape-row">
+          <div className="gl-logo"><Marca size={26} /> Gestop</div>
           <div>Operação sob controle · {new Date().getFullYear()}</div>
-          <button className="glp-link-btn" onClick={ir('privacidade')}>Política de Privacidade</button>
+          <button className="gl-link-btn" onClick={ir('privacidade')}>Política de Privacidade</button>
         </div>
       </footer>
     </div>
+  )
+}
+
+// O "+" do FAQ que vira "×" quando abre — desenhado, não glifo de teclado.
+function IcMais() {
+  return (
+    <Icone size={20}><path d="M12 5.5v13M5.5 12h13" /></Icone>
   )
 }
