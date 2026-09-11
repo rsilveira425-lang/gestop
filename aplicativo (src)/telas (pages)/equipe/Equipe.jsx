@@ -59,44 +59,44 @@ export default function Equipe({ restaurantId, codigoAcesso, onCodigoAtualizado 
   }
 
   return (
-    <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'40px' }}>
+    <div style={{ minHeight:'100vh', background:'var(--gs-bg)', paddingBottom:'40px' }}>
       <div className="gs-appbar gs-appbar--row">
         <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' }}>←</button>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:'700', display:'flex', alignItems:'center', gap:'9px' }}><Icon name="users" size={21} /> Equipe</h1>
       </div>
 
-      <div style={{ margin:'16px 24px', backgroundColor:'#eff6ff', borderRadius:'12px', padding:'16px', border:'1px solid #bfdbfe' }}>
-        <p style={{ margin:0, fontSize:'11px', color:'#3b82f6', fontWeight:'700', textTransform:'uppercase', letterSpacing:'1px' }}>Código de acesso</p>
-        <p style={{ margin:'4px 0 0 0', fontSize:'32px', fontWeight:'900', color:'#1e40af', letterSpacing:'8px' }}>{codigo || '—'}</p>
+      <div style={{ margin:'16px 24px', background:'var(--gs-surface-brand)', borderRadius:'var(--gs-radius-card)', padding:'16px' }}>
+        <p className="gs-eyebrow" style={{ margin:0, color:'var(--gs-action)' }}>Código de acesso</p>
+        <p className="gs-num" style={{ margin:'6px 0 0 0', fontSize:'30px', fontWeight:600, color:'var(--gs-blue-800)', letterSpacing:'.16em', lineHeight:1.1 }}>{codigo || '—'}</p>
         <button onClick={regenerarCodigo} disabled={gerando}
-          style={{ marginTop:'10px', padding:'8px 14px', borderRadius:'8px', border:'1px solid #bfdbfe', backgroundColor:'white', color:'var(--gs-action)', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}>
+          style={{ marginTop:'12px', minHeight:'38px', padding:'9px 14px', borderRadius:'var(--gs-radius-md)', border:'none', background:'var(--gs-surface)', color:'var(--gs-action)', fontSize:'13px', fontWeight:'600', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:'7px', boxShadow:'var(--gs-shadow-xs)' }}>
           {gerando ? 'Gerando...' : <><Icon name="refresh" size={14} /> Gerar novo código</>}
         </button>
       </div>
 
       <div style={{ padding:'0 24px' }}>
-        <p style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', margin:'8px 0' }}>Membros ({membros.length})</p>
-        {loading ? <p style={{ textAlign:'center', color:'#94a3b8' }}>Carregando...</p>
+        <p style={{ fontSize:'13px', fontWeight:600, color:'var(--gs-text-muted)', margin:'10px 0' }}>Membros ({membros.length})</p>
+        {loading ? <p style={{ textAlign:'center', color:'var(--gs-text-subtle)' }}>Carregando...</p>
         : membros.map(m => (
-          <div key={m.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'14px 16px', marginBottom:'10px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', opacity: m.ativo === false ? 0.6 : 1 }}>
+          <div key={m.id} style={{ background:'var(--gs-surface)', borderRadius:'var(--gs-radius-card)', padding:'14px 16px', marginBottom:'10px', boxShadow:'var(--gs-shadow-xs)', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', opacity: m.ativo === false ? 0.6 : 1 }}>
             <div style={{ minWidth:0 }}>
-              <p style={{ margin:0, fontWeight:'600', fontSize:'14px', color:'#1e293b', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              <p style={{ margin:0, fontWeight:'600', fontSize:'14px', color:'var(--gs-text-body)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                 <Icon name={m.role === 'dono' ? 'crown' : 'user'} size={14} style={{ display:'inline-block', verticalAlign:'-2px', marginRight:'6px' }} />{m.nome || m.email}{m.id === user.uid ? ' (você)' : ''}
               </p>
-              <p style={{ margin:'2px 0 0 0', fontSize:'12px', color:'#94a3b8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              <p style={{ margin:'3px 0 0 0', fontSize:'12px', color:'var(--gs-text-subtle)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                 {m.email} · {m.role === 'dono' ? 'Gestor' : m.ativo === false ? 'Desativado' : 'Funcionário'}
               </p>
             </div>
             {m.role !== 'dono' && (
               <div style={{ display:'flex', gap:'6px', flexShrink:0 }}>
                 <button onClick={() => alternarAcesso(m)}
-                  style={{ padding:'6px 12px', borderRadius:'8px', border:'none', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
-                    backgroundColor: m.ativo === false ? '#f0fdf4' : '#fef2f2', color: m.ativo === false ? '#16a34a' : '#dc2626' }}>
+                  style={{ padding:'8px 12px', minHeight:'36px', borderRadius:'var(--gs-radius-md)', border:'none', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
+                    background: m.ativo === false ? 'var(--gs-success-bg)' : 'var(--gs-danger-bg)', color: m.ativo === false ? 'var(--gs-success-text)' : 'var(--gs-danger-text)' }}>
                   {m.ativo === false ? 'Reativar' : 'Desativar'}
                 </button>
                 <button onClick={() => excluirMembro(m)}
-                  style={{ padding:'6px 12px', borderRadius:'8px', border:'1px solid #fecaca', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
-                    backgroundColor:'white', color:'#dc2626' }}>
+                  style={{ padding:'8px 12px', minHeight:'36px', borderRadius:'var(--gs-radius-md)', border:'none', fontSize:'12px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap',
+                    background:'var(--gs-surface-sunken)', color:'var(--gs-danger)' }}>
                   Excluir
                 </button>
               </div>

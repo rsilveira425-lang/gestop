@@ -4,6 +4,7 @@ import { db } from '../../conexoes (services)/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
 import { compararTarefas } from '../../ajustes (config)/tarefas'
+import { Icon } from '../../componentes (design)'
 
 export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
   const navigate = useNavigate()
@@ -117,7 +118,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
           </div>
         </div>
         <div style={{ padding: '20px 24px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', boxShadow: 'var(--gs-shadow-xs)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: '#64748b' }}>Taxa de conclusão</span>
               <span style={{ fontSize: '13px', fontWeight: '700', color: pct === 100 ? '#16a34a' : 'var(--gs-action)' }}>{pct}%</span>
@@ -133,7 +134,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
             {Object.entries(detalhe.respostas || {}).sort(([a], [b]) => compararTarefas({ ...mapaT[a], id: a }, { ...mapaT[b], id: b })).map(([tarefaId, resp]) => (
               <div key={tarefaId} style={{
                 backgroundColor: 'white', borderRadius: '10px', padding: '14px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                boxShadow: 'var(--gs-shadow-xs)',
                 borderLeft: resp === 'sim' ? '4px solid #16a34a' : '4px solid #dc2626'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
@@ -191,36 +192,43 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
         {loading ? (
           <p style={{ textAlign: 'center', color: '#64748b' }}>Carregando...</p>
         ) : Object.keys(porData).length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-            <p style={{ fontSize: '32px' }}>📋</p>
-            <p>Nenhum checklist registrado ainda.</p>
+          <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--gs-text-muted)' }}>
+            <Icon name="clipboard" size={34} style={{ margin: '0 auto 12px', color: 'var(--gs-text-subtle)' }} />
+            <p style={{ margin: 0, fontSize: '14px' }}>Nenhum checklist registrado ainda.</p>
           </div>
         ) : (
           Object.entries(porData).map(([data, turnosData]) => (
             <div key={data} style={{ marginBottom: '24px' }}>
-              <p style={{ fontSize: '13px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gs-text-muted)', marginBottom: '9px' }}>
                 {formatarData(data)}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {TURNOS.map(turno => {
                   const lista = turnosData[turno] || []
                   if (lista.length === 0) return (
-                    <div key={turno} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', borderLeft: '4px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#94a3b8' }}>{turno}</span>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Não iniciado</span>
+                    <div key={turno} style={{ background: 'var(--gs-surface)', borderRadius: 'var(--gs-radius-card)', padding: '14px 16px', boxShadow: 'var(--gs-shadow-xs)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--gs-text-subtle)' }}>
+                        <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: 'var(--gs-border-strong)', flexShrink: 0 }} />
+                        {turno}
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--gs-text-subtle)' }}>Não iniciado</span>
                     </div>
                   )
                   return lista.map(cl => {
                     const pct = calcularPorcentagem(cl.respostas)
                     return (
-                      <div key={cl.id} onClick={() => abrirDetalhe(cl)} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', borderLeft: cl.concluido ? '4px solid #16a34a' : '4px solid #f59e0b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-                        <div>
-                          <p style={{ margin: 0, fontWeight: '600', color: '#1e293b' }}>{turno}{cl.funcionarioNome ? <span style={{ fontWeight: 400, color: '#94a3b8' }}> · {cl.funcionarioNome}</span> : null}</p>
-                          <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: cl.concluido ? '#16a34a' : '#f59e0b' }}>
-                            {cl.concluido ? '✅ Concluído' : '⚠️ Incompleto'} · {pct}%
-                          </p>
+                      <div key={cl.id} onClick={() => abrirDetalhe(cl)} style={{ background: 'var(--gs-surface)', borderRadius: 'var(--gs-radius-card)', padding: '14px 16px', boxShadow: 'var(--gs-shadow-xs)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0 }}>
+                          <Icon name={cl.concluido ? 'checkCircle' : 'warning'} size={17}
+                            style={{ marginTop: '2px', color: cl.concluido ? 'var(--gs-success)' : 'var(--gs-warning-text)' }} />
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ margin: 0, fontWeight: '600', color: 'var(--gs-text-body)' }}>{turno}{cl.funcionarioNome ? <span style={{ fontWeight: 400, color: 'var(--gs-text-subtle)' }}> · {cl.funcionarioNome}</span> : null}</p>
+                            <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: cl.concluido ? 'var(--gs-success-text)' : 'var(--gs-warning-text)' }}>
+                              {cl.concluido ? 'Concluído' : 'Incompleto'} · <span className="gs-num">{pct}%</span>
+                            </p>
+                          </div>
                         </div>
-                        <span style={{ color: '#94a3b8', fontSize: '18px' }}>›</span>
+                        <Icon name="forward" size={16} style={{ color: 'var(--gs-text-subtle)' }} />
                       </div>
                     )
                   })
@@ -230,7 +238,7 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
           ))
         )}
         {!loading && filtro === 'recente' && temMais && Object.keys(porData).length > 0 && (
-          <button onClick={() => setRangeDias(d => d + 15)} style={{ width: '100%', padding: '12px', marginTop: '4px', backgroundColor: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+          <button onClick={() => setRangeDias(d => d + 15)} style={{ width: '100%', minHeight: '44px', padding: '12px', marginTop: '4px', background: 'var(--gs-surface-sunken)', color: 'var(--gs-text-body)', border: 'none', borderRadius: 'var(--gs-radius-md)', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
             Carregar mais
           </button>
         )}

@@ -101,7 +101,7 @@ select.gs-input { appearance: none; padding-right: 38px;
 /* ---------- CARD ---------- */
 .gs-card {
   background: var(--gs-surface);
-  border-radius: var(--gs-radius-md);
+  border-radius: var(--gs-radius-card);
   box-shadow: var(--gs-shadow-xs);
 }
 .gs-card--flat { box-shadow: none; border: 1px solid var(--gs-border); }

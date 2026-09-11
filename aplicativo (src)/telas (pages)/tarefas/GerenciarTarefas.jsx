@@ -53,7 +53,7 @@ function Coluna({ setor, turno, children, vazia }) {
   return (
     <div ref={setNodeRef} style={{
       backgroundColor: isOver ? '#eff6ff' : 'white', borderRadius:'12px',
-      boxShadow:'0 1px 3px rgba(0,0,0,0.08)', overflow:'hidden',
+      boxShadow:'var(--gs-shadow-xs)', overflow:'hidden',
       border: isOver ? '2px dashed #93c5fd' : '2px solid transparent', minHeight:'80px'
     }}>
       {children}
@@ -231,7 +231,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
     tabs: { display:'flex', flexWrap:'wrap', gap:'0', backgroundColor:'white', borderBottom:'2px solid #e2e8f0', padding:'0 12px' },
     tab: (ativo) => ({ padding:'12px 18px', border:'none', background:'none', fontSize:'15px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap', color: ativo ? 'var(--gs-action)' : '#64748b', borderBottom: ativo ? '2px solid var(--gs-action)' : '2px solid transparent', marginBottom:'-2px' }),
     body: { padding:'20px 24px', maxWidth: kanban ? '1400px' : '700px', margin:'0 auto' },
-    turnoCard: { backgroundColor:'white', borderRadius:'12px', marginBottom:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', overflow:'hidden' },
+    turnoCard: { backgroundColor:'white', borderRadius:'12px', marginBottom:'16px', boxShadow:'var(--gs-shadow-xs)', overflow:'hidden' },
     turnoHeader: { padding:'14px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', fontSize:'14px', fontWeight:'700', color:'#475569' },
     tarefaTexto: { fontSize:'14px', color:'#1e293b', flex:1, padding:'12px 0' },
     btnEdit: { padding:'4px 10px', backgroundColor:'#f1f5f9', border:'none', borderRadius:'6px', fontSize:'12px', cursor:'pointer', marginRight:'6px', color:'#475569' },
@@ -550,7 +550,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
 
         <DragOverlay>
           {tarefaArrastada && (
-            <div style={{ backgroundColor:'white', borderRadius:'8px', padding:'12px 16px', boxShadow:'0 8px 24px rgba(0,0,0,0.18)', fontSize:'14px', color:'#1e293b', border:'2px solid var(--gs-action)' }}>
+            <div style={{ backgroundColor:'white', borderRadius:'8px', padding:'12px 16px', boxShadow:'var(--gs-shadow-md)', fontSize:'14px', color:'#1e293b', border:'2px solid var(--gs-action)' }}>
               {tarefaArrastada.texto}
             </div>
           )}

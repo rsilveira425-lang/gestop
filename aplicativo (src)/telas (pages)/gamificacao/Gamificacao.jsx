@@ -69,7 +69,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {ranking.map((p, i) => (
-              <div key={p.uid} style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '14px', borderLeft: i < 3 ? '4px solid #f59e0b' : '4px solid #e2e8f0' }}>
+              <div key={p.uid} style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px 16px', boxShadow: 'var(--gs-shadow-xs)', display: 'flex', alignItems: 'center', gap: '14px', borderLeft: i < 3 ? '4px solid #f59e0b' : '4px solid #e2e8f0' }}>
                 <span style={{ fontSize: '18px', fontWeight: '800', width: '30px', textAlign: 'center', flexShrink: 0 }}>{medalha(i)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: '700', color: '#1e293b', fontSize: '15px' }}>{p.nome}</p>

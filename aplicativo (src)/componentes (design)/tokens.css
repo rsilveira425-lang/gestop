@@ -173,6 +173,10 @@
   --gs-radius-xl:   24px;  /* blocos da landing */
   --gs-radius-pill: 999px;
 
+  /* Papel, não medida: é o raio de toda superfície de conteúdo.
+     A escala acima continua geométrica; isto aqui nomeia o uso. */
+  --gs-radius-card: 14px;
+
   /* ---------- ELEVAÇÃO ---------- */
   /* Duas camadas: um contato curto e uma queda longa. Base navy, nao cinza. */
   --gs-shadow-xs: 0 1px 2px rgba(5,11,36,.05), 0 10px 26px -16px rgba(5,11,36,.30);

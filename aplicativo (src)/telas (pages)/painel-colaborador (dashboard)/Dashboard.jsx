@@ -10,6 +10,7 @@ import Equipe from '../equipe/Equipe'
 import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
 import { ordenarTarefas } from '../../ajustes (config)/tarefas'
 import { pushDisponivel, permissaoAtual, ativarNotificacoes, jaAtivouNesteAparelho, ehIOS, instaladoNaTelaInicial, registrarServiceWorker } from '../../conexoes (services)/push'
+import { Icon } from '../../componentes (design)'
 
 export default function Dashboard({ restaurantId, userRole, userName, codigoAcesso, turnos = DEFAULT_TURNOS, diasTrial = null, onRestaurantUpdate = () => {} }) {
   const { user } = useAuth()
@@ -298,7 +299,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const telaChecklist = loading ? (
     <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh' }}><p style={{ color:'#64748b' }}>Carregando...</p></div>
   ) : (
-    <div style={{ minHeight:'100vh', backgroundColor:'#f8fafc', paddingBottom:'80px' }}>
+    <div style={{ minHeight:'100vh', background:'var(--gs-bg)', paddingBottom:'80px' }}>
       <style>{`
         @keyframes gestopPop { 0%{transform:scale(1)} 40%{transform:scale(1.03)} 100%{transform:scale(1)} }
         @keyframes gestopBigRing { from{stroke-dashoffset:326.73} to{stroke-dashoffset:0} }
@@ -334,12 +335,12 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'flex-end' }}>
           {userRole === 'dono' && (
             <>
-              <button onClick={() => navigate('/tarefas')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Tarefas</button>
-              <button onClick={() => navigate('/gestor')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Gestor</button>
-              <button onClick={() => navigate('/equipe')} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Equipe</button>
+              <button onClick={() => navigate('/tarefas')} style={{ padding:'9px 13px', borderRadius:'var(--gs-radius-md)', border:'none', backgroundColor:'rgba(255,255,255,0.16)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Tarefas</button>
+              <button onClick={() => navigate('/gestor')} style={{ padding:'9px 13px', borderRadius:'var(--gs-radius-md)', border:'none', backgroundColor:'rgba(255,255,255,0.16)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Gestor</button>
+              <button onClick={() => navigate('/equipe')} style={{ padding:'9px 13px', borderRadius:'var(--gs-radius-md)', border:'none', backgroundColor:'rgba(255,255,255,0.16)', color:'white', fontSize:'13px', cursor:'pointer', fontWeight:'600' }}>Equipe</button>
             </>
           )}
-          <button onClick={() => { if (window.confirm('Tem certeza que quer sair?')) signOut(auth) }} style={{ padding:'8px 12px', borderRadius:'8px', border:'none', backgroundColor:'rgba(255,255,255,0.2)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
+          <button onClick={() => { if (window.confirm('Tem certeza que quer sair?')) signOut(auth) }} style={{ padding:'9px 13px', borderRadius:'var(--gs-radius-md)', border:'none', backgroundColor:'rgba(255,255,255,0.16)', color:'white', fontSize:'13px', cursor:'pointer' }}>Sair</button>
         </div>
       </div>
 
@@ -399,32 +400,35 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         </div>
       )}
 
-      <div style={{ display:'flex', gap:'8px', padding:'16px 24px', backgroundColor:'white', borderBottom:'1px solid #e2e8f0', overflowX:'auto' }}>
+      <div style={{ display:'flex', gap:'8px', padding:'14px 24px', background:'var(--gs-surface)', borderBottom:'1px solid var(--gs-border)', overflowX:'auto' }}>
         {TURNOS.map(t => (
-          <button key={t} onClick={() => setTurnoAtivo(t)} style={{ padding:'8px 16px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: turnoAtivo===t ? 'var(--gs-action)' : '#f1f5f9', color: turnoAtivo===t ? 'white' : '#64748b' }}>{t}</button>
+          <button key={t} onClick={() => setTurnoAtivo(t)} style={{ padding:'10px 17px', minHeight:'40px', borderRadius:'var(--gs-radius-pill)', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: turnoAtivo===t ? 'var(--gs-action)' : 'var(--gs-surface-sunken)', color: turnoAtivo===t ? 'white' : 'var(--gs-text-muted)' }}>{t}</button>
         ))}
       </div>
 
       <div style={{ padding:'20px 24px' }}>
-        <div style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', marginBottom:'20px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', display:'flex', alignItems:'center', gap:'16px' }}>
+        <div style={{ background:'var(--gs-surface)', borderRadius:'var(--gs-radius-card)', padding:'17px', marginBottom:'20px', boxShadow:'var(--gs-shadow-xs)', display:'flex', alignItems:'center', gap:'16px' }}>
           <div style={{ position:'relative', width:'62px', height:'62px', flexShrink:0 }}>
             <svg width="62" height="62" viewBox="0 0 62 62">
-              <circle cx="31" cy="31" r="26" fill="none" stroke="#f1f5f9" strokeWidth="7" />
+              <circle cx="31" cy="31" r="26" fill="none" stroke="#eef2f9" strokeWidth="7" />
               <circle cx="31" cy="31" r="26" fill="none" stroke={prog===100 ? '#16a34a' : '#1d4ed8'} strokeWidth="7" strokeLinecap="round"
                 strokeDasharray={163.36} strokeDashoffset={163.36 * (1 - prog/100)} transform="rotate(-90 31 31)"
                 style={{ transition:'stroke-dashoffset 0.4s ease, stroke 0.3s' }} />
             </svg>
-            <span style={{ position:'absolute', top:0, left:0, width:'62px', height:'62px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'700', color: prog===100 ? '#16a34a' : 'var(--gs-action)' }}>{prog}%</span>
+            <span className="gs-num" style={{ position:'absolute', top:0, left:0, width:'62px', height:'62px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:600, color: prog===100 ? 'var(--gs-success)' : 'var(--gs-action)' }}>{prog}%</span>
           </div>
           <div>
-            <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Progresso do turno</p>
-            <p style={{ margin:'2px 0 0 0', fontSize:'15px', fontWeight:'700', color:'#1e293b' }}>{totalResp} de {total} tarefas</p>
+            <p style={{ margin:0, fontSize:'13px', color:'var(--gs-text-muted)' }}>Progresso do turno</p>
+            <p style={{ margin:'3px 0 0 0', fontSize:'16px', fontWeight:600, color:'var(--gs-text)' }}>
+              <span className="gs-num">{totalResp}</span> de <span className="gs-num">{total}</span> tarefas
+            </p>
           </div>
         </div>
 
         {concluido && (
-          <div style={{ backgroundColor:'#dcfce7', border:'1px solid #86efac', borderRadius:'12px', padding:'16px', marginBottom:'20px', textAlign:'center' }}>
-            <p style={{ margin:0, fontWeight:'700', color:'#16a34a', fontSize:'18px' }}>Turno concluido!</p>
+          <div style={{ background:'var(--gs-success-bg)', borderRadius:'var(--gs-radius-card)', padding:'18px', marginBottom:'20px', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px' }}>
+            <Icon name="checkCircle" size={22} style={{ color:'var(--gs-success)' }} />
+            <p style={{ margin:0, fontWeight:600, color:'var(--gs-success-text)', fontSize:'17px' }}>Turno concluído</p>
           </div>
         )}
 
@@ -434,40 +438,54 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
           return (<>
           {su.length > 1 && (
             <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px' }}>
-              <button onClick={() => setSetorAtivo(null)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? '700' : '400', backgroundColor: setorAtivo === null ? 'var(--gs-action)' : '#f1f5f9', color: setorAtivo === null ? 'white' : '#475569' }}>Todos</button>
+              <button onClick={() => setSetorAtivo(null)} style={{ padding:'9px 15px', minHeight:'38px', borderRadius:'var(--gs-radius-pill)', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: setorAtivo === null ? 600 : 500, backgroundColor: setorAtivo === null ? 'var(--gs-action)' : 'var(--gs-surface-sunken)', color: setorAtivo === null ? 'white' : 'var(--gs-text-muted)' }}>Todos</button>
               {su.map(s => {
                 const ativo = normSetor(setorAtivo) === normSetor(s)
                 const fechado = !!setoresConcluidos[chaveSetor(s)]
                 const ts = tarefasDoSetor(s)
                 const nResp = ts.filter(t => respostas[t.id] === 'sim' || respostas[t.id] === 'nao').length
                 return (
-                  <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'6px 14px', borderRadius:'20px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: ativo || fechado ? '700' : '400',
-                    backgroundColor: ativo ? 'var(--gs-action)' : fechado ? '#dcfce7' : '#f1f5f9',
-                    color: ativo ? 'white' : fechado ? '#16a34a' : '#475569' }}>
-                    {s} {fechado ? '✓' : `${nResp}/${ts.length}`}
+                  <button key={s} onClick={() => setSetorAtivo(s)} style={{ padding:'9px 15px', minHeight:'38px', borderRadius:'var(--gs-radius-pill)', border:'none', cursor:'pointer', fontSize:'13px', fontWeight: ativo || fechado ? 600 : 500,
+                    display:'inline-flex', alignItems:'center', gap:'6px',
+                    backgroundColor: ativo ? 'var(--gs-action)' : fechado ? 'var(--gs-success-bg)' : 'var(--gs-surface-sunken)',
+                    color: ativo ? 'white' : fechado ? 'var(--gs-success-text)' : 'var(--gs-text-muted)' }}>
+                    {s}
+                    {fechado ? <Icon name="check" size={13} /> : <span className="gs-num" style={{ fontSize:'12px', opacity:.85 }}>{nResp}/{ts.length}</span>}
                   </button>
                 )
               })}
             </div>
           )}
           {tf.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}><p>Nenhuma tarefa para {turnoAtivo}.</p></div>
+          <div style={{ textAlign:'center', padding:'48px 20px', color:'var(--gs-text-muted)' }}>
+            <Icon name="clipboard" size={34} style={{ margin:'0 auto 12px', color:'var(--gs-text-subtle)' }} />
+            <p style={{ margin:0, fontSize:'14px' }}>Nenhuma tarefa para {turnoAtivo}.</p>
+          </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
             {tf.map(tarefa => {
               const resp = respostas[tarefa.id]; const coment = comentarios[tarefa.id]||''; const foto = fotos[tarefa.id]
               return (
-                <div key={tarefa.id} style={{ backgroundColor:'white', borderRadius:'12px', padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.08)', borderLeft: resp==='sim' ? '4px solid #16a34a' : resp==='nao' ? '4px solid #dc2626' : '4px solid #e2e8f0', animation: tarefa.id === ultimaResp ? 'gestopPop 0.4s ease' : undefined }}>
-                  <p style={{ margin:'0 0 4px 0', fontSize:'15px', color:'#1e293b', fontWeight:'500' }}>{tarefa.texto}</p>
-                  <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
-                    {tarefa.setorNome && <span style={{ fontSize:'11px', color:'#94a3b8', backgroundColor:'#f8fafc', padding:'2px 8px', borderRadius:'10px' }}>{tarefa.setorNome}</span>}
-                    {tarefa.fotoObrigatoria && <span style={{ fontSize:'11px', color:'#b45309', backgroundColor:'#fffbeb', padding:'2px 8px', borderRadius:'10px', fontWeight:'600' }}>📷 Foto obrigatória</span>}
+                <div key={tarefa.id} style={{ background:'var(--gs-surface)', borderRadius:'var(--gs-radius-card)', padding:'16px', boxShadow:'var(--gs-shadow-xs)', animation: tarefa.id === ultimaResp ? 'gestopPop 0.4s ease' : undefined }}>
+                  <div style={{ display:'flex', gap:'12px', alignItems:'flex-start' }}>
+                    <span style={{ flexShrink:0, width:'22px', height:'22px', marginTop:'1px', borderRadius:'50%', display:'grid', placeItems:'center', color:'white',
+                      background: resp==='sim' ? 'var(--gs-success)' : resp==='nao' ? 'var(--gs-danger)' : 'transparent',
+                      border: resp ? 'none' : '1.8px solid var(--gs-border-strong)' }}>
+                      {resp==='sim' ? <Icon name="check" size={13} /> : resp==='nao' ? <Icon name="x" size={12} /> : null}
+                    </span>
+                    <div style={{ minWidth:0, flex:1 }}>
+                      <p style={{ margin:'0 0 5px 0', fontSize:'15px', color:'var(--gs-text-body)', fontWeight:500 }}>{tarefa.texto}</p>
+                      <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+                        {tarefa.setorNome && <span style={{ fontSize:'11px', color:'var(--gs-text-muted)', background:'var(--gs-surface-sunken)', padding:'3px 9px', borderRadius:'var(--gs-radius-pill)' }}>{tarefa.setorNome}</span>}
+                        {tarefa.fotoObrigatoria && <span style={{ fontSize:'11px', color:'var(--gs-warning-text)', background:'var(--gs-warning-bg)', padding:'3px 9px', borderRadius:'var(--gs-radius-pill)', fontWeight:600, display:'inline-flex', alignItems:'center', gap:'5px' }}><Icon name="camera" size={11} />Foto obrigatória</span>}
+                      </div>
+                    </div>
                   </div>
                   {!concluido && (
                     <>
                       <div style={{ display:'flex', gap:'8px', marginTop:'12px' }}>
-                        <button onClick={() => salvarResposta(tarefa.id, 'sim')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='sim' ? '#16a34a' : '#f0fdf4', color: resp==='sim' ? 'white' : '#16a34a' }}>Sim</button>
-                        <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, padding:'10px', borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', backgroundColor: resp==='nao' ? '#dc2626' : '#fef2f2', color: resp==='nao' ? 'white' : '#dc2626' }}>Nao</button>
+                        <button onClick={() => salvarResposta(tarefa.id, 'sim')} style={{ flex:1, minHeight:'44px', padding:'11px', borderRadius:'var(--gs-radius-md)', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:600, backgroundColor: resp==='sim' ? 'var(--gs-success)' : 'var(--gs-success-bg)', color: resp==='sim' ? 'white' : 'var(--gs-success-text)' }}>Sim</button>
+                        <button onClick={() => salvarResposta(tarefa.id, 'nao')} style={{ flex:1, minHeight:'44px', padding:'11px', borderRadius:'var(--gs-radius-md)', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:600, backgroundColor: resp==='nao' ? 'var(--gs-danger)' : 'var(--gs-danger-bg)', color: resp==='nao' ? 'white' : 'var(--gs-danger-text)' }}>Não</button>
                       </div>
                       {resp === 'nao' && !coment.trim() && (
                         <p style={{ margin:'8px 0 0 0', fontSize:'12px', color:'#dc2626', fontWeight:'600' }}>Comentário obrigatório: explique por que não foi feito.</p>

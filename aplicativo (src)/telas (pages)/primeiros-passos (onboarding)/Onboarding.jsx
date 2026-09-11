@@ -31,7 +31,7 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
           <span style={styles.steps}>Etapa {step} de 3</span>
         </div>
         <div style={styles.progress}>
-          <div style={{ ...styles.progressBar, width: `${(step/3)*100}%` }} />
+          <div style={{ ...styles.progressBar, transform: `scaleX(${step/3})` }} />
         </div>
 
         {step === 1 && (
@@ -67,10 +67,11 @@ export default function Onboarding({ restaurant, onConcluir, codigoAcesso }) {
 
 const styles = {
   screen: { minHeight:'100vh', background:'#f8fafc', display:'flex', alignItems:'flex-start', justifyContent:'center', padding:'16px' },
-  container: { background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'560px', boxShadow:'0 4px 12px rgba(0,0,0,0.08)', overflow:'hidden', marginTop:'24px' },
+  container: { background:'#fff', borderRadius:'16px', width:'100%', maxWidth:'560px', boxShadow:'var(--gs-shadow-sm)', overflow:'hidden', marginTop:'24px' },
   topbar: { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'20px 24px 0' },
   logo: { fontSize:'20px', fontWeight:700, color:'var(--gs-action)' },
   steps: { fontSize:'13px', color:'#64748b' },
-  progress: { height:'4px', background:'#e2e8f0', margin:'16px 0 0' },
-  progressBar: { height:'100%', background:'var(--gs-action)', transition:'width 0.3s ease' },
+  progress: { height:'4px', background:'var(--gs-surface-sunken)', margin:'16px 0 0', overflow:'hidden' },
+  // scaleX e nao width: animar largura recalcula o layout a cada quadro.
+  progressBar: { height:'100%', width:'100%', background:'var(--gs-action)', transformOrigin:'left', transition:'transform var(--gs-duration-slow) var(--gs-ease)' },
 }
