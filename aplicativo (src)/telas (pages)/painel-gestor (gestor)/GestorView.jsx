@@ -4,7 +4,7 @@ import { db } from '../../conexoes (services)/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import Historico from '../historico/Historico'
 import Gamificacao from '../gamificacao/Gamificacao'
-import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
+import { DEFAULT_TURNOS, dataOperacional, minutosOperacionais, horarioDoTurno, diaSemanaDe } from '../../ajustes (config)/turnos'
 import { compararTarefas } from '../../ajustes (config)/tarefas'
 import { Icon } from '../../componentes (design)'
 
@@ -42,8 +42,8 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const [checklists, setChecklists] = useState([])
   const [loading, setLoading] = useState(true)
   const codigoAcesso = codigoAcessoProp || '—'
-  const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  const [data, setData] = useState(localDate())
+  const hoje = dataOperacional()
+  const [data, setData] = useState(hoje)
   const [detalhe, setDetalhe] = useState(null)
   const [mapaT, setMapaT] = useState({})
   const [fotoAmpliada, setFotoAmpliada] = useState(null)
@@ -101,7 +101,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   }
 
   // ----- Resumo do dia (Painel do Dono) -----
-  const ehHoje = data === localDate()
+  const ehHoje = data === hoje
   let totalEsp = 0, totalResp = 0, naoCount = 0
   const porSetor = {}
   checklists.forEach(cl => {
@@ -117,9 +117,11 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   })
   let atrasados = 0
   if (ehHoje) {
-    const horaAgora = new Date().getHours()
+    const agora = new Date()
+    const minutosAgora = minutosOperacionais(agora.getHours(), agora.getMinutes())
     turnos.forEach(t => {
-      if (typeof t.horaLimite === 'number' && horaAgora >= t.horaLimite) {
+      const { hora, minuto } = horarioDoTurno(t, diaSemanaDe(hoje))
+      if (minutosAgora >= minutosOperacionais(hora, minuto)) {
         const concluido = checklists.some(cl => cl.turno === t.nome && cl.concluido)
         if (!concluido) atrasados++
       }
@@ -130,7 +132,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
   const progresso = totalEsp ? Math.round(totalResp / totalEsp * 100) : 0
   const setoresResumo = Object.entries(porSetor)
 
-  const datas = Array.from({length:7}, (_,i) => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d) })
+  const datas = Array.from({length:7}, (_,i) => { const d=new Date(hoje+'T12:00:00'); d.setDate(d.getDate()-i); return dataOperacional(d) })
 
   const painel = detalhe ? (
     <>
@@ -195,7 +197,7 @@ export default function GestorView({ restaurantId, codigoAcesso: codigoAcessoPro
       <div style={{ padding:'0 24px 12px' }}>
         <div style={{ display:'flex', gap:'8px', overflowX:'auto' }}>
           {datas.map(d => {
-            const label = d===localDate() ? 'Hoje' : new Date(d+'T12:00:00').toLocaleDateString('pt-BR', {day:'numeric', month:'short'})
+            const label = d===hoje ? 'Hoje' : new Date(d+'T12:00:00').toLocaleDateString('pt-BR', {day:'numeric', month:'short'})
             return <button key={d} onClick={() => setData(d)} style={{ padding:'9px 16px', borderRadius:'var(--gs-radius-pill)', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'600', whiteSpace:'nowrap', backgroundColor: data===d?'var(--gs-action)':'var(--gs-surface-sunken)', color: data===d?'white':'var(--gs-text-muted)' }}>{label}</button>
           })}
         </div>

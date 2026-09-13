@@ -5,6 +5,7 @@
 import admin from 'firebase-admin'
 import { avisosDevidos, chaveLembrete, textoDoAviso, deveAvisar, JANELA_PADRAO } from '../aplicativo (src)/ajustes (config)/lembretes.js'
 import { diasRestantesTrial } from '../aplicativo (src)/ajustes (config)/billing.js'
+import { HORA_VIRADA } from '../aplicativo (src)/ajustes (config)/turnos.js'
 
 const FUSO = 'America/Sao_Paulo'
 
@@ -27,11 +28,16 @@ function agoraNoFuso(fuso = FUSO) {
   }).formatToParts(new Date())
   const p = Object.fromEntries(partes.map(x => [x.type, x.value]))
   const dias = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+  const hora = parseInt(p.hour, 10) % 24
+  // De madrugada ainda é o dia de operação anterior: o checklist do fechamento
+  // que passou da meia-noite está gravado com a data de ontem.
+  const voltar = hora < HORA_VIRADA ? 1 : 0
+  const dia = new Date(Date.UTC(+p.year, +p.month - 1, +p.day - voltar))
   return {
-    data: `${p.year}-${p.month}-${p.day}`,
-    hora: parseInt(p.hour, 10) % 24,
+    data: dia.toISOString().slice(0, 10),
+    hora,
     minuto: parseInt(p.minute, 10),
-    diaSemana: dias[p.weekday] ?? 0,
+    diaSemana: ((dias[p.weekday] ?? 0) - voltar + 7) % 7,
   }
 }
 

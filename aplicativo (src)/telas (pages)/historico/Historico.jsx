@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../conexoes (services)/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
-import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
+import { DEFAULT_TURNOS, dataOperacional } from '../../ajustes (config)/turnos'
 import { compararTarefas } from '../../ajustes (config)/tarefas'
 import { Icon } from '../../componentes (design)'
 
@@ -19,18 +19,18 @@ export default function Historico({ restaurantId, turnos = DEFAULT_TURNOS }) {
   const [rangeDias, setRangeDias] = useState(15)
   const [temMais, setTemMais] = useState(true)
   const [periodoInicio, setPeriodoInicio] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 30); return localDate(d) })
-  const [periodoFim, setPeriodoFim] = useState(() => localDate())
+  const [periodoFim, setPeriodoFim] = useState(() => dataOperacional())
   const totalAnteriorRef = useRef(0)
 
   function calcularIntervalo() {
-    const hoje = localDate()
+    const hoje = dataOperacional()
     if (filtro === 'semana') {
-      const d = new Date(); const diaSemana = d.getDay(); const diff = diaSemana === 0 ? -6 : 1 - diaSemana
+      const d = new Date(hoje + 'T12:00:00'); const diaSemana = d.getDay(); const diff = diaSemana === 0 ? -6 : 1 - diaSemana
       const seg = new Date(d); seg.setDate(d.getDate() + diff)
       return { inicio: localDate(seg), fim: hoje }
     }
     if (filtro === 'mes') {
-      const d = new Date()
+      const d = new Date(hoje + 'T12:00:00')
       return { inicio: localDate(new Date(d.getFullYear(), d.getMonth(), 1)), fim: hoje }
     }
     if (filtro === 'periodo') return { inicio: periodoInicio, fim: periodoFim }

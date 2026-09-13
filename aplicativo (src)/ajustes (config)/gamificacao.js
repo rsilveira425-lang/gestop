@@ -1,19 +1,18 @@
-import { horarioDoTurno } from './turnos'
+import { prazoDoTurno } from './turnos'
 
-// Turno concluído vale 1 ponto; se fechado dentro do horário limite do dia, +1 de bônus.
+// Turno concluído vale 1 ponto; se fechado até 30 min depois do horário limite do dia, +1 de bônus.
 const PONTOS_BASE = 1
 const PONTOS_BONUS_PRAZO = 1
+// Folga depois do horário do turno: a loja fecha às 23:00 e a equipe ainda
+// precisa de um tempo para limpar — o bônus vale até 23:30.
+export const TOLERANCIA_PRAZO_MIN = 30
 
-function diaSemanaDe(dataStr) {
-  const [ano, mes, dia] = dataStr.split('-').map(Number)
-  return new Date(ano, mes - 1, dia).getDay()
-}
-
+// Compara o instante inteiro, não só a hora: fechar à 00:30 um turno que vencia
+// às 23:30 é atraso, mesmo que "00:30" seja menor que "23:30".
 function dentroDoPrazo(checklist, turnoConfig) {
   if (!checklist.concluidoEm?.toDate) return false
-  const { hora, minuto } = horarioDoTurno(turnoConfig, diaSemanaDe(checklist.data))
-  const fim = checklist.concluidoEm.toDate()
-  return fim.getHours() * 60 + fim.getMinutes() <= hora * 60 + minuto
+  const limite = prazoDoTurno(turnoConfig, checklist.data).getTime() + TOLERANCIA_PRAZO_MIN * 60 * 1000
+  return checklist.concluidoEm.toDate().getTime() <= limite
 }
 
 // Agrega pontos por funcionário a partir dos checklists concluídos no período.

@@ -2,15 +2,16 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../conexoes (services)/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
-import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
-import { calcularRanking } from '../../ajustes (config)/gamificacao'
+import { DEFAULT_TURNOS, dataOperacional } from '../../ajustes (config)/turnos'
+import { calcularRanking, TOLERANCIA_PRAZO_MIN } from '../../ajustes (config)/gamificacao'
 import { Icon } from '../../componentes (design)'
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
   const navigate = useNavigate()
-  const hoje = new Date()
+  // Dia de operação: na madrugada do dia 1º o fechamento ainda conta no mês anterior
+  const hoje = new Date(dataOperacional() + 'T12:00:00')
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth())
   const [ranking, setRanking] = useState([])
@@ -55,7 +56,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
         <button onClick={() => mudarMes(1)} disabled={ehMesAtual} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: ehMesAtual ? 'default' : 'pointer', color: ehMesAtual ? '#cbd5e1' : 'var(--gs-action)' }}>›</button>
       </div>
       <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8', textAlign: 'center' }}>
-        1 ponto por turno concluído · +1 se fechado dentro do horário
+        1 ponto por turno concluído · +1 se fechado até {TOLERANCIA_PRAZO_MIN} min após o horário
       </p>
 
       <div style={{ padding: '20px 24px' }}>

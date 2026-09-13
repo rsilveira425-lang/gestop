@@ -3,7 +3,7 @@
 // Mantido puro de propósito: quem chama informa a hora já convertida para o
 // fuso do restaurante. Assim dá para testar horário de fim de semana e virada
 // de dia sem depender do relógio da máquina.
-import { horariosDeAviso, rotuloAntecedencia } from './turnos.js'
+import { horariosDeAviso, rotuloAntecedencia, minutosOperacionais } from './turnos.js'
 
 // Quantos minutos para trás o disparo olha. Precisa ser maior que o intervalo
 // do agendador, senão um aviso pode cair entre duas execuções e nunca sair.
@@ -13,14 +13,15 @@ import { horariosDeAviso, rotuloAntecedencia } from './turnos.js'
 // Ajustável pela variável LEMBRETES_JANELA se o agendador mudar de ritmo.
 export const JANELA_PADRAO = 5
 
-// `agora` = { hora, minuto, diaSemana }. Devolve os avisos cuja hora caiu
+// `agora` = { hora, minuto, diaSemana }, com `diaSemana` do dia de operação
+// (de madrugada, ainda é o dia anterior). Devolve os avisos cuja hora caiu
 // dentro da janela — o de menor antecedência primeiro, que é o mais urgente.
 export function avisosDevidos({ turnos = [], agora, janelaMinutos = JANELA_PADRAO }) {
-  const minutosAgora = agora.hora * 60 + agora.minuto
+  const minutosAgora = minutosOperacionais(agora.hora, agora.minuto)
   const devidos = []
   for (const turno of turnos) {
     for (const h of horariosDeAviso(turno, agora.diaSemana)) {
-      const minutosAviso = h.hora * 60 + h.minuto
+      const minutosAviso = minutosOperacionais(h.hora, h.minuto)
       const atraso = minutosAgora - minutosAviso
       if (atraso >= 0 && atraso < janelaMinutos) {
         devidos.push({ turno: turno.nome, antes: h.antes, hora: h.hora, minuto: h.minuto })

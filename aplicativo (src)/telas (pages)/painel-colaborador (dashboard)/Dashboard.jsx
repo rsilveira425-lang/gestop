@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, addDoc, updateDoc, setDoc, doc, serv
 import GestorView from '../painel-gestor (gestor)/GestorView'
 import GerenciarTarefas from '../tarefas/GerenciarTarefas'
 import Equipe from '../equipe/Equipe'
-import { DEFAULT_TURNOS } from '../../ajustes (config)/turnos'
+import { DEFAULT_TURNOS, dataOperacional, minutosOperacionais, horarioDoTurno, diaSemanaDe } from '../../ajustes (config)/turnos'
 import { ordenarTarefas } from '../../ajustes (config)/tarefas'
 import { pushDisponivel, permissaoAtual, ativarNotificacoes, jaAtivouNesteAparelho, ehIOS, instaladoNaTelaInicial, registrarServiceWorker } from '../../conexoes (services)/push'
 import { Icon } from '../../componentes (design)'
@@ -16,8 +16,6 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const { user } = useAuth()
   const navigate = useNavigate()
   const TURNOS = turnos.map(t => t.nome)
-  const HORARIO_LIMITE = Object.fromEntries(turnos.map(t => [t.nome, t.horaLimite]))
-  const localDate = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   const [turnoAtivo, setTurnoAtivo] = useState(TURNOS[0] || 'Abertura')
   const [tarefas, setTarefas] = useState([])
   const [respostas, setRespostas] = useState({})
@@ -38,7 +36,8 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const fileRefs = useRef({})
   const checklistIdRef = useRef(null)
   const criandoChecklistRef = useRef(null)
-  const hoje = localDate()
+  // Dia de operação: o fechamento que passa da meia-noite continua no checklist de ontem
+  const hoje = dataOperacional()
 
   // Cortina de confete preto e laranja num canvas — 2000 peças em DOM travariam o celular,
   // então isso aqui é desenhado quadro a quadro em vez de virar 2000 elementos animados.
@@ -125,15 +124,17 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   }
 
   async function verificarAlertas() {
-    const hora = new Date().getHours()
+    const agora = new Date()
+    const minutosAgora = minutosOperacionais(agora.getHours(), agora.getMinutes())
     const novos = []
     try {
       const ref = collection(db, 'restaurants', restaurantId, 'checklists')
-      for (const t of TURNOS) {
-        if (hora >= HORARIO_LIMITE[t]) {
-          const q = query(ref, where('data', '==', hoje), where('turno', '==', t), where('concluido', '==', true))
+      for (const t of turnos) {
+        const { hora, minuto } = horarioDoTurno(t, diaSemanaDe(hoje))
+        if (minutosAgora >= minutosOperacionais(hora, minuto)) {
+          const q = query(ref, where('data', '==', hoje), where('turno', '==', t.nome), where('concluido', '==', true))
           const s = await getDocs(q)
-          if (s.empty) novos.push(t)
+          if (s.empty) novos.push(t.nome)
         }
       }
     } catch(e) { console.error(e) }
@@ -329,7 +330,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       <div className="gs-appbar">
         <div>
           <button onClick={() => navigate('/')} style={{ margin:0, fontSize:'22px', fontWeight:'700', background:'none', border:'none', padding:0, color:'white', cursor:'pointer', fontFamily:'inherit' }}>Gestop</button>
-          <p style={{ margin:'4px 0 0 0', fontSize:'13px', opacity:0.85 }}>{new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}</p>
+          <p style={{ margin:'4px 0 0 0', fontSize:'13px', opacity:0.85 }}>{new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}</p>
           {userName && <p style={{ margin:'2px 0 0 0', fontSize:'12px', opacity:0.7 }}>{userName}</p>}
         </div>
         <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', justifyContent:'flex-end' }}>
