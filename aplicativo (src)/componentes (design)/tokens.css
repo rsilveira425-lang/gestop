@@ -113,6 +113,14 @@
   --gs-info-border:    var(--gs-blue-200);
   --gs-info-text:      var(--gs-blue-800);
 
+  /* Pódio do ranking: ouro, prata e bronze. Sólido pro degrau, texto escuro pro rótulo. */
+  --gs-podium-gold:        #d4a03c;
+  --gs-podium-gold-text:   #7c5410;
+  --gs-podium-silver:      #9aa6bc;
+  --gs-podium-silver-text: #475569;
+  --gs-podium-bronze:      #b46d3c;
+  --gs-podium-bronze-text: #7a3f16;
+
   /* Gradientes da marca */
   /* A luz que cai do canto superior direito do hero. E o efeito mais
      reconhecivel da landing — o cabecalho do app veste o mesmo. */
