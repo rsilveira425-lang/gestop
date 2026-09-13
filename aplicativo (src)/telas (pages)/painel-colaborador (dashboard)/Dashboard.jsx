@@ -21,7 +21,6 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   const [respostas, setRespostas] = useState({})
   const [comentarios, setComentarios] = useState({})
   const [fotos, setFotos] = useState({})
-  const [checklistId, setChecklistId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [concluido, setConcluido] = useState(false)
@@ -142,7 +141,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
   }
 
   async function carregarDados() {
-    setLoading(true); setConcluido(false); setRespostas({}); setComentarios({}); setFotos({}); setSetoresConcluidos({}); setChecklistId(null); checklistIdRef.current = null
+    setLoading(true); setConcluido(false); setRespostas({}); setComentarios({}); setFotos({}); setSetoresConcluidos({}); checklistIdRef.current = null
     try {
       const tRef = collection(db, 'restaurants', restaurantId, 'tarefas')
       const tSnap = await getDocs(query(tRef, where('turno', '==', turnoAtivo)))
@@ -154,7 +153,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         // Se houver documentos duplicados (corrida/versão antiga por funcionário), mescla tudo
         const docs = cSnap.docs.slice().sort((a, b) => (a.data().criadoEm?.seconds || 0) - (b.data().criadoEm?.seconds || 0))
         const principal = docs[0]
-        checklistIdRef.current = principal.id; setChecklistId(principal.id)
+        checklistIdRef.current = principal.id
         const resp = {}, coment = {}, f = {}, sc = {}
         let conc = false
         for (const cl of docs) {
@@ -229,7 +228,6 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       if (!cSnap.empty) {
         const docs = cSnap.docs.slice().sort((a, b) => (a.data().criadoEm?.seconds || 0) - (b.data().criadoEm?.seconds || 0))
         checklistIdRef.current = docs[0].id
-        setChecklistId(docs[0].id)
         return docs[0].id
       }
       const ref = await addDoc(cRef, {
@@ -237,7 +235,6 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
         concluido: false, funcionarioId: user.uid, funcionarioNome: userName, criadoEm: serverTimestamp()
       })
       checklistIdRef.current = ref.id
-      setChecklistId(ref.id)
       return ref.id
     })()
     try { return await criandoChecklistRef.current } finally { criandoChecklistRef.current = null }
@@ -273,9 +270,10 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
     try {
       const id = await garantirChecklist()
       await updateDoc(doc(db, 'restaurants', restaurantId, 'checklists', id), {
-        [`setoresConcluidos.${chaveSetor(nome)}`]: { nome, por: userName || user.email || '', em: serverTimestamp() }
+        // porUid identifica a pessoa mesmo com nome repetido ou trocado — base para pontuar por área no futuro
+        [`setoresConcluidos.${chaveSetor(nome)}`]: { nome, por: userName || user.email || '', porUid: user.uid, em: serverTimestamp() }
       })
-      const novo = { ...setoresConcluidos, [chaveSetor(nome)]: { nome, por: userName || '' } }
+      const novo = { ...setoresConcluidos, [chaveSetor(nome)]: { nome, por: userName || '', porUid: user.uid } }
       setSetoresConcluidos(novo)
       // Se todas as tarefas do turno estão respondidas e todos os setores concluídos, fecha o turno
       const setores = [...new Set(tarefas.map(t => t.setorNome).filter(Boolean))]
@@ -356,7 +354,7 @@ export default function Dashboard({ restaurantId, userRole, userName, codigoAces
       {user && !user.emailVerified && (
         <div style={{ backgroundColor:'#eff6ff', borderBottom:'1px solid #bfdbfe', padding:'10px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
           <p style={{ margin:0, fontSize:'13px', color:'#1e40af' }}>Confirme seu e-mail pelo link que enviamos para <strong>{user.email}</strong></p>
-          <button disabled={emailReenviado} onClick={async () => { try { await sendEmailVerification(user); setEmailReenviado(true) } catch(e) { alert('Aguarde alguns minutos antes de reenviar.') } }}
+          <button disabled={emailReenviado} onClick={async () => { try { await sendEmailVerification(user); setEmailReenviado(true) } catch { alert('Aguarde alguns minutos antes de reenviar.') } }}
             style={{ padding:'6px 12px', borderRadius:'8px', border:'none', backgroundColor: emailReenviado ? '#cbd5e1' : 'var(--gs-action)', color:'white', fontSize:'12px', cursor:'pointer', fontWeight:'600' }}>
             {emailReenviado ? 'Enviado ✓' : 'Reenviar'}
           </button>

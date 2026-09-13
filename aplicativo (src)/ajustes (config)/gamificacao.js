@@ -32,5 +32,6 @@ export function calcularRanking(checklists, turnos) {
     const turnoConfig = porTurno[cl.turno]
     if (turnoConfig && dentroDoPrazo(cl, turnoConfig)) { p.pontos += PONTOS_BONUS_PRAZO; p.noPrazo += 1 }
   })
-  return Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos)
+  // Empate em pontos: fica na frente quem fechou mais turnos dentro do prazo
+  return Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos || b.noPrazo - a.noPrazo)
 }
