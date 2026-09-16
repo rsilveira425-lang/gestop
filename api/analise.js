@@ -1,7 +1,7 @@
 // Leitura dos dados de UM restaurante para análise externa (Claude).
 //
-// Só leitura e só um restaurante: o id vem da variável ANALISE_RESTAURANT_ID,
-// nunca da requisição — não existe parâmetro que aponte para outra empresa.
+// Só leitura e só um restaurante: ele vem da variável ANALISE_RESTAURANT_ID
+// (ou do dono em ANALISE_DONO_EMAIL), nunca da requisição — não existe parâmetro que aponte para outra empresa.
 // Restaurante novo que se cadastrar no app fica de fora por construção.
 //
 // GET /api/analise?inicio=AAAA-MM-DD&fim=AAAA-MM-DD   (padrão: mês atual)
@@ -15,13 +15,23 @@ const FUSO = 'America/Sao_Paulo'
 const MAX_DIAS = 93
 
 let inicializado = false
-function getDb() {
+function getAdmin() {
   if (!inicializado) {
     const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
     admin.initializeApp({ credential: admin.credential.cert(sa) })
     inicializado = true
   }
-  return admin.firestore()
+  return admin
+}
+
+// O restaurante liberado: pelo id direto ou pelo e-mail de quem é dono dele.
+async function restauranteLiberado(adm) {
+  if (process.env.ANALISE_RESTAURANT_ID) return process.env.ANALISE_RESTAURANT_ID
+  const email = process.env.ANALISE_DONO_EMAIL
+  if (!email) return null
+  const { uid } = await adm.auth().getUserByEmail(email)
+  const perfil = (await adm.firestore().collection('usuarios').doc(uid).get()).data()
+  return perfil?.role === 'dono' ? perfil.restaurantId : null
 }
 
 function autorizado(req) {
@@ -67,13 +77,15 @@ function periodo(query, fuso) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'somente GET' })
   if (!autorizado(req)) return res.status(401).json({ error: 'nao autorizado' })
-  const rid = process.env.ANALISE_RESTAURANT_ID
-  if (!rid || !process.env.FIREBASE_SERVICE_ACCOUNT) {
-    return res.status(500).json({ error: 'ANALISE_RESTAURANT_ID ou FIREBASE_SERVICE_ACCOUNT ausente' })
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+    return res.status(500).json({ error: 'FIREBASE_SERVICE_ACCOUNT ausente' })
   }
 
   try {
-    const db = getDb()
+    const adm = getAdmin()
+    const rid = await restauranteLiberado(adm)
+    if (!rid) return res.status(500).json({ error: 'defina ANALISE_RESTAURANT_ID ou ANALISE_DONO_EMAIL (de uma conta dona)' })
+    const db = adm.firestore()
     const restRef = db.collection('restaurants').doc(rid)
     const restSnap = await restRef.get()
     if (!restSnap.exists) return res.status(404).json({ error: 'restaurante nao encontrado' })

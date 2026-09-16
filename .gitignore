@@ -34,3 +34,6 @@ dist-ssr
 
 # Material de apoio local, não código
 Mapa-do-Gestop.pdf
+.vercel
+.env*
+!.env.example
