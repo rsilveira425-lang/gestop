@@ -1,4 +1,4 @@
-import { prazoDoTurno } from './turnos'
+import { prazoDoTurno } from './turnos.js'
 
 // Turno concluído vale 1 ponto; se fechado até 30 min depois do horário limite do dia, +1 de bônus.
 const PONTOS_BASE = 1
