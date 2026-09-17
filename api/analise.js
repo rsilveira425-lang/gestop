@@ -1,15 +1,20 @@
-// Leitura dos dados de UM restaurante para análise externa (Claude).
+// Dados de UM restaurante para análise externa (Claude).
 //
-// Só leitura e só um restaurante: ele vem da variável ANALISE_RESTAURANT_ID
+// Lê tudo, mas só escreve em tarefas (sem apagar). Só um restaurante: ele vem da variável ANALISE_RESTAURANT_ID
 // (ou do dono em ANALISE_DONO_EMAIL), nunca da requisição — não existe parâmetro que aponte para outra empresa.
 // Restaurante novo que se cadastrar no app fica de fora por construção.
 //
 // GET /api/analise?inicio=AAAA-MM-DD&fim=AAAA-MM-DD   (padrão: mês atual)
+// POST /api/analise  { acoes: [...] }  — mexe só em tarefas, nunca apaga:
+//   { tipo: 'criar', turno, setor, texto, fotoObrigatoria? }
+//   { tipo: 'editar', id, texto?, fotoObrigatoria? }
+//   { tipo: 'mover', id, setor }
 // Header: Authorization: Bearer <ANALISE_SECRET>
 import admin from 'firebase-admin'
 import { timingSafeEqual } from 'node:crypto'
 import { calcularRanking } from '../aplicativo (src)/ajustes (config)/gamificacao.js'
 import { getTurnos, dataOperacional } from '../aplicativo (src)/ajustes (config)/turnos.js'
+import { proximaOrdem, moverTarefa } from '../aplicativo (src)/ajustes (config)/tarefas.js'
 
 const FUSO = 'America/Sao_Paulo'
 const MAX_DIAS = 93
@@ -74,8 +79,93 @@ function periodo(query, fuso) {
   return { inicio, fim }
 }
 
+const MAX_ACOES = 50
+const mesmoNome = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase()
+
+// Valida todas as ações contra os dados atuais e devolve as escritas.
+// Se qualquer ação for inválida, nada é gravado.
+export function planejarAcoes(acoes, { tarefas, setores, turnos }) {
+  if (!Array.isArray(acoes) || acoes.length === 0 || acoes.length > MAX_ACOES) {
+    throw new Error(`envie de 1 a ${MAX_ACOES} acoes`)
+  }
+  const lista = tarefas.map(t => ({ ...t }))
+  const novas = [], alteradas = new Map()
+  const setorValido = nome => setores.find(s => mesmoNome(s.nome, nome))?.nome
+  const texto = v => {
+    if (typeof v !== 'string' || !v.trim() || v.length > 300) throw new Error('texto invalido')
+    return v.trim()
+  }
+  const alterar = (id, patch) => {
+    alteradas.set(id, { ...alteradas.get(id), ...patch })
+    Object.assign(lista.find(t => t.id === id), patch)
+  }
+
+  acoes.forEach((a, i) => {
+    const onde = `acao ${i + 1}: `
+    try {
+      if (a?.tipo === 'criar') {
+        const turno = turnos.find(t => mesmoNome(t.nome, a.turno))?.nome
+        const setor = setorValido(a.setor)
+        if (!turno) throw new Error('turno inexistente')
+        if (!setor) throw new Error('setor inexistente')
+        const nova = {
+          id: `nova-${novas.length}`,
+          texto: texto(a.texto), setorNome: setor, turno,
+          ordem: proximaOrdem(lista, setor, turno),
+          criadoEm: new Date().toISOString(),
+          fotoObrigatoria: !!a.fotoObrigatoria,
+        }
+        novas.push(nova)
+        lista.push(nova)
+      } else if (a?.tipo === 'editar') {
+        if (!tarefas.some(t => t.id === a.id)) throw new Error('tarefa inexistente')
+        const patch = {}
+        if (a.texto !== undefined) patch.texto = texto(a.texto)
+        if (a.fotoObrigatoria !== undefined) patch.fotoObrigatoria = !!a.fotoObrigatoria
+        if (!Object.keys(patch).length) throw new Error('nada para editar')
+        alterar(a.id, patch)
+      } else if (a?.tipo === 'mover') {
+        if (!tarefas.some(t => t.id === a.id)) throw new Error('tarefa inexistente')
+        const setor = setorValido(a.setor)
+        if (!setor) throw new Error('setor inexistente')
+        moverTarefa(lista, { tarefaId: a.id, paraSetor: setor }).forEach(({ id, ...patch }) => alterar(id, patch))
+      } else {
+        throw new Error('tipo deve ser criar, editar ou mover')
+      }
+    } catch (e) {
+      throw new Error(onde + e.message, { cause: e })
+    }
+  })
+  return { novas, alteradas }
+}
+
+async function aplicarAcoes(req, res, db, restRef, turnos) {
+  const [tSnap, sSnap] = await Promise.all([restRef.collection('tarefas').get(), restRef.collection('setores').get()])
+  let plano
+  try {
+    plano = planejarAcoes(req.body?.acoes, {
+      tarefas: tSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      setores: sSnap.docs.map(d => d.data()),
+      turnos,
+    })
+  } catch (e) {
+    return res.status(400).json({ error: e.message })
+  }
+  const lote = db.batch()
+  const criadas = plano.novas.map(nova => {
+    const dados = { ...nova }
+    delete dados.id // o id provisório só servia para calcular a ordem
+    const ref = restRef.collection('tarefas').doc()
+    lote.set(ref, dados)
+    return { id: ref.id, ...dados }
+  })
+  for (const [id, patch] of plano.alteradas) lote.update(restRef.collection('tarefas').doc(id), patch)
+  await lote.commit()
+  return res.status(200).json({ ok: true, criadas, alteradas: Object.fromEntries(plano.alteradas) })
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'somente GET' })
+  if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'somente GET ou POST' })
   if (!autorizado(req)) return res.status(401).json({ error: 'nao autorizado' })
   if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
     return res.status(500).json({ error: 'FIREBASE_SERVICE_ACCOUNT ausente' })
@@ -93,6 +183,8 @@ export default async function handler(req, res) {
     const restaurante = restSnap.data()
     delete restaurante.codigoAcesso
     const fuso = restaurante.fusoHorario || FUSO
+
+    if (req.method === 'POST') return aplicarAcoes(req, res, db, restRef, getTurnos(restaurante))
 
     const p = periodo(req.query || {}, fuso)
     if (p.erro) return res.status(400).json({ error: p.erro })
