@@ -16,14 +16,16 @@ function dentroDoPrazo(checklist, turnoConfig) {
 }
 
 // Agrega pontos por funcionário a partir dos checklists concluídos no período.
+// `ignorar` tira do ranking quem não disputa — hoje, a conta do dono.
 // Quem fecha o turno (o último setor, ou quem aperta "Concluir Turno") leva o ponto —
 // checklists antigos, de antes do campo concluidoPor existir, caem no criador como aproximação.
-export function calcularRanking(checklists, turnos) {
+export function calcularRanking(checklists, turnos, { ignorar = [] } = {}) {
   const porTurno = Object.fromEntries(turnos.map(t => [t.nome, t]))
+  const fora = new Set(ignorar)
   const porPessoa = {}
   checklists.filter(cl => cl.concluido).forEach(cl => {
     const quem = cl.concluidoPor || { uid: cl.funcionarioId, nome: cl.funcionarioNome }
-    if (!quem?.uid) return
+    if (!quem?.uid || fora.has(quem.uid)) return
     if (!porPessoa[quem.uid]) porPessoa[quem.uid] = { uid: quem.uid, nome: quem.nome || 'Sem nome', pontos: 0, turnos: 0, noPrazo: 0 }
     const p = porPessoa[quem.uid]
     p.nome = quem.nome || p.nome

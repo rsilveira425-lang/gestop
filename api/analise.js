@@ -208,6 +208,7 @@ export default async function handler(req, res) {
         ? { ...cl, concluidoEm: { toDate: () => relogioLocal(cl.concluidoEm.toDate(), fuso) } }
         : cl),
       turnos,
+      { ignorar: [rid] }, // o dono não disputa o ranking
     )
 
     return res.status(200).json(limpar({

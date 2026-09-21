@@ -44,6 +44,7 @@ na prática, você quase nunca precisa abrir nenhum.
 | 🔒 `eslint.config.js` | **O corretor ortográfico do código.** |
 | `README.md` | Instruções de como rodar o projeto. |
 | `MAPA-DO-PROJETO.md` | **Este arquivo.** |
+| `IDEIAS.md` | **Ideias para o futuro**, com rascunho de como fazer. |
 
 ## 📁 Dentro de `app (src)` — o app de verdade
 
@@ -92,3 +93,4 @@ na prática, você quase nunca precisa abrir nenhum.
 |---|---|
 | `enviar-lembretes.js` | Dispara as notificações de lembrete de tarefa. |
 | `mp-webhook.js` | Recebe o aviso do Mercado Pago quando alguém paga. |
+| `analise.js` | Porta de acesso do Claude aos dados de **um único restaurante** (TBB): lê relatórios e ajusta tarefas. |

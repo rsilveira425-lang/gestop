@@ -115,7 +115,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
         const ref = collection(db, 'restaurants', restaurantId, 'checklists')
         return getDocs(query(ref, where('data', '>=', inicio), where('data', '<=', fim)))
       })
-      .then(snap => { if (ativo) setRanking(calcularRanking(snap.docs.map(d => d.data()), turnos)) })
+      .then(snap => { if (ativo) setRanking(calcularRanking(snap.docs.map(d => d.data()), turnos, { ignorar: [restaurantId] })) })
       .catch(e => console.error(e))
       .finally(() => { if (ativo) setLoading(false) })
     return () => { ativo = false }
