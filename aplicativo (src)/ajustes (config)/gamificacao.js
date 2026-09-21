@@ -1,6 +1,8 @@
 import { prazoDoTurno } from './turnos.js'
 
-// Turno concluído vale 1 ponto; se fechado até 30 min depois do horário limite do dia, +1 de bônus.
+// Cada setor fechado vale 1 ponto. Se o turno inteiro foi concluído dentro do
+// prazo, cada setor dele vale +1 — o bônus é do time, não só de quem apertou
+// o último botão. Quem fecha 4 setores num turno no prazo faz 8 pontos.
 const PONTOS_BASE = 1
 const PONTOS_BONUS_PRAZO = 1
 // Folga depois do horário do turno: a loja fecha às 23:00 e a equipe ainda
@@ -15,25 +17,55 @@ function dentroDoPrazo(checklist, turnoConfig) {
   return checklist.concluidoEm.toDate().getTime() <= limite
 }
 
-// Agrega pontos por funcionário a partir dos checklists concluídos no período.
+const chaveNome = nome => (nome || '').trim().toLowerCase()
+
+// Agrega pontos por pessoa a partir dos setores fechados no período.
 // `ignorar` tira do ranking quem não disputa — hoje, a conta do dono.
-// Quem fecha o turno (o último setor, ou quem aperta "Concluir Turno") leva o ponto —
-// checklists antigos, de antes do campo concluidoPor existir, caem no criador como aproximação.
 export function calcularRanking(checklists, turnos, { ignorar = [] } = {}) {
   const porTurno = Object.fromEntries(turnos.map(t => [t.nome, t]))
   const fora = new Set(ignorar)
-  const porPessoa = {}
-  checklists.filter(cl => cl.concluido).forEach(cl => {
-    const quem = cl.concluidoPor || { uid: cl.funcionarioId, nome: cl.funcionarioNome }
-    if (!quem?.uid || fora.has(quem.uid)) return
-    if (!porPessoa[quem.uid]) porPessoa[quem.uid] = { uid: quem.uid, nome: quem.nome || 'Sem nome', pontos: 0, turnos: 0, noPrazo: 0 }
-    const p = porPessoa[quem.uid]
-    p.nome = quem.nome || p.nome
-    p.turnos += 1
-    p.pontos += PONTOS_BASE
+  const registros = []
+
+  for (const cl of checklists) {
     const turnoConfig = porTurno[cl.turno]
-    if (turnoConfig && dentroDoPrazo(cl, turnoConfig)) { p.pontos += PONTOS_BONUS_PRAZO; p.noPrazo += 1 }
-  })
-  // Empate em pontos: fica na frente quem fechou mais turnos dentro do prazo
-  return Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos || b.noPrazo - a.noPrazo)
+    const noPrazo = Boolean(cl.concluido && turnoConfig && dentroDoPrazo(cl, turnoConfig))
+    const setores = Object.values(cl.setoresConcluidos || {})
+    for (const s of setores) registros.push({ uid: s.porUid, nome: s.por, noPrazo })
+    // Turno fechado pelo botão "Concluir Turno", sem nenhum setor registrado:
+    // o ponto fica com quem concluiu, como na regra antiga.
+    if (cl.concluido && setores.length === 0) {
+      const quem = cl.concluidoPor || { uid: cl.funcionarioId, nome: cl.funcionarioNome }
+      registros.push({ uid: quem?.uid, nome: quem?.nome, noPrazo })
+    }
+  }
+
+  const porUid = {}, porNome = {}, nomesFora = new Set()
+  const abrir = (uid, nome) => ({ uid, nome: (nome || '').trim() || 'Sem nome', pontos: 0, setores: 0, noPrazo: 0 })
+  const pontuar = (p, noPrazo) => {
+    p.setores += 1
+    p.pontos += PONTOS_BASE
+    if (noPrazo) { p.pontos += PONTOS_BONUS_PRAZO; p.noPrazo += 1 }
+  }
+
+  // Primeiro quem tem uid: é a identidade confiável, e o nome dela indexa o resto.
+  for (const r of registros) {
+    if (!r.uid) continue
+    if (fora.has(r.uid)) { nomesFora.add(chaveNome(r.nome)); continue }
+    const p = porUid[r.uid] || (porUid[r.uid] = abrir(r.uid, r.nome))
+    if (r.nome) { p.nome = r.nome.trim(); porNome[chaveNome(r.nome)] = p }
+    pontuar(p, r.noPrazo)
+  }
+  // Registros antigos não gravavam o uid de quem fechou o setor: entram pelo
+  // nome e se juntam à pessoa certa quando ela já apareceu com uid.
+  for (const r of registros) {
+    if (r.uid) continue
+    const chave = chaveNome(r.nome)
+    if (nomesFora.has(chave)) continue
+    const p = porNome[chave] || (porNome[chave] = abrir(`nome:${chave}`, r.nome))
+    pontuar(p, r.noPrazo)
+  }
+
+  // Empate em pontos: fica na frente quem fechou mais setores dentro do prazo
+  return [...new Set([...Object.values(porUid), ...Object.values(porNome)])]
+    .sort((a, b) => b.pontos - a.pontos || b.noPrazo - a.noPrazo)
 }

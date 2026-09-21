@@ -23,7 +23,7 @@ const iniciais = nome => {
 const dataCurta = dataStr =>
   new Date(dataStr + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
 
-const resumo = p => `${p.turnos} turno${p.turnos === 1 ? '' : 's'} · ${p.noPrazo} no prazo`
+const resumo = p => `${p.setores} setor${p.setores === 1 ? '' : 'es'} · ${p.noPrazo} no prazo`
 
 function Avatar({ nome, tamanho, medalha }) {
   return (
@@ -160,7 +160,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
           ) : ranking.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gs-text-subtle)' }}>
               <Icon name="trophy" size={36} style={{ margin: '0 auto 10px' }} />
-              <p style={{ margin: 0 }}>Nenhum turno concluído {ehMesAtual ? 'ainda neste mês' : 'nesse mês'}.</p>
+              <p style={{ margin: 0 }}>Nenhum setor concluído {ehMesAtual ? 'ainda neste mês' : 'nesse mês'}.</p>
             </div>
           ) : (
             <>
@@ -170,7 +170,7 @@ export default function Gamificacao({ restaurantId, turnos = DEFAULT_TURNOS }) {
           )}
 
           <p style={{ margin: '14px 0 0', fontSize: '12px', color: 'var(--gs-text-subtle)', textAlign: 'center' }}>
-            1 ponto por turno concluído · +1 se fechado até {TOLERANCIA_PRAZO_MIN} min após o horário
+            1 ponto por setor fechado · +1 em cada setor quando o turno fecha até {TOLERANCIA_PRAZO_MIN} min após o horário
           </p>
         </div>
       </div>
