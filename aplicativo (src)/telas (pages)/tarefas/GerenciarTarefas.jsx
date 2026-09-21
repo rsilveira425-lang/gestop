@@ -230,7 +230,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
     back: { background:'none', border:'none', color:'white', fontSize:'22px', cursor:'pointer' },
     tabs: { display:'flex', flexWrap:'wrap', gap:'0', backgroundColor:'white', borderBottom:'2px solid #e2e8f0', padding:'0 12px' },
     tab: (ativo) => ({ padding:'12px 18px', border:'none', background:'none', fontSize:'15px', fontWeight:'600', cursor:'pointer', whiteSpace:'nowrap', color: ativo ? 'var(--gs-action)' : '#64748b', borderBottom: ativo ? '2px solid var(--gs-action)' : '2px solid transparent', marginBottom:'-2px' }),
-    body: { padding:'20px 24px', maxWidth: kanban ? '1400px' : '700px', margin:'0 auto' },
+    body: { padding:'20px 24px', maxWidth: kanban ? 'none' : '700px', margin:'0 auto' },
     turnoCard: { backgroundColor:'white', borderRadius:'12px', marginBottom:'16px', boxShadow:'var(--gs-shadow-xs)', overflow:'hidden' },
     turnoHeader: { padding:'14px 20px', backgroundColor:'#f8fafc', borderBottom:'1px solid #e2e8f0', fontSize:'14px', fontWeight:'700', color:'#475569' },
     tarefaTexto: { fontSize:'14px', color:'#1e293b', flex:1, padding:'12px 0' },
@@ -518,7 +518,8 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
           </p>
 
           {kanban ? (
-            <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.max(1, nomesSetores.length)}, minmax(260px, 1fr))`, gap:'16px', alignItems:'start' }}>
+            <div style={{ overflowX:'auto', paddingBottom:'8px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.max(1, nomesSetores.length)}, minmax(200px, 1fr))`, gap:'12px', alignItems:'start' }}>
               {nomesSetores.map(setor => {
                 const lista = tarefasDoGrupo(tarefas, setor, turnoAtivo)
                 return (
@@ -531,6 +532,7 @@ export default function GerenciarTarefas({ restaurantId, turnos = DEFAULT_TURNOS
                   </Coluna>
                 )
               })}
+            </div>
             </div>
           ) : (
             TURNOS.map(turno => {
