@@ -6,14 +6,17 @@ import { prazoDoTurno } from './turnos.js'
 const PONTOS_BASE = 1
 const PONTOS_BONUS_PRAZO = 1
 // Folga depois do horário do turno: a loja fecha às 23:00 e a equipe ainda
-// precisa de um tempo para limpar — o bônus vale até 23:30.
+// precisa de um tempo para limpar — o bônus vale até 23:30. A Abertura não
+// tem essa folga: a equipe já chega com antecedência, então o horário limite
+// é seco.
 export const TOLERANCIA_PRAZO_MIN = 30
 
 // Compara o instante inteiro, não só a hora: fechar à 00:30 um turno que vencia
 // às 23:30 é atraso, mesmo que "00:30" seja menor que "23:30".
 function dentroDoPrazo(checklist, turnoConfig) {
   if (!checklist.concluidoEm?.toDate) return false
-  const limite = prazoDoTurno(turnoConfig, checklist.data).getTime() + TOLERANCIA_PRAZO_MIN * 60 * 1000
+  const tolerancia = turnoConfig?.nome === 'Fechamento' ? TOLERANCIA_PRAZO_MIN : 0
+  const limite = prazoDoTurno(turnoConfig, checklist.data).getTime() + tolerancia * 60 * 1000
   return checklist.concluidoEm.toDate().getTime() <= limite
 }
 
