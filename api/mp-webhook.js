@@ -3,6 +3,9 @@
 // Nunca confiamos no corpo da notificação: buscamos a assinatura direto na API do MP.
 import admin from 'firebase-admin'
 
+// Planos do Cotaí na mesma conta do Mercado Pago ("Cotaí - Plano Fundador" e "Cotaí - Plano Mensal")
+const PLANOS_COTAI = ['14a88d0f88364c8898327dd5bbc58a12', '2ee57f5025814f61a81cd6861f1c7b22']
+
 let inicializado = false
 function getDb() {
   if (!inicializado) {
@@ -41,6 +44,12 @@ export default async function handler(req, res) {
     if (!r.ok) return res.status(200).json({ ok: true, skip: 'assinatura nao encontrada no MP' })
     const sub = await r.json()
 
+    // A conta do Mercado Pago também cobra o Cotaí (app de cotação), que tem os próprios planos
+    // e se atualiza sozinho: os avisos das assinaturas dele não são deste app.
+    if (PLANOS_COTAI.includes(sub.preapproval_plan_id)) {
+      return res.status(200).json({ ok: true, skip: 'assinatura do Cotaí' })
+    }
+
     const db = getDb()
 
     // Identifica o restaurante: external_reference (vem do link) ou e-mail do pagador
@@ -57,8 +66,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, skip: 'restaurante nao identificado' })
     }
 
+    // Só atualiza restaurante que existe (não cria documento solto por um external_reference qualquer)
+    const ref = db.collection('restaurants').doc(restaurantId)
+    if (!(await ref.get()).exists) {
+      console.error('Assinatura para restaurante inexistente:', sub.id, restaurantId)
+      return res.status(200).json({ ok: true, skip: 'restaurante inexistente' })
+    }
+
     const ativa = sub.status === 'authorized'
-    await db.collection('restaurants').doc(restaurantId).set({
+    await ref.set({
       assinaturaAtiva: ativa,
       assinaturaStatus: sub.status,
       assinaturaId: sub.id,
